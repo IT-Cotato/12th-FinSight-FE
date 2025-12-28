@@ -6,9 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "lint": "next lint"
   },
   "dependencies": {
     "next": "^16.1.1",
@@ -17,12 +15,6 @@
     "zustand": "^4.5.2"
   },
   "devDependencies": {
-    "@storybook/addon-essentials": "^8.6.15",
-    "@storybook/addon-interactions": "^8.6.15",
-    "@storybook/addon-links": "^8.6.15",
-    "@storybook/nextjs": "^8.6.15",
-    "@storybook/react": "^8.6.15",
-    "@storybook/test": "^8.6.15",
     "@types/node": "^20.14.12",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
@@ -30,7 +22,6 @@
     "eslint": "^8.57.0",
     "eslint-config-next": "^16.1.1",
     "postcss": "^8.4.40",
-    "storybook": "^8.6.15",
     "tailwindcss": "^3.4.7",
     "typescript": "^5.5.4"
   }

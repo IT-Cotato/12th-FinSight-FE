@@ -25,14 +25,6 @@ pnpm dev
 
 브라우저에서 [http://localhost:3000](http://localhost:3000)을 열어 확인하세요.
 
-### Storybook 실행
-
-```bash
-pnpm storybook
-```
-
-Storybook은 [http://localhost:6006](http://localhost:6006)에서 실행됩니다.
-
 ## 프로젝트 구조
 
 ```

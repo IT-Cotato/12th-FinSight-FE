@@ -68,6 +68,7 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --color-bg-100: #131416;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -84,7 +85,7 @@ html {
 
 body {
   color: var(--foreground);
-  background: var(--background);
+  background: #f3f4f6;
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   /* 모바일 크기 강제 */
   max-width: 100vw;

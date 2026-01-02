@@ -6,7 +6,7 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col min-h-screen max-w-md mx-auto w-full bg-white dark:bg-gray-900 shadow-lg">
+    <div className="flex flex-col min-h-screen max-w-md mx-auto w-full shadow-lg bg-[#131416]">
       <main className="flex-1 overflow-y-auto pb-16">{children}</main>
       <BottomTab />
     </div>

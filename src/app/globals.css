@@ -69,6 +69,8 @@
   --background: #ffffff;
   --foreground: #171717;
   --color-bg-100: #131416;
+  --color-bg-90: #171E26;
+  --color-bg-70: #2F3847;
 }
 
 @media (prefers-color-scheme: dark) {

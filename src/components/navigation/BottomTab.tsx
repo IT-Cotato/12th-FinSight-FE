@@ -43,7 +43,7 @@ export function BottomTab() {
 
   return (
     <nav className="pointer-events-none sticky bottom-0 z-40 flex w-full justify-center">
-      <div className="pointer-events-auto w-full rounded-t-[20px] border-t-[0.4px] border-[var(--color-bg-70,#2F3847)] bg-[var(--color-bg-90,#171E26)] shadow-[0_0_5px_0_rgba(47,56,71,0.5)]">
+      <div className="pointer-events-auto w-full rounded-t-[20px] border-t-[0.4px] border-bg-70 bg-bg-90 shadow-[0_0_5px_0_rgba(47,56,71,0.5)]">
         <div className="flex items-center justify-between w-full h-[90px] pt-[13px] pb-[35px] px-10">
           {TAB_ITEMS.map((item) => {
           const isActive =

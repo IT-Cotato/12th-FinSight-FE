@@ -16,7 +16,7 @@ const config: Config = {
         "bg-70": "var(--color-bg-70, #2F3847)",
       },
       fontFamily: {
-        sans: ["Pretendard", "-apple-system", "BlinkMacSystemFont", "system-ui", "sans-serif"],
+        sans: ["Pretendard", "sans-serif"],
       },
     },
   },

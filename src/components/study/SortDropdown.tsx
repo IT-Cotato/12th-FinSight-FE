@@ -62,39 +62,45 @@ export function SortDropdown({ value, onChange }: SortDropdownProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-5 inline-flex h-[79px] flex-col items-start justify-center gap-[5px] bg-bg-80 rounded-[16px] shadow-[0_0_20px_0_rgba(11,11,11,0.70)] z-10 py-[12px] pl-[20px] pr-[73px]">
-          {SORT_OPTIONS.map((option) => (
-            <button
-              key={option.value}
-              onClick={() => {
-                onChange(option.value);
-                setIsOpen(false);
-              }}
-              className={`w-full flex items-center gap-2 text-left text-sm transition-colors ${
-                value === option.value
-                  ? "text-primary-30"
-                  : "text-gray-300 hover:bg-bg-70"
-              }`}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="12"
-                height="12"
-                viewBox="0 0 12 12"
-                fill="none"
-                className={value === option.value ? "" : "invisible"}
+        <>
+          <div
+            className="fixed inset-0 bg-[rgba(0,0,0,0.50)] z-[5]"
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="absolute top-full left-5 inline-flex h-[79px] flex-col items-start justify-center gap-[5px] bg-bg-80 rounded-[16px] shadow-[0_0_20px_0_rgba(11,11,11,0.70)] z-10 py-[12px] pl-[20px] pr-[73px]">
+            {SORT_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  onChange(option.value);
+                  setIsOpen(false);
+                }}
+                className={`w-full flex items-center gap-2 text-left text-sm transition-colors ${
+                  value === option.value
+                    ? "text-primary-30"
+                    : "text-gray-300 hover:bg-bg-70"
+                }`}
               >
-                <path
-                  d="M1 5.72222L4.83467 9.93872C5.30286 10.4535 6.14064 10.3446 6.46169 9.72726L11 1"
-                  stroke="#9C95FA"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-              {option.label}
-            </button>
-          ))}
-        </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="12"
+                  height="12"
+                  viewBox="0 0 12 12"
+                  fill="none"
+                  className={value === option.value ? "" : "invisible"}
+                >
+                  <path
+                    d="M1 5.72222L4.83467 9.93872C5.30286 10.4535 6.14064 10.3446 6.46169 9.72726L11 1"
+                    stroke="#9C95FA"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

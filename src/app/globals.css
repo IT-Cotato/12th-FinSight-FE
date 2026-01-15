@@ -1,80 +1,53 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@font-face {
-  font-family: 'Pretendard';
-  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-Thin.woff2') format('woff2');
-  font-weight: 100;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Pretendard';
-  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-ExtraLight.woff2') format('woff2');
-  font-weight: 200;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Pretendard';
-  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-Light.woff2') format('woff2');
-  font-weight: 300;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Pretendard';
-  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Pretendard';
-  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Pretendard';
-  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-SemiBold.woff2') format('woff2');
-  font-weight: 600;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Pretendard';
-  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-Bold.woff2') format('woff2');
-  font-weight: 700;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Pretendard';
-  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-ExtraBold.woff2') format('woff2');
-  font-weight: 800;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Pretendard';
-  src: url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/woff2/Pretendard-Black.woff2') format('woff2');
-  font-weight: 900;
-  font-display: swap;
-}
-
 :root {
-  --color-bg-100: #131416;
-  --color-bg-90: #171E26;
+  --color-primary-10: #ECE7FD;
+  --color-primary-20: #C5BBFB;
+  --color-primary-30: #9C95FA;
+  --color-primary-40: #7770F7;
+  --color-primary-50: #5C54F5;
+  --color-primary-60: #5148D5;
+  --color-primary-70: #433DB4;
+  --color-primary-80: #35328F;
+  --color-primary-90: #2A2970;
+  --color-primary-100: #151540;
+  --color-bg-10: #EAEFF5;
+  --color-bg-20: #D5D9E4;
+  --color-bg-30: #B5BDC9;
+  --color-bg-40: #8E99AD;
+  --color-bg-50: #4D5464;
+  --color-bg-60: #3D4655;
   --color-bg-70: #2F3847;
+  --color-bg-80: #1D2937;
+  --color-bg-90: #171E26;
+  --color-bg-100: #000000;
+  --color-bg-100: #131416;
+  --color-gray-10: #F8F8F8;
+  --color-gray-20: #F0F0F0;
+  --color-gray-30: #E6E6E6;
+  --color-gray-40: #D5D5D5;
+  --color-gray-50: #B1B1B1;
+  --color-gray-60: #909090;
+  --color-gray-70: #696969;
+  --color-gray-80: #555;
+  --color-gray-90: #373737;
+  --color-gray-100: #171717;
   --background: var(--color-bg-100);
   --foreground: #ededed;
 }
 
 html {
   height: 100%;
+}
+
+@layer base {
+  body {
+    font-family: 'Pretendard', sans-serif;
+  }
 }
 
 body {
@@ -109,6 +82,52 @@ body {
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* 바텀시트 애니메이션 */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
   }
 }
 

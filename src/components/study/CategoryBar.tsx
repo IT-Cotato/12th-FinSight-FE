@@ -11,18 +11,21 @@ type CategoryBarProps = {
   categories: Category[];
   selectedCategoryId: number | null;
   onCategoryChange: (categoryId: number | null) => void;
+  onEditClick?: () => void;
 };
 
 export function CategoryBar({
   categories,
   selectedCategoryId,
   onCategoryChange,
+  onEditClick,
 }: CategoryBarProps) {
   return (
     <div className="w-full overflow-x-auto pb-3 scrollbar-hide">
       <div className="inline-flex items-center gap-2 py-[10px] pl-5 pr-0">
         {/* 수정 아이콘 */}
         <button
+          onClick={onEditClick}
           className="flex-shrink-0 flex items-center justify-center w-9 h-[35px] py-[6px] px-0 gap-[10px] rounded-[16px] bg-bg-70 border border-bg-60"
           aria-label="수정"
         >

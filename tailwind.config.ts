@@ -47,17 +47,17 @@ const config: Config = {
       },
       fontSize: {
         // Headings - Bold
-        h1: ["25px", { lineHeight: "1.3", letterSpacing: "-0.01em" }],
-        h2: ["22px", { lineHeight: "1.3", letterSpacing: "-0.01em" }],
-        h3: ["20px", { lineHeight: "1.3", letterSpacing: "-0.01em" }],
-        h4: ["18px", { lineHeight: "1.3", letterSpacing: "-0.01em" }],
+        h1: ["25px", { lineHeight: "1.3", letterSpacing: "-0.01em", fontWeight: "700" }],
+        h2: ["22px", { lineHeight: "1.3", letterSpacing: "-0.01em", fontWeight: "700" }],
+        h3: ["20px", { lineHeight: "1.3", letterSpacing: "-0.01em", fontWeight: "700" }],
+        h4: ["18px", { lineHeight: "1.3", letterSpacing: "-0.01em", fontWeight: "700" }],
 
         // Headings - SemiBold
-        sh1: ["25px", { lineHeight: "1.3", letterSpacing: "-0.01em" }],
-        sh2: ["22px", { lineHeight: "1.3", letterSpacing: "-0.01em" }],
-        sh3: ["20px", { lineHeight: "1.3", letterSpacing: "-0.01em" }],
-        sh4: ["18px", { lineHeight: "1.3", letterSpacing: "-0.01em" }],
-        sh5: ["15px", { lineHeight: "1.3", letterSpacing: "-0.01em" }],
+        sh1: ["25px", { lineHeight: "1.3", letterSpacing: "-0.01em", fontWeight: "600" }],
+        sh2: ["22px", { lineHeight: "1.3", letterSpacing: "-0.01em", fontWeight: "600" }],
+        sh3: ["20px", { lineHeight: "1.3", letterSpacing: "-0.01em", fontWeight: "600" }],
+        sh4: ["18px", { lineHeight: "1.3", letterSpacing: "-0.01em", fontWeight: "600" }],
+        sh5: ["15px", { lineHeight: "1.3", letterSpacing: "-0.01em", fontWeight: "600" }],
 
         // Body
         b1: ["16px", { lineHeight: "1.8", letterSpacing: "-0.01em" }],

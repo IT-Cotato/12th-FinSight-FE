@@ -56,7 +56,7 @@ export default function LoginPage() {
       await new Promise(resolve => setTimeout(resolve, 1000));
 
       // 테스트용: 특정 이메일/비밀번호로 로그인 성공
-      if (email === 'test@test.com' && password === 'test1234') {
+      if (email === 'test@test.com' && password === 'test12345') {
         alert('로그인 성공!');
         router.push('/home');
       } else {

@@ -73,6 +73,12 @@ export default function QuizOptionsPage() {
     return "3문제 다 맞으면 보너스 +20점이 있어요!";
   }, []);
 
+  const contentQuizSetId =
+    quizzes.find((q) => q.quiz_type === "CONTENT")?.quiz_set_id ?? 501;
+
+  const termQuizSetId =
+    quizzes.find((q) => q.quiz_type === "TERM")?.quiz_set_id ?? 502;
+
   return (
     <div className="min-h-screen">
       <div className="min-h-screen">
@@ -136,7 +142,8 @@ export default function QuizOptionsPage() {
               countText={`총 ${quizzes.find((q) => q.quiz_type === "CONTENT")?.question_count ?? 3}문제`}
               iconSrc="/quiz/icon-content.svg"
               iconScale={1}
-              onClick={() => router.push(`/articles/${articleId}/quiz/content`)}
+              //   onClick={() => router.push(`/articles/${articleId}/quiz/content`)}
+              onClick={() => router.push(`/quiz/${contentQuizSetId}`)}
             />
 
             <QuizOptionCard
@@ -145,7 +152,8 @@ export default function QuizOptionsPage() {
               countText={`총 ${quizzes.find((q) => q.quiz_type === "TERM")?.question_count ?? 3}문제`}
               iconSrc="/quiz/icon-word.svg"
               iconScale={2}
-              onClick={() => router.push(`/articles/${articleId}/quiz/term`)}
+              //   onClick={() => router.push(`/articles/${articleId}/quiz/term`)}
+              onClick={() => router.push(`/quiz/${termQuizSetId}`)}
             />
           </div>
         </div>

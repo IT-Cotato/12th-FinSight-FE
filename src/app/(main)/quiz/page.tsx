@@ -97,9 +97,7 @@ export default function QuizOptionsPage() {
           rightSlot={
             <button
               type="button"
-              onClick={() =>
-                router.push(`/articles/${articleId}/quiz/score-guide`)
-              }
+              onClick={() => router.push(`/quiz/score-guide`)}
               className="flex items-center gap-2 px-2 py-1"
             >
               <span className="text-b4 text-gray-20">점수안내</span>
@@ -129,24 +127,6 @@ export default function QuizOptionsPage() {
             어떤 퀴즈를 풀어볼까요?
           </h1>
           <p className="mt-2 text-center text-b3 text-gray-40">{bonusText}</p>
-
-          {/* 상태 메시지 */}
-          {state.kind === "loading" && (
-            <p className="mt-6 text-center text-b4 text-gray-50">
-              불러오는 중...
-            </p>
-          )}
-
-          {state.kind === "error" && (
-            <div className="mt-6 rounded-xl border border-bg-70/60 bg-bg-90/40 p-4">
-              <p className="text-b4 text-gray-20">{state.message}</p>
-              {state.status === "QUIZ-002" && (
-                <p className="mt-1 text-b5 text-gray-50">
-                  잠시 후 다시 시도해주세요.
-                </p>
-              )}
-            </div>
-          )}
 
           {/* 옵션 카드 */}
           <div className="grid grid-cols-2 gap-4">

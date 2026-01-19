@@ -75,3 +75,10 @@ export type QuizSubmitResponse =
       };
     }
   | { status: string; message: string };
+
+// 퀴즈 제출
+export function isQuizSubmitSuccess(
+  res: QuizSubmitResponse,
+): res is Extract<QuizSubmitResponse, { status: "QUIZ_200_4" }> {
+  return res.status === "QUIZ_200_4";
+}

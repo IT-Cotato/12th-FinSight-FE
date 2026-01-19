@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthContainer from '../AuthContainer';
@@ -18,6 +19,9 @@ export default function LoginPage() {
   // Touch 상태
   const [emailTouched, setEmailTouched] = useState(false);
   const [passwordTouched, setPasswordTouched] = useState(false);
+
+  // 비밀번호 표시/숨김 상태
+  const [showPassword, setShowPassword] = useState(false);
 
   // 이메일 유효성 검사
   const isValidEmail = (email: string) => {
@@ -111,34 +115,50 @@ export default function LoginPage() {
         />
       </div>
 
-      {/* 비밀번호 */}
-      <div className="mb-6">
+      {/* 비밀번호 입력 - relative로 감싸고 아이콘 추가 */}
+        <div className="mb-6 relative">
         <label className="block text-[var(--color-bg-10)] font-pretendard text-[18px] leading-[130%] tracking-[-0.18px] mb-[12px]">
-          비밀번호
+            비밀번호
         </label>
         <input
-          type="password"
-          value={password}
-          onChange={(e) => {
+            type={showPassword ? "text" : "password"}  // 수정: 동적으로 type 변경
+            value={password}
+            onChange={(e) => {
             setPassword(e.target.value);
             if (!passwordTouched) setPasswordTouched(true);
             setError('');
-          }}
-          onFocus={() => {
+            }}
+            onFocus={() => {
             setIsPasswordFocused(true);
             if (!passwordTouched) setPasswordTouched(true);
-          }}
-          onBlur={() => setIsPasswordFocused(false)}
-          className={`w-[350px] h-[60px] ${
+            }}
+            onBlur={() => setIsPasswordFocused(false)}
+            className={`w-[350px] h-[60px] ${
             passwordTouched && isPasswordFocused 
-              ? 'bg-[var(--color-bg-70)]' 
-              : 'bg-[var(--color-bg-80)]'
-          } rounded-lg pl-[25px] py-[18px] text-[14px] font-pretendard border-none outline-none ${
+                ? 'bg-[var(--color-bg-70)]' 
+                : 'bg-[var(--color-bg-80)]'
+            } rounded-lg pl-[25px] pr-[60px] py-[18px] text-[14px] font-pretendard border-none outline-none ${
             password ? 'text-[var(--color-gray-20)]' : 'text-[var(--color-gray-50)]'
-          } tracking-[-0.14px] leading-[180%]`}
-          placeholder="비밀번호 입력"
+            } tracking-[-0.14px] leading-[180%]`}
+            placeholder="비밀번호 입력"
         />
-      </div>
+
+        {/* 눈 아이콘 버튼 */}
+        {password.length > 0 && (
+            <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-[15px] mt-[30px] transform -translate-y-1/2 bg-transparent border-none cursor-pointer p-0"
+            >
+            <Image
+                src={showPassword ? '/eye-on.png' : '/eye-off.png'}
+                alt="비밀번호 표시/숨김"
+                width={20}
+                height={12}
+            />
+            </button>
+        )}
+        </div>
 
       {/* 하단 안내 텍스트 */}
       {error && (

@@ -122,8 +122,8 @@ export default function QuizResultPage() {
             <button
               type="button"
               onClick={() => {
-                // 퀴즈 종료(추후 구현) 화면으로 이동
-                router.push("/quiz");
+                // 퀴즈 종료 화면으로 이동
+                router.push(`/quiz/${quizSetId}/result/next`);
               }}
               className="
                 h-[60px] w-[350px] rounded-xl bg-primary-50

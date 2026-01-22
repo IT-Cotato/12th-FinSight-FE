@@ -111,7 +111,24 @@ export function CategoryEditBottomSheet({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50 data-[state=open]:animate-[fade-in_200ms_ease-out] data-[state=closed]:animate-[fade-out_200ms_ease-in]" />
-        <Dialog.Content className="fixed bottom-0 left-0 right-0 z-50 bg-bg-90 rounded-t-[20px] border-t-2 border-bg-80 shadow-[0_0_20px_0_rgba(11,11,11,0.70)] safe-area-inset-bottom data-[state=open]:animate-[slide-up_300ms_ease-out] data-[state=closed]:animate-[slide-down_250ms_ease-in]">
+        <Dialog.Content
+          className="
+            /* 1. fixed를 유지하되 기준을 잡기 위해 left/right를 0이 아닌 auto로 설정 */
+            fixed bottom-0 left-auto right-auto
+            
+            /* 2. 하단 앱 쉘(420px) 너비만큼 차지하게 설정 */
+            w-full max-w-[420px] 
+            
+            /* 3. 정렬 충돌 방지를 위해 translate-x 제거 */
+            z-50 bg-bg-90 rounded-t-[20px]
+            border-t-2 border-bg-80 shadow-[0_0_20px_0_rgba(11,11,11,0.70)]
+            pb-[safe-area-inset-bottom]
+            
+            /* 4. 애니메이션 */
+            data-[state=open]:animate-[sheet-up_300ms_ease-out]
+            data-[state=closed]:animate-[sheet-down_250ms_ease-in]
+          "
+        >
           <div className="flex flex-col max-h-[150vh]">
             {/* 헤더 */}
             <div className="flex items-center justify-between px-5 pt-10 pb-5">

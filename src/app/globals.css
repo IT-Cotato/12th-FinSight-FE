@@ -64,13 +64,12 @@ body {
 }
 
 #app-shell {
-  /* 앱 화면 크기 */
   width: 100%;
   max-width: 420px;
   min-height: 100vh;
-  /* 앱 화면 배경(검정) */
+
+  margin: 0 auto;          /* 가운데 정렬 */
   background: var(--color-bg-100);
-  /* 혹시 가로 스크롤 방지 */
   overflow-x: hidden;
 }
 
@@ -113,21 +112,20 @@ body {
   }
 }
 
-@keyframes slide-up {
-  from {
-    transform: translateY(100%);
+@keyframes sheet-up {
+  0% {
+    transform: translateY(100%); /* -50% 삭제 */
   }
-  to {
+  100% {
     transform: translateY(0);
   }
 }
 
-@keyframes slide-down {
-  from {
+@keyframes sheet-down {
+  0% {
     transform: translateY(0);
   }
-  to {
+  100% {
     transform: translateY(100%);
   }
 }
-

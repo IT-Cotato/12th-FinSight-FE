@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Header } from "@/components/common/Header";
 import { CategoryBar } from "@/components/study/CategoryBar";
 import { SortDropdown, type SortOption } from "@/components/study/SortDropdown";
@@ -104,6 +105,7 @@ const sortOptionToApiSort = (sort: SortOption): NewsSort => {
 };
 
 export default function StudyPage() {
+  const router = useRouter();
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [sortOption, setSortOption] = useState<SortOption>("latest");
   const [newsList, setNewsList] = useState<NewsItem[]>([]);
@@ -156,8 +158,7 @@ export default function StudyPage() {
   }, [selectedCategoryId, sortOption]);
 
   const handleSearchClick = () => {
-    // TODO: 검색 기능 구현
-    console.log("검색 클릭");
+    router.push("/study/search");
   };
 
   const handleCategoryChange = (categoryId: number | null) => {

@@ -44,7 +44,7 @@ export function CategoryBar({
             <button
               key={category.category_id}
               onClick={() => onCategoryChange(category.category_id)}
-              className={`flex-shrink-0 flex items-center justify-center px-[15px] py-[6px] rounded-[16px] gap-[10px] text-b3 transition-colors ${
+              className={`flex-shrink-0 flex items-center justify-center px-[15px] py-[6px] rounded-[16px] gap-[10px] text-b3 text-gray-10 transition-colors ${
                 isSelected
                   ? "bg-primary-50 border border-primary-40"
                   : "bg-bg-70 border border-bg-60"

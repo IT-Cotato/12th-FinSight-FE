@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Header } from "@/components/common/Header";
+import { NewCategoryBottomSheet } from "@/components/study/NewCategoryBottomSheet";
 import { getNewsDetail, type NewsDetail } from "@/lib/api/news";
 
 // Mock 데이터
@@ -28,6 +29,16 @@ const MOCK_NEWS_DETAIL: NewsDetail = {
   ],
 };
 
+type Category = {
+  category_id: number;
+  name: string;
+  count?: number;
+};
+
+const ARCHIVE_CATEGORIES: Category[] = [
+  { category_id: 0, name: "기본 폴더", count: 0 },
+];
+
 export default function NewsDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -36,6 +47,7 @@ export default function NewsDetailPage() {
   const [news, setNews] = useState<NewsDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSaveBottomSheetOpen, setIsSaveBottomSheetOpen] = useState(false);
 
   useEffect(() => {
     async function fetchNews() {
@@ -63,8 +75,22 @@ export default function NewsDetailPage() {
   };
 
   const handleBookmark = () => {
-    // TODO: 북마크 기능 구현
-    console.log("북마크 토글");
+    setIsSaveBottomSheetOpen(true);
+  };
+
+  const handleSelectCategory = (categoryId: number | null) => {
+    // TODO: 선택한 카테고리에 저장하는 API 호출
+    console.log("카테고리 선택:", categoryId);
+    // 저장 후 북마크 상태 업데이트
+    if (news) {
+      setNews({ ...news, isSaved: true });
+    }
+  };
+
+  const handleAddNewCategory = () => {
+    // TODO: 새 카테고리 추가 기능 구현
+    console.log("새 카테고리 추가");
+    setIsSaveBottomSheetOpen(false);
   };
 
   const handleViewOriginal = () => {
@@ -294,6 +320,15 @@ export default function NewsDetailPage() {
             문제 풀러가기
           </button>
       </div>
+
+      {/* 보관함 저장 바텀시트 */}
+      <NewCategoryBottomSheet
+        open={isSaveBottomSheetOpen}
+        onOpenChange={setIsSaveBottomSheetOpen}
+        categories={ARCHIVE_CATEGORIES}
+        onSelectCategory={handleSelectCategory}
+        onAddNewCategory={handleAddNewCategory}
+      />
     </div>
   );
 }

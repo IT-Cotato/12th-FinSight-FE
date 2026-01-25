@@ -36,8 +36,6 @@
   --color-gray-80: #555;
   --color-gray-90: #373737;
   --color-gray-100: #171717;
-  --background: var(--color-bg-100);
-  --foreground: #ededed;
 }
 
 html {
@@ -53,7 +51,6 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
-  color: var(--foreground);
   font-family: 'Pretendard', sans-serif;
   overscroll-behavior-y: none;
   /* 데스크톱 바깥 배경 */
@@ -90,42 +87,5 @@ body {
 
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
-  }
-}
-
-/* 바텀시트 애니메이션 */
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes fade-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes sheet-up {
-  0% {
-    transform: translateY(100%);
-  }
-  100% {
-    transform: translateY(0);
-  }
-}
-
-@keyframes sheet-down {
-  0% {
-    transform: translateY(0);
-  }
-  100% {
-    transform: translateY(100%);
   }
 }

@@ -1,7 +1,12 @@
 "use client";
 
-import * as Dialog from "@radix-ui/react-dialog";
 import { useState, useEffect } from "react";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetClose,
+} from "@/components/ui/sheet";
 
 type Category = {
   category_id: number;
@@ -108,55 +113,39 @@ export function CategoryEditBottomSheet({
   };
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50 data-[state=open]:animate-[fade-in_200ms_ease-out] data-[state=closed]:animate-[fade-out_200ms_ease-in]" />
-        <Dialog.Content
-          className="
-            /* 1. fixed를 유지하되 기준을 잡기 위해 left/right를 0이 아닌 auto로 설정 */
-            fixed bottom-0 left-auto right-auto
-            
-            /* 2. 하단 앱 쉘(420px) 너비만큼 차지하게 설정 */
-            w-full max-w-[420px] 
-            
-            /* 3. 정렬 충돌 방지를 위해 translate-x 제거 */
-            z-50 bg-bg-90 rounded-t-[20px]
-            border-t-2 border-bg-80 shadow-[0_0_20px_0_rgba(11,11,11,0.70)]
-            pb-[safe-area-inset-bottom]
-            
-            /* 4. 애니메이션 */
-            data-[state=open]:animate-[sheet-up_300ms_ease-out]
-            data-[state=closed]:animate-[sheet-down_250ms_ease-in]
-          "
-        >
-          <div className="flex flex-col max-h-[150vh]">
-            {/* 헤더 */}
-            <div className="flex items-center justify-between px-5 pt-10 pb-5">
-              <Dialog.Title className="text-sh3 text-gray-10">
-                카테고리 순서 선택
-              </Dialog.Title>
-              <Dialog.Close asChild>
-                <button
-                  className="flex items-center justify-center w-5 h-5"
-                  aria-label="닫기"
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="bottom"
+        className="w-full max-w-[420px] left-auto right-auto border-t-2 border-bg-80 shadow-[0_0_20px_0_rgba(11,11,11,0.70)] pb-[safe-area-inset-bottom] p-0 rounded-t-[20px]"
+      >
+        <div className="flex flex-col max-h-[150vh]">
+          {/* 헤더 */}
+          <div className="flex items-center justify-between px-5 pt-10 pb-5">
+            <SheetTitle className="text-sh3 text-gray-10">
+              카테고리 순서 선택
+            </SheetTitle>
+            <SheetClose asChild>
+              <button
+                className="flex items-center justify-center w-5 h-5"
+                aria-label="닫기"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                  >
-                    <path
-                      d="M5 5L15 15M15 5L5 15"
-                      stroke="#D5D9E4"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </button>
-              </Dialog.Close>
-            </div>
+                  <path
+                    d="M5 5L15 15M15 5L5 15"
+                    stroke="#D5D9E4"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            </SheetClose>
+          </div>
 
             {/* 카테고리 목록 */}
             <div className="flex flex-col">
@@ -200,9 +189,8 @@ export function CategoryEditBottomSheet({
                 저장하기
               </button>
             </div>
-          </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

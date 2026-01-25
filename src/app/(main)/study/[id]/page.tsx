@@ -240,7 +240,7 @@ export default function NewsDetailPage() {
 
             {/* 제목과 발행일시 */}
             <div className="flex flex-col items-start gap-[10px] self-stretch">
-              <h1 className="text-h2">{news.title}</h1>
+              <h1 className="text-h2 text-gray-10">{news.title}</h1>
               <p className="text-b3 text-gray-40">{news.publishedAt}</p>
             </div>
           </div>

@@ -4,14 +4,13 @@ import type {
   MyProfile,
   WeeklyReport,
 } from "@/types/mypage";
+
 import { apiFetch, getClientToken } from "./fetcher";
 
-const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
+// const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
 export async function getMyProfile() {
   const token = getClientToken();
-  if (USE_MOCK) throw new Error("mock");
-
   const res = await apiFetch<ApiEnvelope<MyProfile>>("/api/mypage/me/profile", {
     token,
   });
@@ -50,9 +49,7 @@ export async function getUserCategories() {
   const token = getClientToken();
   const res = await apiFetch<ApiEnvelope<{ categories: CategoryItem[] }>>(
     "/api/users/categories",
-    {
-      token,
-    },
+    { token },
   );
   return res.data.categories;
 }

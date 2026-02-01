@@ -9,6 +9,7 @@ export type MyProfile = {
   currentLv: number;
   nextLv: number;
   percentLv: number;
+  categories?: string[];
 };
 
 export type CategoryItem = {

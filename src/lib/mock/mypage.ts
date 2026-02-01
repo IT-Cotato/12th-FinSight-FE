@@ -1,7 +1,8 @@
 import type { MyPageViewData } from "@/types/mypage";
+import type { CategoryItem, MyProfile } from "@/types/mypage";
 
 export const MOCK_NO_RECORD: MyPageViewData = {
-  profile: { nickname: "정원", currentLv: 1, nextLv: 2, percentLv: 50 },
+  profile: { nickname: "민성", currentLv: 1, nextLv: 2, percentLv: 50 },
   categories: [
     { section: "FINANCE", displayName: "금융" },
     { section: "STOCK", displayName: "증권" },
@@ -83,3 +84,24 @@ export const MOCK_AUTH = {
   email: "jeongbam@example.com",
   currentPassword: "abc12345",
 };
+
+export const ALL_CATEGORIES_8: CategoryItem[] = [
+  { section: "FINANCE", displayName: "금융" },
+  { section: "STOCK", displayName: "증권" },
+  { section: "GLOBAL", displayName: "글로벌 경제" },
+  { section: "INDUSTRY", displayName: "산업/재계" },
+  { section: "PROPERTY", displayName: "부동산" },
+  { section: "VENTURE", displayName: "중기/벤처" },
+  { section: "ECONOMY", displayName: "경제 일반" },
+  { section: "LIFE", displayName: "생활경제" },
+];
+
+export const MOCK_PROFILE: MyProfile = {
+  nickname: "민성",
+  currentLv: 1,
+  nextLv: 2,
+  percentLv: 50,
+  categories: ["FINANCE", "STOCK", "GLOBAL"],
+};
+
+export const MOCK_TAKEN_NICKNAMES = new Set(["고민성", "민성", "admin"]);

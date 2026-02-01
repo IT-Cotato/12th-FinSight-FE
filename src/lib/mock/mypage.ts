@@ -78,3 +78,8 @@ export const MOCK_HAS_RECORD: MyPageViewData = {
   },
   hasAnyRecord: true,
 };
+
+export const MOCK_AUTH = {
+  email: "jeongbam@example.com",
+  currentPassword: "abc12345",
+};

@@ -72,11 +72,11 @@ export default function MyPagePage() {
         data={data}
         onGoStudy={() => router.push("/study")}
         onEditProfile={() => {
-          // 프로필 수정 페이지 라우트로 교체 예정
-          router.push("/mypage/edit");
+          // 프로필 수정 페이지로 이동
+          router.push("/mypage/profile");
         }}
         onChangePassword={() => {
-          // 비밀번호 변경 페이지 라우트로 교체 예정
+          // 비밀번호 변경 페이지로 이동
           router.push("/mypage/password");
         }}
         onLogoutConfirm={async () => {

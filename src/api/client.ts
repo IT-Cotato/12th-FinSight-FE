@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://13.62.157.0:8080/api',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://finsight-deploy.duckdns.org/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

@@ -151,7 +151,7 @@ const handleSignup = async () => {
     return `${m}:${s < 10 ? `0${s}` : s}`;
   };
 
-  //---------------- 수정: API 연동 -------------------
+  //---------------- API 연동 -------------------
   
   /** 1. 인증번호 전송 API 호출 */
 const handleSendVerificationCode = async () => {
@@ -963,7 +963,7 @@ const handleVerifyCode = async () => {
       }
       buttonDisabled={
         step === 1 ? (!name || !isNicknameChecked) :
-        step === 2 ? (isCodeSent ? verificationCode.length == 6 : !isValidEmail(email)) :  // 인증번호 4자리 입력 시 활성화
+        step === 2 ? (isCodeSent ? verificationCode.length < 4 : !isValidEmail(email)) :  // 인증번호 4자리 입력 시 활성화
         step === 3 ? (
           showPasswordConfirm 
             ? !passwordsMatch 

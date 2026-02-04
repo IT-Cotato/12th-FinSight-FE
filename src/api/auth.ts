@@ -40,7 +40,7 @@ export const sendPasswordResetCode = async (
 ): Promise<SendPasswordResetCodeResponse> => {
   try {
     const response = await apiClient.post<SendPasswordResetCodeResponse>(
-      '/auth/password/send-code',  // 비밀번호 찾기 전용 경로
+      'api/v1/auth/password/send-code',  // 비밀번호 찾기 전용 경로
       data
     );
     return response.data;
@@ -52,7 +52,7 @@ export const sendPasswordResetCode = async (
   }
 };
 
-// 기존: 인증번호 확인
+// 인증번호 확인
 export const verifyCode = async (
   data: VerifyCodeRequest
 ): Promise<VerifyCodeResponse> => {

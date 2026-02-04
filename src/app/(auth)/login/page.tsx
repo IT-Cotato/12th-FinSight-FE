@@ -4,6 +4,8 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthContainer from '../AuthContainer';
+import { login } from '@/api/auth'; // auth.ts의 login 함수 import
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,46 +31,25 @@ export default function LoginPage() {
     return emailRegex.test(email);
   };
 
-  // 로그인 처리
+  // 수정: 로그인 처리 - auth.ts의 login 함수 사용
   const handleLogin = async () => {
     setLoading(true);
     setError('');
 
     try {
-      /* [실제 API 연동 시 주석 해제]
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+      // 수정: auth.ts의 login 함수 호출
+      await login({ email, password });
+      
+      // 수정: 로그인 성공 시 홈으로 이동 (토큰 저장은 auth.ts에서 처리됨)
+      router.push('/home');
 
-      if (!response.ok) {
-        const data = await response.json();
-        if (response.status === 401) {
-          setError('이메일 또는 비밀번호가 일치하지 않습니다.');
-          setLoading(false);
-          return;
-        }
-        throw new Error('로그인 실패');
-      }
-
-      const data = await response.json();
-      // 토큰 저장 등 처리
-      */
-
-      // Mock 테스트
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // 테스트용: 특정 이메일/비밀번호로 로그인 성공
-      if (email === 'test@test.com' && password === 'test12345') {
-        alert('로그인 성공!');
-        router.push('/home');
+    } catch (err: any) {
+      // 수정: 에러 처리
+      if (err.message?.includes('로그인')) {
+        setError('이메일 또는 비밀번호가 일치하지 않습니다.');
       } else {
-        setError('존재하지 않는 회원정보입니다.');
+        setError('로그인 중 오류가 발생했습니다.');
       }
-
-    } catch (err) {
-      setError('로그인 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
@@ -121,7 +102,7 @@ export default function LoginPage() {
             비밀번호
         </label>
         <input
-            type={showPassword ? "text" : "password"}  // 수정: 동적으로 type 변경
+            type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => {
             setPassword(e.target.value);

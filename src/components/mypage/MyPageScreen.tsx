@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import type { MyPageViewData } from "@/types/mypage";
+import { useEffect, useMemo, useState } from "react";
+import { getWeeklyReport } from "@/lib/api/mypage";
+import type { MyPageViewData, WeeklyReport } from "@/types/mypage";
 import ProfileHeader from "./ProfileHeader";
 import LevelProgress from "./LevelProgress";
 import StatTripletCard from "./StatTripletCard";
@@ -18,6 +19,8 @@ type Props = {
   onWithdrawConfirm: () => Promise<void>;
 };
 
+const MAX_WEEKS_AGO = 7;
+
 export default function MyPageScreen({
   data,
   onGoStudy,
@@ -30,6 +33,44 @@ export default function MyPageScreen({
 
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
+
+  const [weeksAgo, setWeeksAgo] = useState(0);
+  const [report, setReport] = useState<WeeklyReport | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+
+    (async () => {
+      try {
+        const data = await getWeeklyReport(weeksAgo);
+        if (!alive) return;
+        setReport(data);
+      } catch (e) {
+        console.error(e);
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [weeksAgo]);
+
+  // 전 주
+  const canGoPrev = report
+    ? report.weeksAgo < MAX_WEEKS_AGO
+    : data.report.weeksAgo < MAX_WEEKS_AGO;
+  // 다음 주
+  const canGoNext = weeksAgo > 0;
+
+  const handlePrev = () => {
+    if (!canGoPrev) return;
+    setWeeksAgo((v) => Math.min(MAX_WEEKS_AGO, v + 1));
+  };
+
+  const handleNext = () => {
+    if (!canGoNext) return;
+    setWeeksAgo((v) => Math.max(0, v - 1));
+  };
 
   const safePercent = useMemo(
     () => Math.max(0, Math.min(100, data.profile.percentLv)),
@@ -57,12 +98,12 @@ export default function MyPageScreen({
       />
 
       <WeeklyReportCard
-        report={data.report}
+        report={report ?? data.report}
         hasAnyRecord={data.hasAnyRecord}
-        canPrevWeek={data.report.weeksAgo < 52}
-        canNextWeek={data.report.weeksAgo > 0}
-        onPrevWeek={() => {}}
-        onNextWeek={() => {}}
+        canPrev={canGoPrev}
+        canNext={canGoNext}
+        onPrev={handlePrev}
+        onNext={handleNext}
         onGoStudy={onGoStudy}
       />
 

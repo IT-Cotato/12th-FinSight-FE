@@ -9,11 +9,11 @@ type Props = {
   hasAnyRecord: boolean;
 
   // 주차별 이동 가능 여부
-  canPrevWeek: boolean;
-  canNextWeek: boolean;
+  canPrev: boolean;
+  canNext: boolean;
 
-  onPrevWeek: () => void;
-  onNextWeek: () => void;
+  onPrev: () => void;
+  onNext: () => void;
   onGoStudy: () => void;
 };
 
@@ -54,10 +54,10 @@ function getWeekTitle(weekStart?: string) {
 export default function WeeklyReportCard({
   report,
   hasAnyRecord,
-  canPrevWeek,
-  canNextWeek,
-  onPrevWeek,
-  onNextWeek,
+  canPrev,
+  canNext,
+  onPrev,
+  onNext,
   onGoStudy,
 }: Props) {
   const title = getWeekTitle(report.weekStart);
@@ -73,14 +73,14 @@ export default function WeeklyReportCard({
           {/* 이전 주 */}
           <button
             type="button"
-            onClick={canPrevWeek ? onPrevWeek : undefined}
-            disabled={!canPrevWeek}
+            onClick={canPrev ? onPrev : undefined}
+            disabled={!canPrev}
             className="p-2 disabled:cursor-not-allowed"
             aria-label="이전 주"
           >
             <Image
               src={
-                canPrevWeek
+                canPrev
                   ? "/mypage/icon-back.svg"
                   : "/mypage/icon-back-disabled.svg"
               }
@@ -96,14 +96,14 @@ export default function WeeklyReportCard({
           {/* 다음 주 */}
           <button
             type="button"
-            onClick={canNextWeek ? onNextWeek : undefined}
-            disabled={!canNextWeek}
+            onClick={canNext ? onNext : undefined}
+            disabled={!canNext}
             className="p-2 disabled:cursor-not-allowed"
             aria-label="다음 주"
           >
             <Image
               src={
-                canNextWeek
+                canNext
                   ? "/mypage/icon-next.svg"
                   : "/mypage/icon-next-disabled.svg"
               }

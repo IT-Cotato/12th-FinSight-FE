@@ -13,6 +13,16 @@ type Props = {
 
 type CheckState = "idle" | "checking" | "available" | "taken";
 
+function getErrorStatus(err: unknown): number | undefined {
+  if (!err || typeof err !== "object") return undefined;
+  const anyErr = err as any;
+  if (typeof anyErr.status === "number") return anyErr.status;
+  if (typeof anyErr.response?.status === "number")
+    return anyErr.response.status;
+  if (typeof anyErr.cause?.status === "number") return anyErr.cause.status;
+  return undefined;
+}
+
 export default function NicknameField({
   initialNickname,
   nickname,
@@ -47,7 +57,16 @@ export default function NicknameField({
 
       setState("available");
       onCheckedChange(true);
-    } catch {
+    } catch (e) {
+      const status = getErrorStatus(e);
+
+      // 서버가 중복을 409로 주는 케이스를 정상 처리
+      if (status === 409 || status === 400) {
+        setState("taken");
+        onCheckedChange(false);
+        return;
+      }
+
       // fallback 시 mock
       const isTaken = MOCK_TAKEN_NICKNAMES.has(value);
 

@@ -68,7 +68,7 @@ export default function LoginPage() {
     >
       {/* 이메일 */}
       <div className="mb-6">
-        <label className="block text-[var(--color-bg-10)] font-pretendard text-[18px] leading-[130%] tracking-[-0.18px]">
+        <label className="block text-[var(--color-bg-10)] font-pretendard text-[18px] leading-[130%] tracking-[-0.18px] mb-3">
           이메일
         </label>
         <input

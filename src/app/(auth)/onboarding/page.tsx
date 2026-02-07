@@ -1,17 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import WelcomeLayout from '@/components/onboarding/WelcomeLayout';
 import InterestSelection from '@/components/onboarding/InterestSelection';
 import { INTERESTS } from '@/constants/onboarding';
+/* 추가: Zustand 스토어 임포트 */
+import { useOnboardingStore } from '@/store/onboardingStore';
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [step, setStep] = useState(1);
-  const [showText, setShowText] = useState(false);
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
 
+  /* 추가: Zustand 스토어에서 상태와 액션 가져오기 */
+  const { 
+    step, 
+    showText, 
+    selectedInterests, 
+    setStep, 
+    setShowText, 
+    toggleInterest 
+  } = useOnboardingStore();
+
+  /* 변경: selectedInterests가 스토어 값이므로 그대로 사용 */
   const isButtonEnabled = selectedInterests.length >= 3;
 
   // showText는 useEffect에서만 관리
@@ -24,7 +34,7 @@ export default function OnboardingPage() {
     } else if (step === 2) {
       setShowText(true);
     }
-  }, [step]);
+  }, [step, setShowText]); // setShowText 의존성 추가
 
   // handleNext는 페이지 이동만 담당
   const handleNext = () => {
@@ -37,13 +47,7 @@ export default function OnboardingPage() {
     }
   };
 
-  const toggleInterest = (id: string) => {
-    setSelectedInterests(prev =>
-      prev.includes(id)
-        ? prev.filter(item => item !== id)
-        : [...prev, id]
-    );
-  };
+  /* 삭제: 내부 toggleInterest 함수 삭제 (스토어의 액션으로 대체됨) */
 
   return (
     <div 

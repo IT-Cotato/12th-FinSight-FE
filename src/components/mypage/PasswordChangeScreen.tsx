@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import PageHeader from "./PageHeader";
 import PasswordInput from "./PasswordInput";
-import { resetPassword } from "@/lib/api/auth";
+import { changeMyPassword } from "@/lib/api/mypage";
 import { MOCK_AUTH } from "@/lib/mock/mypage";
 
 // 영문, 숫자 조합 6~18자리
@@ -12,6 +12,19 @@ const PW_REGEX = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,18}$/;
 type Props = {
   email?: string;
 };
+
+function getErrorStatus(err: unknown): number | undefined {
+  if (!err || typeof err !== "object") return undefined;
+  if ("status" in err && typeof (err as any).status === "number")
+    return (err as any).status;
+  return undefined;
+}
+
+function getErrorMessage(err: unknown): string | undefined {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return undefined;
+}
 
 export default function PasswordChangeScreen({ email }: Props) {
   const [currentPw, setCurrentPw] = useState("");
@@ -24,7 +37,7 @@ export default function PasswordChangeScreen({ email }: Props) {
   // 현재 비번 일치/불일치 판단
   const currentMatch = useMemo(() => {
     if (!currentPw) return null;
-    return currentPw === MOCK_AUTH.currentPassword; // mock only
+    return null;
   }, [currentPw]);
 
   const newPwValid = useMemo(() => {
@@ -57,13 +70,21 @@ export default function PasswordChangeScreen({ email }: Props) {
     setSubmitError(null);
 
     try {
-      await resetPassword({ email: resolvedEmail, newPassword: newPw });
+      await changeMyPassword({
+        currentPassword: currentPw.trim(),
+        newPassword: newPw.trim(),
+      });
       alert("비밀번호가 변경되었습니다.");
     } catch (e) {
-      if (String(e).includes("mock")) {
-        alert("비밀번호가 변경되었습니다. (mock)");
-      } else {
+      const status = getErrorStatus(e);
+      const message = getErrorMessage(e);
+
+      if (status === 400) {
         setSubmitError("비밀번호가 일치하지 않습니다.");
+      } else {
+        setSubmitError(
+          message ?? "비밀번호 변경에 실패했어요. 잠시 후 다시 시도해주세요.",
+        );
       }
     } finally {
       setSubmitting(false);
@@ -80,19 +101,16 @@ export default function PasswordChangeScreen({ email }: Props) {
           <PasswordInput
             placeholder="비밀번호 입력"
             value={currentPw}
-            onChange={setCurrentPw}
+            onChange={(v) => {
+              setCurrentPw(v);
+              if (submitError) setSubmitError(null);
+            }}
           />
         </div>
 
-        <p className="mt-1 text-b2 text-primary-30">
-          {submitError
-            ? submitError
-            : currentMatch === null
-              ? ""
-              : currentMatch
-                ? "비밀번호가 일치합니다."
-                : "비밀번호가 일치하지 않습니다."}
-        </p>
+        {submitError ? (
+          <p className="mt-1 text-b2 text-primary-30">{submitError}</p>
+        ) : null}
       </section>
 
       <section className="mt-6">

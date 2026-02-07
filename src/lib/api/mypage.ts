@@ -63,6 +63,21 @@ export async function getWeeklyReport(weeksAgo: number) {
   return res.data;
 }
 
+export async function changeMyPassword(input: {
+  currentPassword: string;
+  newPassword: string;
+}) {
+  const token = getClientToken();
+
+  await apiFetch<ApiEnvelope<{}>>("/api/mypage/me/change-password", {
+    method: "PUT",
+    token,
+    body: JSON.stringify(input),
+  });
+
+  return true;
+}
+
 export async function logout() {
   const token = getClientToken();
   return apiFetch<ApiEnvelope<Record<string, never>>>("/api/auth/logout", {

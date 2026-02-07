@@ -1,129 +1,95 @@
-import type { QuizQuestion, QuizSubmitResponse } from "@/types/quiz";
+import type { QuizSubmitResponse, QuizView } from "@/types/quiz";
 
-export const MOCK_QUESTIONS: QuizQuestion[] = [
-  {
-    question_id: 1001,
-    question_text:
-      "기사에서 일부 경제학자가 비트코인 보유자에게 한 조언에 가장 가까운 것은 무엇인가요?",
-    choices: [
-      {
-        choice_id: 4001,
-        choice_text: "비트코인보다 수익률이 항상 낮기 때문에",
-      },
-      {
-        choice_id: 4002,
-        choice_text:
-          "최근 사상 최고가를 기록하며 헤지 자산 역할을 다시 부각했기 때문에",
-      },
-      {
-        choice_id: 4003,
-        choice_text: "법정화폐를 대체할 새로운 결제 수단이므로",
-      },
-      {
-        choice_id: 4004,
-        choice_text: "비트코인 기술을 기반으로 만들어졌기 때문에",
-      },
-    ],
-  },
-  {
-    question_id: 1002,
-    question_text: "다음 중 본문 내용과 가장 관련이 깊은 설명은?",
-    choices: [
-      {
-        choice_id: 4101,
-        choice_text: "시장 변동성에 따라 투자 전략을 조정해야 한다",
-      },
-      { choice_id: 4102, choice_text: "단기 시세 예측은 항상 가능하다" },
-      { choice_id: 4103, choice_text: "가격은 오로지 공급만으로 결정된다" },
-      { choice_id: 4104, choice_text: "거시지표는 전혀 영향을 주지 않는다" },
-    ],
-  },
-  {
-    question_id: 1003,
-    question_text:
-      "법정화폐(Fiat Currency)에 대한 설명으로 가장 적절한 것은 무엇인가요?",
-    choices: [
-      {
-        choice_id: 4201,
-        choice_text: "특정 플랫폼에서만 사용되는 가상의 화폐",
-      },
-      {
-        choice_id: 4202,
-        choice_text:
-          "국가(정부)의 법률에 의해 강제 통용력이 부여된, 실물 가치와 무관한 화폐",
-      },
-      {
-        choice_id: 4203,
-        choice_text:
-          "컴퓨터 알고리즘에 의해 발행되며 중앙 관리 기관이 없는 디지털 자산",
-      },
-      {
-        choice_id: 4204,
-        choice_text: "금이나 은과 같은 실물 자산으로 교환이 보장되는 화폐",
-      },
-    ],
-  },
-];
-
-export const MOCK_SUBMIT_RESULT: QuizSubmitResponse = {
-  status: "QUIZ_200_4",
-  message: "퀴즈 제출 및 채점 완료",
-  data: {
-    score: 40,
-    correct_count: 2,
-    total_count: 3,
-    level_info: {
-      current_lv: 3,
-      next_lv: 4,
-      current_exp: 380,
-      total_exp: 420,
+export const QUIZ_VIEW_MOCK: QuizView = {
+  naverArticleId: 247,
+  quizType: "CONTENT",
+  questions: [
+    {
+      questionIndex: 0,
+      question: "한국의 고령화 속도는 어떤 수준인가요?",
+      options: [
+        "세계 최고 수준이다.",
+        "상대적으로 낮은 편이다.",
+        "중간 정도이다.",
+        "아주 느린 편이다.",
+      ],
+      previousCorrect: null,
     },
-    results: [
-      {
-        question_id: 1001,
-        is_correct: "Y",
-        chosen_no: 2,
-        correct_no: 2,
-        explanation:
-          "기사에서 강조한 핵심은 ‘최근 흐름(사상 최고가/헤지 자산 역할)’을 근거로 판단하는 것입니다.",
-      },
-      {
-        question_id: 1002,
-        is_correct: "Y",
-        chosen_no: 1,
-        correct_no: 1,
-        explanation:
-          "본문의 맥락은 ‘변동성에 따라 전략을 조정’하는 쪽에 가깝습니다. 단정적 예측은 위험하다는 흐름이에요.",
-      },
-      {
-        question_id: 1003,
-        is_correct: "N",
-        chosen_no: 4,
-        correct_no: 2,
-        explanation:
-          "법정화폐는 정부의 법률로 강제 통용력이 부여된 화폐를 의미합니다(=법정 지급수단).",
-      },
-    ],
-  },
+    {
+      questionIndex: 1,
+      question: "정부가 추진하는 '제조 AI 전환' 전략의 목적은 무엇인가요?",
+      options: [
+        "제조업의 경쟁력 강화를 위해서다.",
+        "소비자 수요를 줄이기 위해서다.",
+        "수출을 감소시키기 위해서다.",
+        "인구 감소를 해결하기 위해서다.",
+      ],
+      previousCorrect: null,
+    },
+    {
+      questionIndex: 2,
+      question: "한국의 올해 실질 GDP 성장률은 어떻게 예상되나요?",
+      options: [
+        "약 2%로 예상된다.",
+        "약 5%로 예상된다.",
+        "약 3%로 예상된다.",
+        "약 1%로 예상된다.",
+      ],
+      previousCorrect: null,
+    },
+  ],
 };
 
-export const MOCK_CHOICE_EXPLAINS: Record<number, string[]> = {
-  1001: [
-    "선택지 1은 '항상'처럼 단정적인 표현이라 기사 톤과 어긋나요.",
-    "선택지 2는 기사에서 언급된 '헤지 자산 역할 재부각' 흐름과 일치합니다.",
-    "선택지 3은 결제수단 관점이라 기사 핵심 근거와 거리가 있어요.",
-    "선택지 4는 기술 일반론이라 기사 속 조언의 근거가 아닙니다.",
-  ],
-  1002: [
-    "변동성 대응 전략 조정은 본문 흐름과 직접 연결됩니다.",
-    "단기 예측 '항상 가능'은 과도한 확신으로 오답 포인트예요.",
-    "가격 결정 요인을 공급만으로 한정하는 건 편향된 설명입니다.",
-    "거시지표 무관은 기사 맥락과 반대입니다.",
-  ],
-  1003: [
-    "특정 플랫폼 전용은 '가상화폐/토큰'에 가까운 설명입니다.특정 플랫폼 전용은 '가상화폐/토큰'에 가까운 설명입니다.",
-    "정부 법률로 강제 통용력 부여가 '법정화폐' 정의입니다.",
-    "중앙기관 없는 디지털 자산은 보통 '암호자산'에 해당합니다.중앙기관 없는 디지털 자산은 보통 '암호자산'에 해당합니다.중앙기관 없는 디지털 자산은 보통 '암호자산'에 해당합니다.",
-    "실물자산 교환 보장은 '금본위/상품화폐' 쪽 설명입니다.실물자산 교환 보장은 '금본위/상품화폐' 쪽 설명입니다.",
-  ],
+export const QUIZ_SUBMIT_MOCK: QuizSubmitResponse = {
+  status: "OK",
+  data: {
+    correctCount: 2,
+    testScore: 80,
+    totalExp: 120,
+    level: 3,
+    results: [
+      {
+        questionIndex: 0,
+        correct: true,
+        selectedIndex: 0,
+        answerIndex: 0,
+        question: QUIZ_VIEW_MOCK.questions[0].question,
+        options: QUIZ_VIEW_MOCK.questions[0].options,
+        explanations: [
+          "정답 선택지입니다.",
+          "기사의 맥락과 거리가 있어요.",
+          "기사 근거가 부족해요.",
+          "기사 흐름과 어긋나요.",
+        ],
+      },
+      {
+        questionIndex: 1,
+        correct: true,
+        selectedIndex: 0,
+        answerIndex: 0,
+        question: QUIZ_VIEW_MOCK.questions[1].question,
+        options: QUIZ_VIEW_MOCK.questions[1].options,
+        explanations: [
+          "정책 목적과 일치합니다.",
+          "정책 방향과 반대예요.",
+          "근거가 부족해요.",
+          "정책 목적이 아닙니다.",
+        ],
+      },
+      {
+        questionIndex: 2,
+        correct: false,
+        selectedIndex: 3,
+        answerIndex: 0,
+        question: QUIZ_VIEW_MOCK.questions[2].question,
+        options: QUIZ_VIEW_MOCK.questions[2].options,
+        explanations: [
+          "기사에서 제시한 수치 흐름과 맞습니다.",
+          "기사 근거와 거리가 있어요.",
+          "가능성이 낮습니다.",
+          "기사의 방향성과 달라요.",
+        ],
+      },
+    ],
+  },
 };

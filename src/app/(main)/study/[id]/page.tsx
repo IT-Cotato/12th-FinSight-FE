@@ -5,6 +5,7 @@ import React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Header } from "@/components/common/Header";
 import { NewCategoryBottomSheet } from "@/components/study/NewCategoryBottomSheet";
+import { TermDescriptionCard } from "@/components/study/TermDescriptionCard";
 import { getNewsDetail, type NewsDetail, type CoreTerm } from "@/lib/api/news";
 
 type Category = {
@@ -86,50 +87,50 @@ export default function NewsDetailPage() {
 
   // 핵심 단어를 하이라이트하는 함수 (각 단어는 첫 번째 매칭만 하이라이트)
   const highlightCoreTerms = (text: string): React.ReactNode[] => {
+    // 핵심 단어가 없거나 텍스트가 없으면 텍스트 그대로 반환
     if (!news?.coreTerms || news.coreTerms.length === 0 || !text) {
       return [text];
     }
 
-    const parts: React.ReactNode[] = [];
-    let lastIndex = 0;
-    const usedTerms = new Set<string>(); // 이미 하이라이트된 단어 추적
-
     // 각 coreTerm별로 첫 번째 매칭만 찾기
-    const termMatches: Array<{ term: string; start: number; end: number; coreTerm: CoreTerm }> = [];
-    
+    const matches: Array<{ start: number; end: number; coreTerm: CoreTerm; term: string }> = [];
+    const usedTerms = new Set<string>();
+
     news.coreTerms.forEach((coreTerm) => {
       const term = coreTerm.term;
+      if (usedTerms.has(term.toLowerCase())) return; // 이미 하이라이트된 단어는 스킵
+
       const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const regex = new RegExp(escapedTerm, "gi");
       const match = regex.exec(text);
-      
-      if (match && !usedTerms.has(term.toLowerCase())) {
-        const start = match.index;
-        const end = start + match[0].length;
-        termMatches.push({ term: match[0], start, end, coreTerm });
+
+      if (match) {
+        matches.push({
+          start: match.index,
+          end: match.index + match[0].length,
+          coreTerm,
+          term: match[0],
+        });
         usedTerms.add(term.toLowerCase());
       }
     });
 
-    // 인덱스 순서대로 정렬
-    termMatches.sort((a, b) => a.start - b.start);
-
-    // 겹치는 부분 처리 (긴 단어 우선)
-    const processedMatches: Array<{ term: string; start: number; end: number; coreTerm: CoreTerm }> = [];
-    termMatches.forEach((match) => {
-      const overlaps = processedMatches.some(
-        (pm) => !(match.end <= pm.start || match.start >= pm.end)
-      );
-      if (!overlaps) {
-        processedMatches.push(match);
-      }
-    });
-
-    // 다시 정렬
-    processedMatches.sort((a, b) => a.start - b.start);
+    // 겹치는 부분 제거 (긴 단어 우선) 후 인덱스 순서대로 정렬
+    const sortedMatches = matches
+      .sort((a, b) => b.end - b.start - (a.end - a.start)) // 긴 단어 우선
+      .filter((match, index, arr) => {
+        // 겹치지 않는 것만 선택
+        return !arr.slice(0, index).some(
+          (m) => !(match.end <= m.start || match.start >= m.end)
+        );
+      })
+      .sort((a, b) => a.start - b.start); // 인덱스 순서대로 정렬
 
     // 텍스트를 하이라이트된 부분과 일반 부분으로 분리
-    processedMatches.forEach((match) => {
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+
+    sortedMatches.forEach((match) => {
       if (lastIndex < match.start) {
         parts.push(text.substring(lastIndex, match.start));
       }
@@ -140,13 +141,11 @@ export default function NewsDetailPage() {
             e.stopPropagation();
             setSelectedTerm(match.coreTerm);
           }}
-          style={{
-            color: "#9C95FA",
-            textDecoration: "underline",
-            textDecorationColor: "#9C95FA",
-            cursor: "pointer",
-          }}
-          className="hover:opacity-80 transition-opacity"
+          className="
+          text-primary-30
+          underline
+          decoration-primary-30
+          cursor-pointer"
         >
           {match.term}
         </span>
@@ -412,50 +411,13 @@ export default function NewsDetailPage() {
       />
 
       {/* 단어 설명 카드 */}
-      {selectedTerm && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-          onClick={() => setSelectedTerm(null)}
-        >
-          <div
-            className="relative w-full max-w-[360px] mx-4 px-6 py-6 rounded-[16px] bg-bg-100 border border-bg-80 shadow-lg"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* 닫기 버튼 */}
-            <button
-              onClick={() => setSelectedTerm(null)}
-              className="absolute top-4 right-4 flex items-center justify-center w-6 h-6"
-              aria-label="닫기"
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="text-gray-40"
-              >
-                <path
-                  d="M5 5L15 15M15 5L5 15"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-
-            {/* 단어 제목 */}
-            <h3 className="text-h3 text-gray-10 mb-2 pr-8">{selectedTerm.term}</h3>
-
-            {/* 단어 설명 */}
-            {selectedTerm.description && (
-              <p className="text-b2 text-gray-20 leading-relaxed">
-                {selectedTerm.description}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
+      <TermDescriptionCard
+        term={selectedTerm}
+        onClose={() => setSelectedTerm(null)}
+        categories={ARCHIVE_CATEGORIES}
+        onSelectCategory={handleSelectCategory}
+        onAddNewCategory={handleAddNewCategory}
+      />
     </div>
   );
 }

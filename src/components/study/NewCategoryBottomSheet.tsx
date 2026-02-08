@@ -132,7 +132,7 @@ function CategorySelectList({
           <svg
             width="14"
             height="19"
-            viewBox="0 0 14 19" 
+            viewBox="0 0 14 19"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
             className="text-bg-20"
@@ -165,7 +165,7 @@ function CategorySelectList({
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
                   className="text-bg-20"
-                > 
+                >
                   <path
                     d="M13 16.5V2C13 1.44772 12.5523 1 12 1H2C1.44772 1 1 1.44772 1 2V16.5C1 17.4027 2.10158 17.8433 2.72414 17.1897L6.27586 13.4603C6.66995 13.0466 7.33005 13.0466 7.72414 13.4603L11.2759 17.1897C11.8984 17.8433 13 17.4027 13 16.5Z"
                     stroke="currentColor"

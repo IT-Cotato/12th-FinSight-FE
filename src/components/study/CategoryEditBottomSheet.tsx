@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Sheet,
   SheetContent,
@@ -32,6 +32,7 @@ export function CategoryEditBottomSheet({
   const [isDragging, setIsDragging] = useState<number | null>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // categories가 변경되면 editedCategories 업데이트
   useEffect(() => {
@@ -63,54 +64,69 @@ export function CategoryEditBottomSheet({
     setIsDragging(index);
   };
 
-  // 터치 이동 (모바일)
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (draggedIndex === null) return;
-    e.preventDefault();
+  // 터치 이동 (모바일) - passive 이벤트 리스너로 직접 등록
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-    const touch = e.touches[0];
-    const currentY = touch.clientY;
+    const handleTouchMove = (e: TouchEvent) => {
+      if (draggedIndex === null) return;
+      e.preventDefault();
 
-    // 모든 아이템 요소 가져오기
-    const allItems = document.querySelectorAll('[data-category-item]');
-    let targetIndex = draggedIndex;
+      const touch = e.touches[0];
+      const currentY = touch.clientY;
 
-    // 터치 위치에 해당하는 아이템 찾기
-    for (let idx = 0; idx < allItems.length; idx++) {
-      if (idx === draggedIndex) continue;
-      
-      const rect = allItems[idx].getBoundingClientRect();
-      
-      // 터치 위치가 이 아이템 영역 안에 있는지 확인
-      if (currentY >= rect.top && currentY <= rect.bottom) {
-        const itemCenterY = rect.top + rect.height / 2;
-        // 아이템의 위쪽 절반이면 그 위에, 아래쪽 절반이면 그 아래에 배치
-        targetIndex = currentY < itemCenterY ? idx : idx + 1;
-        break;
+      // 모든 아이템 요소 가져오기
+      const allItems = container.querySelectorAll('[data-category-item]');
+      let targetIndex = draggedIndex;
+
+      // 터치 위치에 해당하는 아이템 찾기
+      for (let idx = 0; idx < allItems.length; idx++) {
+        if (idx === draggedIndex) continue;
+        
+        const rect = allItems[idx].getBoundingClientRect();
+        
+        // 터치 위치가 이 아이템 영역 안에 있는지 확인
+        if (currentY >= rect.top && currentY <= rect.bottom) {
+          const itemCenterY = rect.top + rect.height / 2;
+          // 아이템의 위쪽 절반이면 그 위에, 아래쪽 절반이면 그 아래에 배치
+          targetIndex = currentY < itemCenterY ? idx : idx + 1;
+          break;
+        }
       }
-    }
 
-    // 배열 범위 체크
-    if (targetIndex < 0) targetIndex = 0;
-    if (targetIndex > editedCategories.length - 1) targetIndex = editedCategories.length - 1;
+      // 배열 범위 체크
+      if (targetIndex < 0) targetIndex = 0;
+      if (targetIndex > editedCategories.length - 1) targetIndex = editedCategories.length - 1;
 
-    // 위치가 변경되었으면 배열 재정렬
-    if (targetIndex !== draggedIndex) {
-      const newCategories = [...editedCategories];
-      const draggedItem = newCategories[draggedIndex];
-      newCategories.splice(draggedIndex, 1);
-      newCategories.splice(targetIndex, 0, draggedItem);
-      setEditedCategories(newCategories);
-      setDraggedIndex(targetIndex);
-    }
-  };
+      // 위치가 변경되었으면 배열 재정렬
+      if (targetIndex !== draggedIndex) {
+        setEditedCategories((prev) => {
+          const newCategories = [...prev];
+          const draggedItem = newCategories[draggedIndex];
+          newCategories.splice(draggedIndex, 1);
+          newCategories.splice(targetIndex, 0, draggedItem);
+          return newCategories;
+        });
+        setDraggedIndex(targetIndex);
+      }
+    };
 
-  // 터치 종료 (모바일)
-  const handleTouchEnd = () => {
-    setTouchStartY(null);
-    setDraggedIndex(null);
-    setIsDragging(null);
-  };
+    const handleTouchEnd = () => {
+      setTouchStartY(null);
+      setDraggedIndex(null);
+      setIsDragging(null);
+    };
+
+    // passive: false로 이벤트 리스너 등록
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [draggedIndex, editedCategories.length]);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -148,14 +164,12 @@ export function CategoryEditBottomSheet({
           </div>
 
             {/* 카테고리 목록 */}
-            <div className="flex flex-col">
+            <div ref={containerRef} className="flex flex-col">
                 {editedCategories.map((category, index) => (
                   <div
                     key={category.category_id}
                     data-category-item
                     onTouchStart={(e) => handleTouchStart(e, index)}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={handleTouchEnd}
                     className={`flex items-center justify-between px-5 py-[14px] select-none ${
                       isDragging === index ? "opacity-50" : ""
                     }`}

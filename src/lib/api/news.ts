@@ -1,6 +1,40 @@
 // 뉴스 API 관련 함수들
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || null;
+
+/**
+ * 액세스 토큰을 가져옵니다.
+ * TODO: 로그인 기능 완성 후 실제 토큰 관리 로직으로 교체 필요
+ */
+function getAccessToken(): string | null {
+  // 환경변수에서 토큰 가져오기 (개발용)
+  if (typeof window !== "undefined") {
+    // 클라이언트 사이드: localStorage나 다른 저장소에서 가져올 수 있음
+    // 일단 환경변수나 상수로 관리
+    return (
+      process.env.NEXT_PUBLIC_ACCESS_TOKEN ||
+      // TODO: 임시 토큰 - 로그인 기능 완성 후 제거 필요
+      null
+    );
+  }
+  return process.env.ACCESS_TOKEN || null;
+}
+
+/**
+ * API 요청을 위한 공통 헤더를 생성합니다.
+ */
+function getAuthHeaders(): HeadersInit {
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+
+  const token = getAccessToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  return headers;
+}
 
 export type NewsCategory =
   | "ALL"
@@ -18,6 +52,7 @@ export type NewsSort = "LATEST" | "POPULARITY";
 export type CoreTerm = {
   termId: number;
   term: string;
+  description?: string;
 };
 
 export type NewsItem = {
@@ -30,7 +65,7 @@ export type NewsItem = {
 
 export type NewsListResponse = {
   status: string;
-  message: string;
+  message?: string;
   data: {
     category: string;
     sort: string;
@@ -94,11 +129,9 @@ export async function getNewsList(params: NewsListParams = {}): Promise<NewsList
     queryParams.append("cursor", cursor);
   }
 
-  const response = await fetch(`${API_BASE_URL}/news?${queryParams.toString()}`, {
+  const response = await fetch(`${API_BASE_URL}/api/news?${queryParams.toString()}`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -114,11 +147,9 @@ export async function getNewsList(params: NewsListParams = {}): Promise<NewsList
  * @returns 뉴스 상세 정보 응답
  */
 export async function getNewsDetail(newsId: string): Promise<NewsDetailResponse> {
-  const response = await fetch(`${API_BASE_URL}/news/${newsId}`, {
+  const response = await fetch(`${API_BASE_URL}/api/news/${newsId}`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {

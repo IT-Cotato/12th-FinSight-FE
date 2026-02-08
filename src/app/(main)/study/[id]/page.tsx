@@ -1,33 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Header } from "@/components/common/Header";
 import { NewCategoryBottomSheet } from "@/components/study/NewCategoryBottomSheet";
-import { getNewsDetail, type NewsDetail } from "@/lib/api/news";
-
-// Mock 데이터
-const MOCK_NEWS_DETAIL: NewsDetail = {
-  newsId: 12345,
-  category: "FINANCE",
-  title: '"비트코인, 지금이 마지막 탈출 기회일 수도"...섬뜩한 \'폭락\' 전망 나온 이유는',
-  publishedAt: "2026.01.01. 오후 4:51",
-  thumbnailUrl: "/study/thumbnail.png",
-  url: "https://www.example.com/news/12345",
-  isSaved: false,
-  coreTerms: [
-    { termId: 9001, term: "경제" },
-    { termId: 9002, term: "핵심용어1" },
-    { termId: 9003, term: "핵심용어2" },
-  ],
-  summary3Lines: "비트코인 가격이 9만 달러를 넘지 못하고 8만 달러 후반에서 횡보하고 있습니다.\n비트코인 회의론자는 금은 같은 실물자산이 더 나은 헤지 수단이라고 주장합니다.\n반면 일부 분석가는 과거 연말 조정 이후 반등 패턴과 거시환경을 근거로 연초 반등 가능성을 제기하고 있습니다.",
-  summaryFull: "최근 비트코인 가격은 9만 달러를 돌파하지 못한 채 8만 달러 후반에서 뚜렷한 방향 없이 움직이고 있습니다.\n이 과정에서 대표적인 비트코인 회의론자인 일부 경제학자는 \"지금이 마지막 탈출 기회\"라며 보유 자산을 정리하라고 경고했습니다.\n그는 시장이 인플레이션과 경제 불안정에 대응하는 진정한 헤지 수단으로 금과 같은 귀금속을 다시 평가하고 있으며, 비트코인이 그 역할을 제대로 수행하지 못했다고 지적합니다. (중략)\n반면 다른 분석가들은 과거 연말에 조정을 겪은 뒤 연초에 반등한 사례와, 정부 부채·재정 적자 확대 같은 거시경제 요인을 근거로 비트코인이 다시 상승 흐름을 탈 가능성도 있다고 봅니다. (중략)",
-  insight: "같은 비트코인 가격을 두고도 \"마지막 탈출 기회\"와 \"연초 반등 가능성\"이라는 정반대 해석이 동시에 나오는 이유는, 사람들이 보는 시간 축과 자산의 성격(헤지 vs 위험자산)에 대한 관점이 다르기 때문입니다.",
-  highlights: [
-    { termId: 9001, term: "헤지", startIndex: 120, endIndex: 122 },
-    { termId: 9002, term: "변동성", startIndex: 210, endIndex: 213 },
-  ],
-};
+import { getNewsDetail, type NewsDetail, type CoreTerm } from "@/lib/api/news";
 
 type Category = {
   category_id: number;
@@ -44,11 +22,14 @@ export default function NewsDetailPage() {
   const router = useRouter();
   const newsId = params.id as string;
 
-  const [news, setNews] = useState<NewsDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isSaveBottomSheetOpen, setIsSaveBottomSheetOpen] = useState(false);
+  const [news, setNews] = useState<NewsDetail | null>(null); // API로 받아온 뉴스 상세 데이터
+  const [loading, setLoading] = useState(true); // API 호출 중 로딩 상태
+  const [error, setError] = useState<string | null>(null); // API 호출 중 에러 상태
+  const [isSaveBottomSheetOpen, setIsSaveBottomSheetOpen] = useState(false); // 보관함 저장 바텀시트 열림 상태
+  const [isSaved, setIsSaved] = useState(false); // 북마크 상태 별도 관리
+  const [selectedTerm, setSelectedTerm] = useState<CoreTerm | null>(null); // 선택된 단어 설명 표시용
 
+  // API로 뉴스 상세 데이터 조회
   useEffect(() => {
     async function fetchNews() {
       try {
@@ -56,24 +37,24 @@ export default function NewsDetailPage() {
         const data = await getNewsDetail(newsId);
         setNews(data.data);
       } catch (err) {
-        // API 실패 시 mock 데이터 사용
-        console.warn("API 호출 실패, mock 데이터 사용:", err);
-        setNews(MOCK_NEWS_DETAIL);
+        console.warn("API 호출 실패: ", err);
         setError(null);
       } finally {
         setLoading(false);
       }
     }
-
+    // newsId가 있을 때만 API 호출
     if (newsId) {
       fetchNews();
     }
   }, [newsId]);
 
+  // 뒤로가기 버튼 클릭 시 이전 페이지로 이동
   const handleBack = () => {
     router.back();
   };
 
+  // 북마크 버튼 클릭 시 보관함 저장 바텀시트 열기
   const handleBookmark = () => {
     setIsSaveBottomSheetOpen(true);
   };
@@ -81,10 +62,9 @@ export default function NewsDetailPage() {
   const handleSelectCategory = (categoryId: number | null) => {
     // TODO: 선택한 카테고리에 저장하는 API 호출
     console.log("카테고리 선택:", categoryId);
-    // 저장 후 북마크 상태 업데이트
-    if (news) {
-      setNews({ ...news, isSaved: true });
-    }
+    // 저장 후 북마크 상태 업데이트 및 바텀시트 닫기
+    setIsSaved(true);
+    setIsSaveBottomSheetOpen(false);
   };
 
   const handleAddNewCategory = () => {
@@ -94,8 +74,8 @@ export default function NewsDetailPage() {
   };
 
   const handleViewOriginal = () => {
-    if (news?.url) {
-      window.open(news.url, "_blank");
+    if (news?.originalUrl) {
+      window.open(news.originalUrl, "_blank");
     }
   };
 
@@ -104,9 +84,90 @@ export default function NewsDetailPage() {
     console.log("문제 풀러가기");
   };
 
-  // summary3Lines를 줄바꿈으로 분리
+  // 핵심 단어를 하이라이트하는 함수 (각 단어는 첫 번째 매칭만 하이라이트)
+  const highlightCoreTerms = (text: string): React.ReactNode[] => {
+    if (!news?.coreTerms || news.coreTerms.length === 0 || !text) {
+      return [text];
+    }
+
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    const usedTerms = new Set<string>(); // 이미 하이라이트된 단어 추적
+
+    // 각 coreTerm별로 첫 번째 매칭만 찾기
+    const termMatches: Array<{ term: string; start: number; end: number; coreTerm: CoreTerm }> = [];
+    
+    news.coreTerms.forEach((coreTerm) => {
+      const term = coreTerm.term;
+      const escapedTerm = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(escapedTerm, "gi");
+      const match = regex.exec(text);
+      
+      if (match && !usedTerms.has(term.toLowerCase())) {
+        const start = match.index;
+        const end = start + match[0].length;
+        termMatches.push({ term: match[0], start, end, coreTerm });
+        usedTerms.add(term.toLowerCase());
+      }
+    });
+
+    // 인덱스 순서대로 정렬
+    termMatches.sort((a, b) => a.start - b.start);
+
+    // 겹치는 부분 처리 (긴 단어 우선)
+    const processedMatches: Array<{ term: string; start: number; end: number; coreTerm: CoreTerm }> = [];
+    termMatches.forEach((match) => {
+      const overlaps = processedMatches.some(
+        (pm) => !(match.end <= pm.start || match.start >= pm.end)
+      );
+      if (!overlaps) {
+        processedMatches.push(match);
+      }
+    });
+
+    // 다시 정렬
+    processedMatches.sort((a, b) => a.start - b.start);
+
+    // 텍스트를 하이라이트된 부분과 일반 부분으로 분리
+    processedMatches.forEach((match) => {
+      if (lastIndex < match.start) {
+        parts.push(text.substring(lastIndex, match.start));
+      }
+      parts.push(
+        <span
+          key={`${match.start}-${match.end}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedTerm(match.coreTerm);
+          }}
+          style={{
+            color: "#9C95FA",
+            textDecoration: "underline",
+            textDecorationColor: "#9C95FA",
+            cursor: "pointer",
+          }}
+          className="hover:opacity-80 transition-opacity"
+        >
+          {match.term}
+        </span>
+      );
+      lastIndex = match.end;
+    });
+
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : [text];
+  };
+
+  // summary3Lines를 배열로 변환 (event, reason, impact)
   const summaryLines = news?.summary3Lines
-    ? news.summary3Lines.split("\n").filter((line) => line.trim())
+    ? [
+        news.summary3Lines.event,
+        news.summary3Lines.reason,
+        news.summary3Lines.impact,
+      ].filter((line) => line && line.trim())
     : [];
 
   if (loading) {
@@ -207,7 +268,7 @@ export default function NewsDetailPage() {
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              className={news.isSaved ? "text-primary-30 fill-primary-30" : "text-white"}
+              className={isSaved ? "text-primary-30 fill-primary-30" : "text-white"}
             >
               <path
                 d="M5 5C5 3.89543 5.89543 3 7 3H17C18.1046 3 19 3.89543 19 5V21L12 17L5 21V5Z"
@@ -215,7 +276,7 @@ export default function NewsDetailPage() {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                fill={news.isSaved ? "currentColor" : "none"}
+                fill={isSaved ? "currentColor" : "none"}
               />
             </svg>
           </button>
@@ -241,18 +302,20 @@ export default function NewsDetailPage() {
             {/* 제목과 발행일시 */}
             <div className="flex flex-col items-start gap-[10px] self-stretch">
               <h1 className="text-h2 text-gray-10">{news.title}</h1>
-              <p className="text-b3 text-gray-40">{news.publishedAt}</p>
+              <p className="text-b3 text-gray-40">{news.date}</p>
             </div>
           </div>
 
-          {/* 일러스트 이미지 */}
-          <div className="w-full flex justify-center mt-5 mb-5">
-            <img
-              src="/study/news_img.png"
-              alt={news.title}
-              className="max-w-full h-auto object-contain"
-            />
-          </div>
+          {/* 썸네일 이미지 */}
+          {news.thumbnailUrl && (
+            <div className="w-full flex justify-center mt-5 mb-5">
+              <img
+                src={news.thumbnailUrl}
+                alt={news.title}
+                className="max-w-full h-auto object-contain rounded-lg"
+              />
+            </div>
+          )}
 
           {/* AI 핵심 요약 */}
           {news.summary3Lines && (
@@ -279,16 +342,16 @@ export default function NewsDetailPage() {
           )}
 
           {/* 본문 내용 */}
-          {news.summaryFull && (
+          {news.bodySummary && (
             <div className="flex flex-col items-center justify-center w-full px-5 py-6 mt-[25px] mb-[25px] gap-[10px] rounded-[8px] bg-bg-90">
-              <div className="text-b2 text-gray-20">
-                {news.summaryFull}
+              <div className="text-b2 text-gray-20 whitespace-pre-line">
+                {highlightCoreTerms(news.bodySummary)}
               </div>
             </div>
           )}
 
-          {/* Q 핵심 인사이트 */}
-          {news.insight && (
+          {/* 핵심 인사이트 */}
+          {news.insights && news.insights.length > 0 && (
             <div className="gap-[10px]">
               <div className="inline-flex pt-[1px] justify-center items-center gap-[10px]">
                 <img
@@ -300,9 +363,27 @@ export default function NewsDetailPage() {
                 />
                 <h2 className="text-sh5 text-gray-20">핵심 인사이트</h2>
               </div>
-              <div className="flex flex-col items-start gap-[10px] px-5 py-6 rounded-[8px] bg-bg-90">
-                <p className="text-b2 text-gray-20">{news.insight}</p>
-              </div>
+              {news.insights.map((insight, index) => (
+                <div
+                  key={index}
+                  className="flex flex-col items-start gap-[10px] px-5 py-6 rounded-[8px] bg-bg-90 mb-4"
+                >
+                  {insight.title && (
+                    <h3 className="text-b1 text-gray-10 font-semibold">
+                      {insight.title}
+                    </h3>
+                  )}
+                  {insight.detail && (
+                    <p className="text-b2 text-gray-20">{insight.detail}</p>
+                  )}
+                  {insight.whyItMatters && (
+                    <p className="text-b3 text-gray-30">
+                      <span className="font-semibold">왜 중요한가:</span>{" "}
+                      {insight.whyItMatters}
+                    </p>
+                  )}
+                </div>
+              ))}
             </div>
           )}
 
@@ -329,6 +410,52 @@ export default function NewsDetailPage() {
         onSelectCategory={handleSelectCategory}
         onAddNewCategory={handleAddNewCategory}
       />
+
+      {/* 단어 설명 카드 */}
+      {selectedTerm && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => setSelectedTerm(null)}
+        >
+          <div
+            className="relative w-full max-w-[360px] mx-4 px-6 py-6 rounded-[16px] bg-bg-100 border border-bg-80 shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* 닫기 버튼 */}
+            <button
+              onClick={() => setSelectedTerm(null)}
+              className="absolute top-4 right-4 flex items-center justify-center w-6 h-6"
+              aria-label="닫기"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="text-gray-40"
+              >
+                <path
+                  d="M5 5L15 15M15 5L5 15"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+
+            {/* 단어 제목 */}
+            <h3 className="text-h3 text-gray-10 mb-2 pr-8">{selectedTerm.term}</h3>
+
+            {/* 단어 설명 */}
+            {selectedTerm.description && (
+              <p className="text-b2 text-gray-20 leading-relaxed">
+                {selectedTerm.description}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,18 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CoreTerm } from "@/lib/api/news";
-
-type Category = {
-  category_id: number;
-  name: string;
-  count?: number;
-};
+import {
+  getStorageFolders,
+  createStorageFolder,
+  saveTermToStorage,
+  type StorageFolder,
+} from "@/lib/api/storage";
 
 type TermDescriptionCardProps = {
   term: CoreTerm | null;
   onClose: () => void;
-  categories: Category[];
   onSelectCategory: (categoryId: number | null) => void;
   onAddNewCategory: () => void;
 };
@@ -21,7 +20,6 @@ type TermDescriptionCardProps = {
  * 단어 설명 카드 컴포넌트
  * @param term 단어 설명 데이터
  * @param onClose 닫기 함수
- * @param categories 보관함 카테고리 목록
  * @param onSelectCategory 카테고리 선택 핸들러
  * @param onAddNewCategory 새 카테고리 추가 핸들러
  * @returns 단어 설명 카드 컴포넌트
@@ -29,13 +27,34 @@ type TermDescriptionCardProps = {
 export function TermDescriptionCard({
   term,
   onClose,
-  categories,
   onSelectCategory,
   onAddNewCategory,
 }: TermDescriptionCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isCreatingNewCategory, setIsCreatingNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [userFolders, setUserFolders] = useState<StorageFolder[]>([]);
+  const [loadingFolders, setLoadingFolders] = useState(false);
+
+  // 카드가 뒤집힐 때 사용자 폴더 목록 조회
+  useEffect(() => {
+    if (isFlipped && !isCreatingNewCategory) {
+      fetchUserFolders();
+    }
+  }, [isFlipped, isCreatingNewCategory]);
+
+  const fetchUserFolders = async () => {
+    try {
+      setLoadingFolders(true);
+      const response = await getStorageFolders("TERM");
+      setUserFolders(response.data || []);
+    } catch (err) {
+      console.error("보관함 폴더 조회 실패:", err);
+      setUserFolders([]);
+    } finally {
+      setLoadingFolders(false);
+    }
+  };
 
   if (!term) return null; // 단어 설명 데이터가 없으면 카드 렌더링하지 않음
 
@@ -52,22 +71,46 @@ export function TermDescriptionCard({
     }
   };
 
-  const handleCategorySelect = (categoryId: number | null) => {
-    onSelectCategory(categoryId);
-    onClose();
+  const handleCategorySelect = async (folderId: number | null) => {
+    if (!term?.termId || folderId === null) return;
+
+    try {
+      // 보관함에 단어 저장 API 호출
+      await saveTermToStorage(term.termId, [folderId]);
+      
+      // 부모 컴포넌트에 알림 (북마크 상태 업데이트용)
+      onSelectCategory(folderId);
+      onClose();
+    } catch (err) {
+      console.error("보관함에 단어 저장 실패:", err);
+      // TODO: 에러 메시지 표시 (토스트 등)
+    }
   };
 
   const handleAddNewCategoryClick = () => {
     setIsCreatingNewCategory(true);
   };
 
-  const handleSaveNewCategory = () => {
-    if (newCategoryName.trim()) {
-      onAddNewCategory();
-      // TODO: 실제로 새 카테고리를 생성하는 API 호출
+  const handleSaveNewCategory = async () => {
+    if (!newCategoryName.trim()) return;
+
+    try {
+      // 새 폴더 생성 API 호출
+      await createStorageFolder("TERM", newCategoryName.trim());
+      
+      // 폴더 목록 새로고침
+      await fetchUserFolders();
+      
+      // 상태 초기화 및 카드 앞면으로 돌아가기
       setIsCreatingNewCategory(false);
       setNewCategoryName("");
-      setIsFlipped(false); // 카테고리 추가 후 카드 앞면으로 돌아가기
+      setIsFlipped(false);
+      
+      // 부모 컴포넌트에 알림
+      onAddNewCategory();
+    } catch (err) {
+      console.error("새 폴더 생성 실패:", err);
+      // TODO: 에러 메시지 표시 (토스트 등)
     }
   };
 
@@ -226,37 +269,17 @@ export function TermDescriptionCard({
 
                 {/* 카테고리 리스트 */}
                 <div className="mt-6 px-5 flex flex-col items-start gap-[5px] overflow-y-auto max-h-[200px]">
-              {/* 기본 폴더 */}
-              <button
-                onClick={() => handleCategorySelect(null)}
-                className="w-full flex items-center gap-3 px-0 py-[14px] text-left border-bg-50 border-b-[0.8px]"
-              >
-                <svg
-                  width="14"
-                  height="19"
-                  viewBox="0 0 14 19"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="text-bg-20"
-                >
-                  <path
-                    d="M13 16.5V2C13 1.44772 12.5523 1 12 1H2C1.44772 1 1 1.44772 1 2V16.5C1 17.4027 2.10158 17.8433 2.72414 17.1897L6.27586 13.4603C6.66995 13.0466 7.33005 13.0466 7.72414 13.4603L11.2759 17.1897C11.8984 17.8433 13 17.4027 13 16.5Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    fill="none"
-                  />
-                </svg>
-                <span className="text-b2 text-bg-20">기본 폴더 (0)</span>
-              </button>
 
-              {/* 사용자 카테고리들 */}
-              {categories
-                .filter((cat) => cat.category_id !== 0)
-                .map((category) => (
+              {/* 사용자 폴더들 */}
+              {loadingFolders ? (
+                <div className="w-full py-[14px] text-center text-b2 text-gray-40">
+                  로딩 중...
+                </div>
+              ) : (
+                userFolders.map((folder) => (
                   <button
-                    key={category.category_id}
-                    onClick={() => handleCategorySelect(category.category_id)}
+                    key={folder.folderId}
+                    onClick={() => handleCategorySelect(folder.folderId)}
                     className="w-full flex items-center gap-3 px-0 py-[14px] text-left border-bg-50 border-b-[0.8px]"
                   >
                     <svg
@@ -276,10 +299,11 @@ export function TermDescriptionCard({
                       />
                     </svg>
                     <span className="text-b2 text-bg-20">
-                      {category.name} ({category.count || 0})
+                      {folder.folderName} (0)
                     </span>
                   </button>
-                ))}
+                ))
+              )}
 
               {/* 새 카테고리 추가 */}
               <button

@@ -414,7 +414,6 @@ export default function NewsDetailPage() {
       <TermDescriptionCard
         term={selectedTerm}
         onClose={() => setSelectedTerm(null)}
-        categories={ARCHIVE_CATEGORIES}
         onSelectCategory={handleSelectCategory}
         onAddNewCategory={handleAddNewCategory}
       />

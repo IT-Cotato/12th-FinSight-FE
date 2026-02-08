@@ -67,3 +67,79 @@ export async function getStorageFolders(type: string = "TERM"): Promise<StorageF
 
   return response.json();
 }
+
+export type CreateStorageFolderRequest = {
+  folderType: string;
+  folderName: string;
+};
+
+export type CreateStorageFolderResponse = {
+  status: string;
+  data: StorageFolder;
+};
+
+/**
+ * 보관함 폴더 생성
+ * @param folderType 폴더 타입 (TERM, NEWS)
+ * @param folderName 폴더 이름
+ * @returns 생성된 폴더 응답
+ */
+export async function createStorageFolder(
+  folderType: string,
+  folderName: string
+): Promise<CreateStorageFolderResponse> {
+  const requestBody: CreateStorageFolderRequest = {
+    folderType,
+    folderName,
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/storage/folders`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to create storage folder: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+export type SaveTermToStorageRequest = {
+  termId: number;
+  folderIds: number[];
+};
+
+export type SaveTermToStorageResponse = {
+  status: string;
+  message?: string;
+};
+
+/**
+ * 보관함에 단어 저장
+ * @param termId 단어 ID
+ * @param folderIds 폴더 ID 배열
+ * @returns 저장 응답
+ */
+export async function saveTermToStorage(
+  termId: number,
+  folderIds: number[]
+): Promise<SaveTermToStorageResponse> {
+  const requestBody: SaveTermToStorageRequest = {
+    termId,
+    folderIds,
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/storage/terms`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to save term to storage: ${response.statusText}`);
+  }
+
+  return response.json();
+}

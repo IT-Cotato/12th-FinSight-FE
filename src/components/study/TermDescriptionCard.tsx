@@ -121,24 +121,19 @@ export function TermDescriptionCard({
     >
       <div
         className="w-72 h-96 relative"
-        style={{ perspective: "1000px" }}
         onClick={(e) => e.stopPropagation()}
       >
         <div
-          className="relative w-full h-full transition-transform duration-500"
-          style={{
-            transformStyle: "preserve-3d",
-            transform: isCreatingNewCategory
-              ? "rotateY(180deg)" // 새 카테고리 입력 폼도 뒷면에 있으므로 180deg
-              : isFlipped
-              ? "rotateY(180deg)"
-              : "rotateY(0deg)",
-          }}
+          className="relative w-full h-full transition-transform duration-500 [transform-style:preserve-3d]"
+          style={{ transform: isCreatingNewCategory
+            ? "rotateY(180deg)" // 새 카테고리 입력 폼도 뒷면에 있으므로 180deg
+            : isFlipped
+            ? "rotateY(180deg)"
+            : "rotateY(0deg)" }}
         >
           {/* 카드 앞면 */}
           <div
-            className="absolute inset-0 w-full h-full rounded-2xl border-2 border-bg-90 overflow-hidden opacity-95 bg-bg-100 backface-hidden"
-            style={{ backfaceVisibility: "hidden" }}
+            className="absolute inset-0 w-full h-full rounded-2xl border-2 border-bg-90 overflow-hidden opacity-95 bg-bg-100 backface-hidden [backface-visibility:hidden]"
           >
             {/* 닫기 버튼 */}
             <button
@@ -187,11 +182,8 @@ export function TermDescriptionCard({
 
           {/* 카드 뒷면 */}
           <div
-            className="absolute inset-0 w-full h-full rounded-2xl border-2 border-bg-90 overflow-hidden opacity-95 bg-bg-100 backface-hidden"
-            style={{
-              backfaceVisibility: "hidden",
-              transform: "rotateY(180deg)",
-            }}
+            className="absolute inset-0 w-full h-full rounded-2xl border-2 border-bg-90 overflow-hidden opacity-95 bg-bg-100 backface-hidden [backface-visibility:hidden]"
+            style={{ transform: "rotateY(180deg)" }}
           >
             {/* 뒤로가기 버튼 */}
             <button

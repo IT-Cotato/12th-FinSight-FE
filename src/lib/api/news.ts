@@ -83,31 +83,32 @@ export type NewsListParams = {
   cursor?: string;
 };
 
-export type Highlight = {
-  termId: number;
-  term: string;
-  startIndex: number;
-  endIndex: number;
+export type Summary3Lines = {
+  event: string;
+  reason: string;
+  impact: string;
+};
+
+export type Insight = {
+  title: string;
+  detail: string;
+  whyItMatters: string;
 };
 
 export type NewsDetail = {
-  newsId: number;
   category: string;
-  title: string;
-  publishedAt: string;
-  thumbnailUrl: string;
-  url: string;
-  isSaved: boolean;
   coreTerms: CoreTerm[];
-  summary3Lines: string;
-  summaryFull: string;
-  insight: string;
-  highlights: Highlight[];
+  title: string;
+  date: string;
+  thumbnailUrl: string;
+  originalUrl: string;
+  summary3Lines: Summary3Lines;
+  bodySummary: string;
+  insights: Insight[];
 };
 
 export type NewsDetailResponse = {
   status: string;
-  message: string;
   data: NewsDetail;
 };
 
@@ -159,3 +160,50 @@ export async function getNewsDetail(newsId: string): Promise<NewsDetailResponse>
   return response.json();
 }
 
+export type NewsSearchParams = {
+  q: string;
+  category?: NewsCategory;
+  sort?: NewsSort;
+  page?: number;
+};
+
+export type NewsSearchResponse = {
+  status: string;
+  message?: string;
+  data: {
+    q: string;
+    category: string;
+    sort: string;
+    page: number;
+    totalPages: number;
+    totalElements: number;
+    news: NewsItem[];
+  };
+};
+
+/**
+ * 뉴스 검색
+ * @param params 검색 파라미터
+ * @returns 검색 결과 응답
+ */
+export async function searchNews(params: NewsSearchParams): Promise<NewsSearchResponse> {
+  const { q, category = "ALL", sort = "LATEST", page = 1 } = params;
+
+  const queryParams = new URLSearchParams({
+    q,
+    category,
+    sort,
+    page: page.toString(),
+  });
+
+  const response = await fetch(`${API_BASE_URL}/api/news/search?${queryParams.toString()}`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to search news: ${response.statusText}`);
+  }
+
+  return response.json();
+}

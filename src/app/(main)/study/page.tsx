@@ -106,7 +106,7 @@ const sortOptionToApiSort = (sort: SortOption): NewsSort => {
 
 export default function StudyPage() {
   const router = useRouter();
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null); // null = 종합(ALL)
   const [sortOption, setSortOption] = useState<SortOption>("latest");
   const [newsList, setNewsList] = useState<NewsItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);

@@ -39,11 +39,14 @@ export function CategoryBar({
 
         {/* 카테고리 버튼들 */}
         {categories.map((category) => {
-          const isSelected = category.category_id === selectedCategoryId;
+          // 종합(category_id: 0)은 selectedCategoryId가 0이거나 null일 때 선택된 것으로 처리
+          const isSelected =
+            category.category_id === selectedCategoryId ||
+            (category.category_id === 0 && selectedCategoryId === null);
           return (
             <button
               key={category.category_id}
-              onClick={() => onCategoryChange(category.category_id)}
+              onClick={() => onCategoryChange(category.category_id === 0 ? null : category.category_id)}
               className={`flex-shrink-0 flex items-center justify-center px-[15px] py-[6px] rounded-[16px] gap-[10px] text-b3 text-gray-10 transition-colors ${
                 isSelected
                   ? "bg-primary-50 border border-primary-40"

@@ -90,7 +90,7 @@ function NewCategoryForm({
           disabled={!categoryName.trim()}
           className="w-[150px] px-2.5 py-2 bg-primary-50 rounded-[8px] text-b2 text-gray-10 disabled:bg-primary-20 disabled:cursor-not-allowed transition-colors"        
         >
-          저장하기
+          만들기
         </button>
       </div>
     </div>

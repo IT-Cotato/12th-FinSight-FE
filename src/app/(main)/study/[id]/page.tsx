@@ -60,6 +60,7 @@ export default function NewsDetailPage() {
     setIsSaveBottomSheetOpen(true);
   };
 
+  // 기사 저장용 핸들러
   const handleSelectCategory = (categoryId: number | null) => {
     // TODO: 선택한 카테고리에 저장하는 API 호출
     console.log("카테고리 선택:", categoryId);
@@ -67,6 +68,7 @@ export default function NewsDetailPage() {
     setIsSaved(true);
     setIsSaveBottomSheetOpen(false);
   };
+
 
   const handleAddNewCategory = () => {
     // TODO: 새 카테고리 추가 기능 구현
@@ -414,8 +416,7 @@ export default function NewsDetailPage() {
       <TermDescriptionCard
         term={selectedTerm}
         onClose={() => setSelectedTerm(null)}
-        onSelectCategory={handleSelectCategory}
-        onAddNewCategory={handleAddNewCategory}
+        onCategoryCreated={handleAddNewCategory}
       />
     </div>
   );

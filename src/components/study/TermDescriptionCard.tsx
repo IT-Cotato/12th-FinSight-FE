@@ -291,7 +291,7 @@ export function TermDescriptionCard({
                       />
                     </svg>
                     <span className="text-b2 text-bg-20">
-                      {folder.folderName} (0)
+                      {folder.folderName} ({folder.itemCount})
                     </span>
                   </button>
                 ))

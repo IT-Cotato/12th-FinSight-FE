@@ -41,6 +41,7 @@ export type StorageFolder = {
   folderType: string;
   folderName: string;
   sortOrder: number;
+  itemCount: number;
 };
 
 export type StorageFoldersResponse = {

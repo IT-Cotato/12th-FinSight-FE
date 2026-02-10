@@ -3,7 +3,7 @@
 import Image from "next/image";
 
 type Category = {
-  category_id: number;
+  category_id: number | null;
   name: string;
 };
 
@@ -13,8 +13,6 @@ type CategoryBarProps = {
   onCategoryChange: (categoryId: number | null) => void;
   onEditClick?: () => void;
 };
-
-const ALL_CATEGORY_ID = 0;
 
 export function CategoryBar({
   categories,
@@ -41,14 +39,11 @@ export function CategoryBar({
 
         {/* 카테고리 버튼들 */}
         {categories.map((category) => {
-          // 종합(category_id: 0)은 selectedCategoryId가 0이거나 null일 때 선택된 것으로 처리
-          const isSelected =
-            category.category_id === selectedCategoryId ||
-            (category.category_id === ALL_CATEGORY_ID && selectedCategoryId === null);
+          const isSelected = category.category_id === selectedCategoryId;
           return (
             <button
-              key={category.category_id}
-              onClick={() => onCategoryChange(category.category_id === ALL_CATEGORY_ID ? null : category.category_id)}
+              key={category.category_id ?? "all"}
+              onClick={() => onCategoryChange(category.category_id)}
               className={`flex-shrink-0 flex items-center justify-center px-[15px] py-[6px] rounded-[16px] gap-[10px] text-b3 text-gray-10 transition-colors ${
                 isSelected
                   ? "bg-primary-50 border border-primary-40"

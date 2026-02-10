@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/sheet";
 
 type Category = {
-  category_id: number;
+  category_id: number | null;
   name: string;
 };
 
@@ -26,8 +26,8 @@ export function CategoryEditBottomSheet({
   categories,
   onSave,
 }: CategoryEditBottomSheetProps) {
-  // "종합"(category_id: 0)을 제외한 카테고리만 편집
-  const editableCategories = categories.filter((cat) => cat.category_id !== 0);
+  // "종합"(category_id: null)을 제외한 카테고리만 편집
+  const editableCategories = categories.filter((cat) => cat.category_id !== null);
   const [editedCategories, setEditedCategories] = useState<Category[]>(editableCategories);
   const [isDragging, setIsDragging] = useState<number | null>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
@@ -36,19 +36,19 @@ export function CategoryEditBottomSheet({
 
   // categories가 변경되면 editedCategories 업데이트
   useEffect(() => {
-    const filtered = categories.filter((cat) => cat.category_id !== 0);
+    const filtered = categories.filter((cat) => cat.category_id !== null);
     setEditedCategories(filtered);
   }, [categories]);
 
   // 초기화
   const handleReset = () => {
-    const filtered = categories.filter((cat) => cat.category_id !== 0);
+    const filtered = categories.filter((cat) => cat.category_id !== null);
     setEditedCategories(filtered);
   };
 
   // 저장 - "종합"을 맨 앞에 추가
   const handleSave = () => {
-    const generalCategory = categories.find((cat) => cat.category_id === 0);
+    const generalCategory = categories.find((cat) => cat.category_id === null);
     const finalCategories = generalCategory
       ? [generalCategory, ...editedCategories]
       : editedCategories;

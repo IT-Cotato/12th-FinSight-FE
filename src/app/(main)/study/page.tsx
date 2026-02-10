@@ -20,16 +20,14 @@ import {
   type CategoryOrderItem,
 } from "@/lib/api/user";
 
-const ALL_CATEGORY_ID = 0;
-
 type Category = {
-  category_id: number;
+  category_id: number | null;
   name: string;
 };
 
 // 기본 카테고리 (API 실패 시 사용)
 const DEFAULT_CATEGORIES: Category[] = [
-  { category_id: 0, name: "종합" },
+  { category_id: null, name: "종합" },
   { category_id: 1, name: "금융" },
   { category_id: 2, name: "증권" },
   { category_id: 3, name: "산업/재계" },
@@ -127,7 +125,7 @@ export default function StudyPage() {
 
       // 종합을 맨 앞에 추가하고, API에서 받은 카테고리 사용
       const sortedCategories: Category[] = [
-        { category_id: 0, name: "종합" },
+        { category_id: null, name: "종합" },
         ...items.map((item) => ({
           category_id: item.categoryId,
           name: item.nameKo,
@@ -212,9 +210,9 @@ export default function StudyPage() {
 
   const handleCategorySave = async (editedCategories: Category[]) => {
     try {
-      // 종합(category_id: 0)을 제외한 카테고리만 orders 배열로 변환
+      // 종합(category_id: null)을 제외한 카테고리만 orders 배열로 변환
       const orders = editedCategories
-        .filter((cat) => cat.category_id !== ALL_CATEGORY_ID)
+        .filter((cat): cat is Category & { category_id: number } => cat.category_id !== null)
         .map((cat, index) => ({
           categoryId: cat.category_id,
           sortOrder: index + 1, // 1부터 시작하는 순서
@@ -294,7 +292,6 @@ export default function StudyPage() {
       </div>
 
       {/* 기사 더보기 버튼 */}
-      {/* TODO: 기사 더보기 버튼 동작 구현 */}
       <div className="px-4 py-4 flex justify-center">
         <button
           onClick={handleLoadMore}

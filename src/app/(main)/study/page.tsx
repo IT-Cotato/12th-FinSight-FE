@@ -20,6 +20,8 @@ import {
   type CategoryOrderItem,
 } from "@/lib/api/user";
 
+const ALL_CATEGORY_ID = 0;
+
 type Category = {
   category_id: number;
   name: string;
@@ -91,14 +93,13 @@ const MOCK_NEWS: NewsItem[] = [
 ];
 
 // 카테고리 ID를 API 카테고리 값으로 변환
-// categoryMapping은 API에서 가져온 카테고리 데이터로 동적으로 생성됨
 const categoryIdToApiCategory = (
   categoryId: number | null,
-  categoryMapping: Map<number, string>
+  categoryItems: CategoryOrderItem[]
 ): NewsCategory => {
   if (!categoryId) return "ALL";
-  const code = categoryMapping.get(categoryId);
-  return (code as NewsCategory) || "ALL";
+  const item = categoryItems.find((item) => item.categoryId === categoryId);
+  return (item?.code as NewsCategory) || "ALL";
 };
 
 // 정렬 옵션을 API 정렬 값으로 변환
@@ -114,52 +115,32 @@ export default function StudyPage() {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [hasNext, setHasNext] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isCategoryEditOpen, setIsCategoryEditOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
-  const [categoryMapping, setCategoryMapping] = useState<Map<number, string>>(new Map());
+  const [categoryItems, setCategoryItems] = useState<CategoryOrderItem[]>([]);
 
   // 카테고리 순서 조회
   const fetchCategoryOrder = async () => {
     try {
       const response = await getCategoryOrder();
-      const categoryItems = response.data.categories;
+      const items = response.data.categories;
 
-      // 종합을 맨 앞에 추가하고, API에서 받은 카테고리를 sortOrder 순서대로 정렬
+      // 종합을 맨 앞에 추가하고, API에서 받은 카테고리 사용
       const sortedCategories: Category[] = [
         { category_id: 0, name: "종합" },
-        ...categoryItems
-          .sort((a, b) => a.sortOrder - b.sortOrder)
-          .map((item) => ({
-            category_id: item.categoryId,
-            name: item.nameKo,
-          })),
+        ...items.map((item) => ({
+          category_id: item.categoryId,
+          name: item.nameKo,
+        })),
       ];
 
-      setCategories(sortedCategories);
-
-      // categoryId -> code 매핑 생성
-      const mapping = new Map<number, string>();
-      categoryItems.forEach((item) => {
-        mapping.set(item.categoryId, item.code);
-      });
-      setCategoryMapping(mapping);
+      setCategories(sortedCategories); 
+      setCategoryItems(items);
     } catch (err) {
       console.warn("카테고리 순서 API 호출 실패, 기본 카테고리 사용:", err);
       // 기본 카테고리 사용
       setCategories(DEFAULT_CATEGORIES);
-      // 기본 매핑 생성
-      const defaultMapping = new Map<number, string>([
-        [1, "FINANCE"],
-        [2, "STOCK"],
-        [3, "INDUSTRY"],
-        [4, "REAL_ESTATE"],
-        [5, "VENTURE"],
-        [6, "GLOBAL"],
-        [7, "GENERAL"],
-        [8, "LIVING"],
-      ]);
-      setCategoryMapping(defaultMapping);
+      setCategoryItems([]);
     }
   };
 
@@ -167,23 +148,23 @@ export default function StudyPage() {
   const fetchNewsList = async (cursor?: string, reset = false) => {
     try {
       setLoading(true);
-      setError(null);
 
       const response = await getNewsList({
-        category: categoryIdToApiCategory(selectedCategoryId, categoryMapping),
+        category: categoryIdToApiCategory(selectedCategoryId, categoryItems),
         sort: sortOptionToApiSort(sortOption),
         size: 40,
         cursor,
       });
 
+      // 초기 로드 시 뉴스 리스트 초기화
       if (reset) {
         setNewsList(response.data.news);
       } else {
-        setNewsList((prev) => [...prev, ...response.data.news]);
+        setNewsList((prev) => [...prev, ...response.data.news]); // 더보기 버튼 클릭 시 뉴스 리스트 추가
       }
 
       setNextCursor(response.data.nextCursor);
-      setHasNext(response.data.hasNext);
+      setHasNext(response.data.hasNext); 
     } catch (err) {
       // API 실패 시 목 데이터 사용
       console.warn("API 호출 실패, 목 데이터 사용:", err);
@@ -195,7 +176,7 @@ export default function StudyPage() {
       setNextCursor(null);
       setHasNext(false);
     } finally {
-      setLoading(false);
+      setLoading(false); // 로딩 상태 종료
     }
   };
 
@@ -206,13 +187,13 @@ export default function StudyPage() {
 
   // 초기 로드 및 카테고리/정렬 변경 시
   useEffect(() => {
-    if (categoryMapping.size > 0) {
-      fetchNewsList(undefined, true);
+    if (categoryItems.length > 0) {
+      fetchNewsList(undefined, true); // 초기 로드 시 뉴스 리스트 초기화
     }
-  }, [selectedCategoryId, sortOption, categoryMapping]);
+  }, [selectedCategoryId, sortOption, categoryItems]);
 
   const handleSearchClick = () => {
-    router.push("/study/search");
+    router.push("/study/search"); // 검색 페이지로 이동
   };
 
   const handleCategoryChange = (categoryId: number | null) => {
@@ -220,7 +201,7 @@ export default function StudyPage() {
   };
 
   const handleSortChange = (sort: SortOption) => {
-    setSortOption(sort);
+    setSortOption(sort); // 정렬 옵션 변경
   };
 
   const handleCategoryEditClick = () => {
@@ -233,7 +214,7 @@ export default function StudyPage() {
     try {
       // 종합(category_id: 0)을 제외한 카테고리만 orders 배열로 변환
       const orders = editedCategories
-        .filter((cat) => cat.category_id !== 0)
+        .filter((cat) => cat.category_id !== ALL_CATEGORY_ID)
         .map((cat, index) => ({
           categoryId: cat.category_id,
           sortOrder: index + 1, // 1부터 시작하는 순서
@@ -249,7 +230,6 @@ export default function StudyPage() {
       await fetchCategoryOrder();
     } catch (err) {
       console.error("카테고리 순서 저장 실패:", err);
-      // TODO: 에러 메시지 표시 (토스트 등)
     }
   };
 

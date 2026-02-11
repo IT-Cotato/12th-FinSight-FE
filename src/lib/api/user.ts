@@ -4,20 +4,12 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || null;
 
 /**
  * 액세스 토큰을 가져옵니다.
- * TODO: 로그인 기능 완성 후 실제 토큰 관리 로직으로 교체 필요
  */
 function getAccessToken(): string | null {
-  // 환경변수에서 토큰 가져오기 (개발용)
   if (typeof window !== "undefined") {
-    // 클라이언트 사이드: localStorage나 다른 저장소에서 가져올 수 있음
-    // 일단 환경변수나 상수로 관리
-    return (
-      process.env.NEXT_PUBLIC_ACCESS_TOKEN ||
-      // TODO: 임시 토큰 - 로그인 기능 완성 후 제거 필요
-      null
-    );
+    return localStorage.getItem("accessToken");
   }
-  return process.env.ACCESS_TOKEN || null;
+  return null;
 }
 
 /**

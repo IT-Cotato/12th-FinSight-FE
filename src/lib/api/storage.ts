@@ -144,3 +144,73 @@ export async function saveTermToStorage(
 
   return response.json();
 }
+
+export type SaveNewsToStorageRequest = {
+  articleId: number;
+  folderIds: number[];
+};
+
+export type SaveNewsToStorageResponse = {
+  status: string;
+  message?: string;
+};
+
+/**
+ * 보관함에 뉴스 저장
+ * @param articleId 뉴스 기사 ID
+ * @param folderIds 폴더 ID 배열
+ * @returns 저장 응답
+ */
+export async function saveNewsToStorage(
+  articleId: number,
+  folderIds: number[]
+): Promise<SaveNewsToStorageResponse> {
+  const requestBody: SaveNewsToStorageRequest = {
+    articleId,
+    folderIds,
+  };
+
+  const response = await fetch(`${API_BASE_URL}/api/storage/news`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to save news to storage: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+export type StorageFoldersByItemResponse = {
+  status: string;
+  data: StorageFolder[];
+};
+
+/**
+ * 아이템이 저장된 폴더 목록 조회
+ * @param itemId 아이템 ID (뉴스 ID 또는 단어 ID)
+ * @param type 아이템 타입 (TERM, NEWS)
+ * @returns 저장된 폴더 목록 응답
+ */
+export async function getStorageFoldersByItemId(
+  itemId: number,
+  type: string = "NEWS"
+): Promise<StorageFoldersByItemResponse> {
+  const queryParams = new URLSearchParams({ type });
+  
+  const response = await fetch(
+    `${API_BASE_URL}/api/storage/folders/items/${itemId}?${queryParams.toString()}`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch storage folders by item id: ${response.statusText}`);
+  }
+
+  return response.json();
+}

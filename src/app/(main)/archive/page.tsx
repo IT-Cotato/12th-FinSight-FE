@@ -7,6 +7,7 @@ import { Header } from "@/components/common/Header";
 import { CategoryBar } from "@/components/study/CategoryBar";
 import { ArchiveSortDropdown } from "@/components/archive/ArchiveSortDropdown";
 import { getCategoryOrder, type CategoryOrderItem } from "@/lib/api/user";
+import { getStorageFolders, type StorageFolder } from "@/lib/api/storage";
 
 type TabType = "news" | "terms";
 
@@ -35,6 +36,7 @@ export default function ArchivePage() {
   const [selectedSortCategory, setSelectedSortCategory] = useState<number | null>(null);
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [folders, setFolders] = useState<Category[]>([]);
+  const [loadingFolders, setLoadingFolders] = useState(false);
 
   // 카테고리 순서 조회
   useEffect(() => {
@@ -62,13 +64,32 @@ export default function ArchivePage() {
     fetchCategoryOrder();
   }, []);
 
-  // 폴더 목록 조회 (나중에 API로 교체)
+  // 폴더 목록 조회 - 탭에 따라 다른 타입으로 조회
   useEffect(() => {
-    // TODO: API로 폴더 목록 조회
-    setFolders([
-      { category_id: 0, name: "기본 폴더" },
-      { category_id: 1, name: "헷갈리는 것" },
-    ]);
+    const fetchFolders = async () => {
+      try {
+        setLoadingFolders(true);
+        const folderType = activeTab === "news" ? "NEWS" : "TERM";
+        const response = await getStorageFolders(folderType);
+        
+        // StorageFolder를 Category 형식으로 변환
+        const folderList: Category[] = response.data.map((folder: StorageFolder) => ({
+          category_id: folder.folderId,
+          name: folder.folderName,
+        }));
+        
+        setFolders(folderList);
+      } catch (err) {
+        console.warn("폴더 목록 조회 실패:", err);
+        setFolders([]);
+      } finally {
+        setLoadingFolders(false);
+      }
+    };
+
+    fetchFolders();
+    // 탭 변경 시 선택된 폴더 초기화
+    setSelectedCategoryId(null);
   }, [activeTab]);
 
   const handleSearchClick = () => {

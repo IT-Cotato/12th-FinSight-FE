@@ -6,6 +6,7 @@ import {
   getStorageFolders,
   createStorageFolder,
   saveTermToStorage,
+  getStorageFoldersByItemId,
   type StorageFolder,
 } from "@/lib/api/storage";
 
@@ -36,9 +37,8 @@ export function TermDescriptionCard({
   const [newCategoryName, setNewCategoryName] = useState(""); // 새 카테고리 이름
   const [userFolders, setUserFolders] = useState<StorageFolder[]>([]); // 사용자 폴더 목록
   const [loadingFolders, setLoadingFolders] = useState(false); // 폴더 목록 로딩 상태
-  const [savedFolderId, setSavedFolderId] = useState<number | null>(null); // 저장된 폴더 ID (UI 상에서 저장된 폴더 표시용)
-  const [isSaving, setIsSaving] = useState(false); // 단어 저장 중 상태 (중복 클릭 방지용)
-  // TODO: 단어가 저장된 폴더 ID API로 받아오기 
+  const [savedFolderIds, setSavedFolderIds] = useState<number[]>([]); // 저장된 폴더 ID 목록
+  const [isSaving, setIsSaving] = useState(false); // 단어 저장 중 상태 (중복 클릭 방지용) 
 
   // 사용자 폴더 목록 조회 함수
   const fetchUserFolders = useCallback(async () => {
@@ -53,16 +53,36 @@ export function TermDescriptionCard({
     }
   }, []);
 
-  // 카테고리 선택 화면 최초 진입 시 사용자 폴더 목록 조회
-  useEffect(() => {
-    if (cardMode === "select" && userFolders.length === 0) {
-      fetchUserFolders();
+  // 저장된 폴더 목록 조회 함수
+  const fetchSavedFolders = useCallback(async () => {
+    if (!term?.termId) {
+      setSavedFolderIds([]);
+      return;
     }
-  }, [cardMode, userFolders.length, fetchUserFolders]);
+
+    try {
+      const response = await getStorageFoldersByItemId(term.termId, "TERM");
+      const savedIds = response.data.map((folder: StorageFolder) => folder.folderId);
+      setSavedFolderIds(savedIds);
+    } catch (err) {
+      console.warn("저장된 폴더 목록 조회 실패:", err);
+      setSavedFolderIds([]);
+    }
+  }, [term?.termId]);
+
+  // 카테고리 선택 화면 최초 진입 시 사용자 폴더 목록 및 저장된 폴더 목록 조회
+  useEffect(() => {
+    if (cardMode === "select") {
+      if (userFolders.length === 0) {
+        fetchUserFolders();
+      }
+      fetchSavedFolders();
+    }
+  }, [cardMode, userFolders.length, fetchUserFolders, fetchSavedFolders]);
   
   // 단어가 변경되면 저장된 폴더 ID 초기화 및 카드 모드 초기화
   useEffect(() => {
-    setSavedFolderId(null);
+    setSavedFolderIds([]);
     setCardMode("front");
     setUserFolders([]);
     setIsSaving(false);
@@ -88,7 +108,7 @@ export function TermDescriptionCard({
   // 카테고리 선택 시 보관함에 단어 저장
   const handleCategorySelect = async (folderId: number | null) => {
     if (!term?.termId || folderId === null || isSaving) return;
-    if (savedFolderId === folderId) return;
+    if (savedFolderIds.includes(folderId)) return;
 
     try {
       setIsSaving(true);
@@ -96,8 +116,8 @@ export function TermDescriptionCard({
       // 보관함에 단어 저장 API 호출
       await saveTermToStorage(term.termId, [folderId]);
       
-      // 저장된 폴더 ID만 업데이트 (즉각적인 UI 업데이트를 위해 API 호출 없이 로컬 상태만 변경)
-      setSavedFolderId(folderId);
+      // 저장된 폴더 ID 목록 업데이트 (즉각적인 UI 업데이트를 위해 API 호출 없이 로컬 상태만 변경)
+      setSavedFolderIds((prev) => [...prev, folderId]);
       
       // 선택한 폴더의 itemCount를 로컬에서 증가시킴
       setUserFolders((prevFolders) =>
@@ -299,7 +319,7 @@ export function TermDescriptionCard({
                 </div>
               ) : (
                 userFolders.map((folder) => {
-                  const isSaved = savedFolderId === folder.folderId;
+                  const isSaved = savedFolderIds.includes(folder.folderId);
                   return (
                     <button
                       key={folder.folderId}
@@ -313,7 +333,7 @@ export function TermDescriptionCard({
                         viewBox="0 0 14 19"
                         fill="none"
                         xmlns="http://www.w3.org/2000/svg"
-                        className={isSaved ? "text-primary-50" : "text-bg-20"}
+                        className={isSaved ? "text-primary-30" : "text-bg-20"}
                       >
                         <path
                           d="M13 16.5V2C13 1.44772 12.5523 1 12 1H2C1.44772 1 1 1.44772 1 2V16.5C1 17.4027 2.10158 17.8433 2.72414 17.1897L6.27586 13.4603C6.66995 13.0466 7.33005 13.0466 7.72414 13.4603L11.2759 17.1897C11.8984 17.8433 13 17.4027 13 16.5Z"

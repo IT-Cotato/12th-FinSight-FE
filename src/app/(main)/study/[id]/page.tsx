@@ -7,6 +7,7 @@ import { Header } from "@/components/common/Header";
 import { NewCategoryBottomSheet } from "@/components/study/NewCategoryBottomSheet";
 import { TermDescriptionCard } from "@/components/study/TermDescriptionCard";
 import { getNewsDetail, type NewsDetail, type CoreTerm } from "@/lib/api/news";
+import { saveNewsToStorage, getStorageFoldersByItemId } from "@/lib/api/storage";
 
 type Category = {
   category_id: number;
@@ -30,6 +31,18 @@ export default function NewsDetailPage() {
   const [isSaved, setIsSaved] = useState(false); // 북마크 상태 별도 관리
   const [selectedTerm, setSelectedTerm] = useState<CoreTerm | null>(null); // 선택된 단어 설명 표시용
 
+  // 저장된 폴더 목록 조회 함수
+  const fetchSavedFolders = async (articleId: number) => {
+    try {
+      const response = await getStorageFoldersByItemId(articleId, "NEWS");
+      // 저장된 폴더가 있으면 북마크 색상 표시
+      setIsSaved(response.data.length > 0);
+    } catch (err) {
+      console.warn("저장된 폴더 목록 조회 실패:", err);
+      setIsSaved(false);
+    }
+  };
+
   // API로 뉴스 상세 데이터 조회
   useEffect(() => {
     async function fetchNews() {
@@ -37,6 +50,12 @@ export default function NewsDetailPage() {
         setLoading(true);
         const data = await getNewsDetail(newsId);
         setNews(data.data);
+        
+        // 뉴스 상세 조회 후 저장된 폴더 목록도 조회
+        const articleId = parseInt(newsId, 10);
+        if (!isNaN(articleId)) {
+          await fetchSavedFolders(articleId);
+        }
       } catch (err) {
         console.warn("API 호출 실패: ", err);
         setError(null);
@@ -61,12 +80,23 @@ export default function NewsDetailPage() {
   };
 
   // 기사 저장용 핸들러
-  const handleSelectCategory = (categoryId: number | null) => {
-    // TODO: 선택한 카테고리에 저장하는 API 호출
-    console.log("카테고리 선택:", categoryId);
-    // 저장 후 북마크 상태 업데이트 및 바텀시트 닫기
-    setIsSaved(true);
-    setIsSaveBottomSheetOpen(false);
+  const handleSelectCategory = async (categoryId: number | null) => {
+    if (!newsId || categoryId === null) {
+      return;
+    }
+
+    try {
+      // 선택한 폴더에 뉴스 저장 API 호출
+      const articleId = parseInt(newsId, 10);
+      await saveNewsToStorage(articleId, [categoryId]);
+      // 저장 후 저장된 폴더 목록 다시 조회하여 북마크 상태 업데이트
+      await fetchSavedFolders(articleId);
+      setIsSaveBottomSheetOpen(false);
+    } catch (err) {
+      console.error("뉴스 저장 실패:", err);
+      // 에러 발생 시에도 바텀시트는 닫음 (사용자 경험을 위해)
+      setIsSaveBottomSheetOpen(false);
+    }
   };
 
 
@@ -410,6 +440,7 @@ export default function NewsDetailPage() {
         categories={ARCHIVE_CATEGORIES}
         onSelectCategory={handleSelectCategory}
         onAddNewCategory={handleAddNewCategory}
+        itemId={newsId ? parseInt(newsId, 10) : undefined}
       />
 
       {/* 단어 설명 카드 */}

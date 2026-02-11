@@ -206,3 +206,62 @@ export async function getStorageFoldersByItemId(
 
   return response.json();
 }
+
+export type StorageNewsParams = {
+  folderId: number;
+  section?: string;
+  page?: number;
+  size?: number;
+};
+
+export type StorageNewsItem = {
+  savedItemId: number;
+  newsId: number;
+  category: string;
+  title: string;
+  thumbnailUrl: string;
+  savedAt: string;
+};
+
+export type StorageNewsResponse = {
+  status: string;
+  data: {
+    news: StorageNewsItem[];
+    currentPage: number;
+    totalPages: number;
+    totalElements: number;
+    hasNext: boolean;
+  };
+};
+
+/**
+ * 보관함 폴더의 뉴스 조회
+ * @param params 쿼리 파라미터 (folderId 필수)
+ * @returns 폴더의 뉴스 목록 응답
+ */
+export async function getStorageNews(
+  params: StorageNewsParams
+): Promise<StorageNewsResponse> {
+  const { folderId, section, page = 1, size = 4 } = params;
+  
+  const queryParams = new URLSearchParams({
+    folderId: folderId.toString(),
+    page: page.toString(),
+    size: size.toString(),
+  });
+  
+  if (section) {
+    queryParams.append("section", section);
+  }
+  
+  const response = await fetch(`${API_BASE_URL}/api/storage/news?${queryParams.toString()}`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch storage news: ${response.statusText}`);
+  }
+
+  return response.json();
+}

@@ -36,7 +36,8 @@ const MOCK_NEWS: NewsItem[] = [
   {
     newsId: 1,
     category: "FINANCE",
-    title: '"비트코인, 지금이 마지막 탈출 기회일 수도"...섬뜩한 \'폭락\' 전망 나온 이유는',
+    title:
+      "\"비트코인, 지금이 마지막 탈출 기회일 수도\"...섬뜩한 '폭락' 전망 나온 이유는",
     thumbnailUrl: "/study/thumbnail.png",
     coreTerms: [
       { termId: 9001, term: "카테고리" },
@@ -48,7 +49,8 @@ const MOCK_NEWS: NewsItem[] = [
   {
     newsId: 2,
     category: "STOCK",
-    title: '"비트코인, 지금이 마지막 탈출 기회일 수도"...섬뜩한 \'폭락\' 전망 나온 이유는',
+    title:
+      "\"비트코인, 지금이 마지막 탈출 기회일 수도\"...섬뜩한 '폭락' 전망 나온 이유는",
     thumbnailUrl: "/study/thumbnail.png",
     coreTerms: [
       { termId: 9001, term: "카테고리" },
@@ -60,7 +62,8 @@ const MOCK_NEWS: NewsItem[] = [
   {
     newsId: 3,
     category: "INDUSTRY",
-    title: '"비트코인, 지금이 마지막 탈출 기회일 수도"...섬뜩한 \'폭락\' 전망 나온 이유는',
+    title:
+      "\"비트코인, 지금이 마지막 탈출 기회일 수도\"...섬뜩한 '폭락' 전망 나온 이유는",
     thumbnailUrl: "/study/thumbnail.png",
     coreTerms: [
       { termId: 9001, term: "카테고리" },
@@ -72,7 +75,8 @@ const MOCK_NEWS: NewsItem[] = [
   {
     newsId: 4,
     category: "REAL_ESTATE",
-    title: '"비트코인, 지금이 마지막 탈출 기회일 수도"...섬뜩한 \'폭락\' 전망 나온 이유는',
+    title:
+      "\"비트코인, 지금이 마지막 탈출 기회일 수도\"...섬뜩한 '폭락' 전망 나온 이유는",
     thumbnailUrl: "/study/thumbnail.png",
     coreTerms: [
       { termId: 9001, term: "카테고리" },
@@ -90,7 +94,7 @@ const categoryIdToApiCategory = (categoryId: number | null): NewsCategory => {
     2: "STOCK",
     3: "INDUSTRY",
     4: "REAL_ESTATE",
-    5: "VENTURE",
+    5: "SME",
     6: "GLOBAL",
     7: "GENERAL",
     8: "LIVING",
@@ -104,7 +108,9 @@ const sortOptionToApiSort = (sort: SortOption): NewsSort => {
 };
 
 export default function StudyPage() {
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
+    null,
+  );
   const [sortOption, setSortOption] = useState<SortOption>("latest");
   const [newsList, setNewsList] = useState<NewsItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -189,16 +195,8 @@ export default function StudyPage() {
       <Header
         title="학습"
         rightSlot={
-          <button
-            onClick={handleSearchClick}
-            aria-label="검색"
-          >
-            <Image
-              src="/study/search.png"
-              alt="검색"
-              width={19}
-              height={19}
-            />
+          <button onClick={handleSearchClick} aria-label="검색">
+            <Image src="/study/search.png" alt="검색" width={19} height={19} />
           </button>
         }
       />

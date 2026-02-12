@@ -21,9 +21,9 @@ export type WeeklyMode =
   | "STOCK"
   | "INDUSTRY"
   | "PROPERTY"
-  | "VENTURE"
+  | "SME"
   | "GLOBAL"
-  | "ECONOMY"
+  | "GENERAL"
   | "LIFE"
   | "FINANCE";
 

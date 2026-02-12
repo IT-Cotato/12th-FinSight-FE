@@ -60,25 +60,30 @@ export default function BalanceRings({ items }: Props) {
   const nameMap: Record<string, string> = {
     FINANCE: "금융",
     STOCK: "증권",
-    GLOBAL: "글로벌",
-    INDUSTRY: "산업",
+    INDUSTRY: "산업/재계",
     REAL_ESTATE: "부동산",
-    ECONOMY: "경제",
-    LIFE: "생활",
-    ETC: "기타",
+    SME: "중기/벤처",
+    GLOBAL: "글로벌 경제",
+    GENERAL: "경제 일반",
+    LIVING: "생활 경제",
+    ALL: "종합",
   };
 
   return (
     <div className="mt-8">
       <p className="text-b3 text-gray-40">학습 밸런스</p>
       <div className="mt-4 grid grid-cols-3 justify-items-center gap-3">
-        {items.slice(0, 3).map((it) => (
-          <Ring
-            key={it.section}
-            label={nameMap[it.section] ?? it.section}
-            percent={it.percentage}
-          />
-        ))}
+        {items.slice(0, 3).map((it) => {
+          const normalized = it.section?.trim().toUpperCase();
+
+          return (
+            <Ring
+              key={it.section}
+              label={nameMap[normalized] ?? "기타"}
+              percent={it.percentage}
+            />
+          );
+        })}
       </div>
     </div>
   );

@@ -21,9 +21,9 @@ const MODE_ICON: Record<string, string> = {
   STOCK: "/mypage/icon-stock.svg",
   INDUSTRY: "/mypage/icon-industry.svg",
   PROPERTY: "/mypage/icon-property.svg",
-  VENTURE: "/mypage/icon-venture.svg",
+  SME: "/mypage/icon-venture.svg",
   GLOBAL: "/mypage/icon-global.svg",
-  ECONOMY: "/mypage/icon-economy.svg",
+  GENERAL: "/mypage/icon-economy.svg",
   LIFE: "/mypage/icon-life.svg",
   FINANCE: "/mypage/icon-finance.svg",
 };
@@ -32,9 +32,9 @@ const MODE_LABEL: Record<string, string> = {
   STOCK: "증권 전문가",
   INDUSTRY: "산업/재계 전문가",
   PROPERTY: "부동산 전문가",
-  VENTURE: "증기/벤처 전문가",
+  SME: "증기/벤처 전문가",
   GLOBAL: "글로벌 경제 전문가",
-  ECONOMY: "경제 일반 전문가",
+  GENERAL: "경제 일반 전문가",
   LIFE: "생활경제 전문가",
   FINANCE: "금융 전문가",
 };
@@ -42,11 +42,33 @@ const MODE_LABEL: Record<string, string> = {
 function getWeekTitle(weekStart?: string) {
   if (!weekStart) return "이번 주 학습 리포트";
 
-  const d = new Date(weekStart);
-  // 월
-  const month = d.getMonth() + 1;
-  // 주차 계산
-  const weekNo = Math.floor((d.getDate() - 1) / 7) + 1;
+  const start = new Date(weekStart);
+
+  // 오늘 날짜
+  const today = new Date();
+
+  // 이번 주 시작일 계산
+  const day = today.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+
+  const thisWeekStart = new Date(today);
+  thisWeekStart.setHours(0, 0, 0, 0);
+  thisWeekStart.setDate(today.getDate() + diffToMonday);
+
+  // 날짜 비교
+  const isSameWeek =
+    start.getFullYear() === thisWeekStart.getFullYear() &&
+    start.getMonth() === thisWeekStart.getMonth() &&
+    start.getDate() === thisWeekStart.getDate();
+
+  // 이번 주
+  if (isSameWeek) {
+    return "이번 주 학습 리포트";
+  }
+
+  // 과거 주
+  const month = start.getMonth() + 1;
+  const weekNo = Math.floor((start.getDate() - 1) / 7) + 1;
 
   return `${month}월 ${weekNo}주차 학습 리포트`;
 }
@@ -62,9 +84,28 @@ export default function WeeklyReportCard({
 }: Props) {
   const title = getWeekTitle(report.weekStart);
 
-  const modeKey = report.mode ?? "FINANCE";
-  const modeIconSrc = MODE_ICON[modeKey] ?? "/mypage/icon-finance.svg";
-  const modeLabel = MODE_LABEL[modeKey] ?? "금융 전문가";
+  // 가장 높은 percentage 가진 section 찾기
+  const { modeIconSrc, modeLabel } = (() => {
+    const fallbackKey = "FINANCE";
+
+    if (!report.categoryBalance || report.categoryBalance.length === 0) {
+      return {
+        modeIconSrc: MODE_ICON[fallbackKey] ?? "/mypage/icon-finance.svg",
+        modeLabel: MODE_LABEL[fallbackKey] ?? "금융 전문가",
+      };
+    }
+
+    const top = report.categoryBalance.reduce((max, current) =>
+      current.percentage > max.percentage ? current : max,
+    );
+
+    const key = top.section as string;
+
+    return {
+      modeIconSrc: MODE_ICON[key] ?? "/mypage/icon-finance.svg",
+      modeLabel: MODE_LABEL[key] ?? "금융 전문가",
+    };
+  })();
 
   return (
     <section className="mt-6 px-5 pb-6">

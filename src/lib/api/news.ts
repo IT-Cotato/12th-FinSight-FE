@@ -7,7 +7,7 @@ export type NewsCategory =
   | "FINANCE"
   | "STOCK"
   | "INDUSTRY"
-  | "VENTURE"
+  | "SME"
   | "REAL_ESTATE"
   | "GLOBAL"
   | "LIVING"
@@ -81,7 +81,9 @@ export type NewsDetailResponse = {
  * @param params 쿼리 파라미터
  * @returns 뉴스 리스트 응답
  */
-export async function getNewsList(params: NewsListParams = {}): Promise<NewsListResponse> {
+export async function getNewsList(
+  params: NewsListParams = {},
+): Promise<NewsListResponse> {
   const { category = "ALL", sort = "LATEST", size = 40, cursor } = params;
 
   const queryParams = new URLSearchParams({
@@ -94,12 +96,15 @@ export async function getNewsList(params: NewsListParams = {}): Promise<NewsList
     queryParams.append("cursor", cursor);
   }
 
-  const response = await fetch(`${API_BASE_URL}/news?${queryParams.toString()}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
+  const response = await fetch(
+    `${API_BASE_URL}/news?${queryParams.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
     },
-  });
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to fetch news list: ${response.statusText}`);
@@ -113,7 +118,9 @@ export async function getNewsList(params: NewsListParams = {}): Promise<NewsList
  * @param newsId 뉴스 ID
  * @returns 뉴스 상세 정보 응답
  */
-export async function getNewsDetail(newsId: string): Promise<NewsDetailResponse> {
+export async function getNewsDetail(
+  newsId: string,
+): Promise<NewsDetailResponse> {
   const response = await fetch(`${API_BASE_URL}/news/${newsId}`, {
     method: "GET",
     headers: {
@@ -127,4 +134,3 @@ export async function getNewsDetail(newsId: string): Promise<NewsDetailResponse>
 
   return response.json();
 }
-

@@ -93,3 +93,21 @@ export async function deleteMe() {
     token,
   });
 }
+
+// 알림 설정 조회
+export async function getMyNotification(): Promise<boolean> {
+  const res = await apiFetch<{
+    status: string;
+    data: { enabled: boolean };
+  }>("/api/mypage/me/notification");
+
+  return res.data.enabled;
+}
+
+// 알림 설정 변경
+export async function updateMyNotification(enabled: boolean) {
+  await apiFetch("/api/mypage/me/notification", {
+    method: "PUT",
+    body: JSON.stringify({ enabled }),
+  });
+}

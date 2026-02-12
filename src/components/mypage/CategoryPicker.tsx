@@ -23,17 +23,18 @@ export default function CategoryPicker({
   const selectedItems = allCategories.filter((c) =>
     selected.includes(c.section),
   );
+
   const unselectedItems = allCategories.filter(
     (c) => !selected.includes(c.section),
   );
 
-  const canSaveHint = selected.length < 3;
+  const showMinError = selected.length < 3;
 
   return (
     <section className="pt-10">
       <h2 className="text-h3 font-semibold text-bg-10">관심분야 설정</h2>
 
-      {/* 상단 : edit 버튼 + 선택된 항목 */}
+      {/* 상단 영역 */}
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {/* edit 버튼 */}
         <button
@@ -45,7 +46,6 @@ export default function CategoryPicker({
               : "bg-bg-70 border-bg-60"
           }`}
           aria-label="edit categories"
-          title="관심분야 편집"
         >
           {/* 아이콘 */}
           <Image
@@ -56,27 +56,23 @@ export default function CategoryPicker({
           />
         </button>
 
+        {/* 선택된 항목 */}
         {selectedItems.map((c) => (
           <button
             key={c.section}
             type="button"
             onClick={() => {
-              // 선택 해제 기능
               if (!editMode) return;
               onChange(selected.filter((s) => s !== c.section));
             }}
-            className={`flex h-[40px] items-center justify-center rounded-3xl px-4 text-b3 text-gray-10 border ${
-              editMode
-                ? "bg-primary-70 border-bg-60"
-                : "bg-primary-70 border-bg-60"
-            }`}
+            className="flex h-[40px] items-center justify-center rounded-3xl px-4 text-b3 text-gray-10 border bg-primary-70 border-bg-60"
           >
             {editMode ? `× ${c.displayName}` : c.displayName}
           </button>
         ))}
       </div>
 
-      {/* 나머지 항목 */}
+      {/* 미선택 항목 (edit 모드일 때만) */}
       {editMode && (
         <div className="mt-4 flex flex-wrap gap-3">
           {unselectedItems.map((c) => (
@@ -92,7 +88,8 @@ export default function CategoryPicker({
         </div>
       )}
 
-      {canSaveHint && (
+      {/* 최소 선택 경고 문구 */}
+      {showMinError && (
         <p className="mt-3 text-b2 text-primary-30">3개 이상 선택해주세요.</p>
       )}
     </section>

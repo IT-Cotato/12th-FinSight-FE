@@ -6,7 +6,6 @@ import ConfirmModal from "@/components/mypage/ConfirmModal";
 import NicknameField from "@/components/mypage/NicknameField";
 import CategoryPicker from "@/components/mypage/CategoryPicker";
 import {
-  checkNickname,
   getMyProfile,
   getUserCategories,
   updateMyProfile,
@@ -31,48 +30,34 @@ export default function ProfileEditScreen() {
   const [openConfirm, setOpenConfirm] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  function extractCategories(
-    profile: { nickname: string } | unknown,
-  ): string[] {
-    if (!profile || typeof profile !== "object") return [];
-
-    if (!("categories" in profile)) return [];
-
-    const v = (profile as Record<string, unknown>).categories;
-    if (!Array.isArray(v)) return [];
-
-    return v.filter((x): x is string => typeof x === "string");
-  }
-
   useEffect(() => {
     (async () => {
       try {
-        const [profileRes, catsRes] = await Promise.allSettled([
+        const [profileRes, categoriesRes] = await Promise.allSettled([
           getMyProfile(),
-          getUserCategories(),
+          getUserCategories(), // 관심분야 가져오기
         ]);
 
-        // fallback 시 mock
         const profile =
           profileRes.status === "fulfilled" ? profileRes.value : MOCK_PROFILE;
 
-        // categories 실패 시 8개 fallback
-        const cats =
-          catsRes.status === "fulfilled" && catsRes.value?.length
-            ? catsRes.value
-            : ALL_CATEGORIES_8;
+        const userCategories =
+          categoriesRes.status === "fulfilled"
+            ? (categoriesRes.value ?? [])
+            : [];
 
+        // 전체 카테고리 8개
+        setAllCategories(ALL_CATEGORIES_8);
+
+        // 닉네임
         setInitialNickname(profile.nickname);
         setNickname(profile.nickname);
 
-        // 회원가입 때 저장된 관심분야 그대로 반영
-        setSelected(profile.categories ?? []);
+        // 선택된 카테고리는 section 값 배열로 저장
+        const mappedSections = userCategories.map((c: Category) => c.section);
 
-        const initialCats = extractCategories(profile);
-        setInitialSelected(initialCats);
-        setSelected(initialCats);
-
-        setAllCategories(cats);
+        setInitialSelected(mappedSections);
+        setSelected(mappedSections);
       } finally {
         setLoading(false);
       }
@@ -91,25 +76,11 @@ export default function ProfileEditScreen() {
   }, [initialSelected, selected]);
 
   const canSave = useMemo(() => {
-    const hasMin3 = selected.length >= 3;
-    if (!hasMin3) return false;
-
-    const hasChanges = nicknameChanged || categoriesChanged;
-    // 변경사항 없으면 저장 불가
-    if (!hasChanges) return false;
-
-    // 닉네임 변경이 있으면 중복확인 OK가 필요
-    if (nicknameChanged) return nicknameCheckedOk;
-
-    // 카테고리만 변경된 경우는 바로 저장 가능
+    if (selected.length < 3) return false;
+    if (!nicknameChanged && !categoriesChanged) return false;
+    if (nicknameChanged && !nicknameCheckedOk) return false;
     return true;
-  }, [
-    selected.length,
-    nicknameChanged,
-    categoriesChanged,
-    nicknameCheckedOk,
-    selected,
-  ]);
+  }, [selected.length, nicknameChanged, categoriesChanged, nicknameCheckedOk]);
 
   async function handleConfirmSave() {
     if (!canSave || saving) return;
@@ -118,14 +89,16 @@ export default function ProfileEditScreen() {
     try {
       await updateMyProfile({
         nickname: nickname.trim(),
-        categories: selected,
+        categories: selected, // section 배열 그대로 전송
       });
 
       alert("저장되었습니다.");
+      setInitialNickname(nickname);
+      setInitialSelected(selected);
+      setEditMode(false);
       setOpenConfirm(false);
     } catch {
-      alert("서버 연결에 실패했어요. (임시로 화면만 유지합니다)");
-      setOpenConfirm(false);
+      alert("서버 연결에 실패했어요.");
     } finally {
       setSaving(false);
     }
@@ -160,7 +133,7 @@ export default function ProfileEditScreen() {
           type="button"
           onClick={() => setOpenConfirm(true)}
           disabled={!canSave || saving}
-          className={`h-[60px] w-full rounded-xl text-b1 text-gray-10 transition-colors ${
+          className={`h-[60px] w-full rounded-xl text-b1 text-gray-10 ${
             canSave ? "bg-primary-50" : "bg-primary-20"
           }`}
         >

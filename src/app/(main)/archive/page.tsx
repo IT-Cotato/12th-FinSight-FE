@@ -7,8 +7,11 @@ import { Header } from "@/components/common/Header";
 import { CategoryBar } from "@/components/study/CategoryBar";
 import { ArchiveSortDropdown } from "@/components/archive/ArchiveSortDropdown";
 import { getCategoryOrder, type CategoryOrderItem } from "@/lib/api/user";
-import { getStorageFolders, getStorageNews, type StorageFolder, type StorageNewsItem } from "@/lib/api/storage";
+import { getStorageFolders, getStorageNews, deleteNewsFromStorage, saveNewsToStorage, type StorageFolder, type StorageNewsItem } from "@/lib/api/storage";
 import { ArchiveNewsCard } from "@/components/archive/ArchiveNewsCard";
+import { ArchiveNewsMenuBottomSheet } from "@/components/archive/ArchiveNewsMenuBottomSheet";
+import { DeleteConfirmDialog } from "@/components/archive/DeleteConfirmDialog";
+import { NewCategoryBottomSheet } from "@/components/study/NewCategoryBottomSheet";
 
 type TabType = "news" | "terms";
 
@@ -43,6 +46,11 @@ export default function ArchivePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [categoryMapping, setCategoryMapping] = useState<Map<string, string>>(new Map());
+  const [isMenuBottomSheetOpen, setIsMenuBottomSheetOpen] = useState(false);
+  const [isEditBottomSheetOpen, setIsEditBottomSheetOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [selectedSavedItemId, setSelectedSavedItemId] = useState<number | null>(null);
+  const [selectedNewsId, setSelectedNewsId] = useState<number | null>(null);
 
   // 카테고리 순서 조회
   useEffect(() => {
@@ -180,6 +188,69 @@ export default function ArchivePage() {
     router.push("/study");
   };
 
+  const handleNewsMenuClick = (savedItemId: number, newsId: number) => {
+    setSelectedSavedItemId(savedItemId);
+    setSelectedNewsId(newsId);
+    setIsMenuBottomSheetOpen(true);
+  };
+
+  const handleDeleteClick = () => {
+    setIsMenuBottomSheetOpen(false);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const handleDeleteFromCategory = async () => {
+    if (!selectedSavedItemId) {
+      return;
+    }
+
+    try {
+      await deleteNewsFromStorage(selectedSavedItemId);
+      // 삭제 후 뉴스 목록 다시 조회
+      if (selectedCategoryId !== null) {
+        await fetchStorageNews(selectedCategoryId, currentPage);
+      }
+    } catch (err) {
+      console.error("카테고리에서 삭제 실패:", err);
+    }
+  };
+
+  const handleEditCategory = () => {
+    setIsEditBottomSheetOpen(true);
+  };
+
+  const handleSelectCategoryForEdit = async (categoryId: number | null) => {
+    if (!selectedNewsId || categoryId === null) {
+      return;
+    }
+
+    try {
+      // 새 폴더에 추가
+      await saveNewsToStorage(selectedNewsId, [categoryId]);
+      // 뉴스 목록 다시 조회
+      if (selectedCategoryId !== null) {
+        await fetchStorageNews(selectedCategoryId, currentPage);
+      }
+    } catch (err) {
+      console.error("카테고리 수정 실패:", err);
+    }
+  };
+
+  const handleAddNewCategory = async () => {
+    // 새 카테고리 추가 후 폴더 목록 다시 조회
+    const folderType = activeTab === "news" ? "NEWS" : "TERM";
+    try {
+      const response = await getStorageFolders(folderType);
+      const folderList: Category[] = response.data.map((folder: StorageFolder) => ({
+        category_id: folder.folderId,
+        name: folder.folderName,
+      }));
+      setFolders(folderList);
+    } catch (err) {
+      console.warn("폴더 목록 조회 실패:", err);
+    }
+  };
+
   return (
     <div className="flex flex-col bg-bg-100">
       {/* 헤더 */}
@@ -255,6 +326,7 @@ export default function ArchivePage() {
                 thumbnailUrl={news.thumbnailUrl}
                 category={categoryMapping.get(news.category) || news.category}
                 href={`/study/${news.newsId}`}
+                onMenuClick={() => handleNewsMenuClick(news.savedItemId, news.newsId)}
               />
             ))}
           </div>
@@ -299,6 +371,32 @@ export default function ArchivePage() {
           </div>
         </div>
       )}
+
+      {/* 뉴스 메뉴 바텀시트 */}
+      <ArchiveNewsMenuBottomSheet
+        open={isMenuBottomSheetOpen}
+        onOpenChange={setIsMenuBottomSheetOpen}
+        onDelete={handleDeleteClick}
+        onEdit={handleEditCategory}
+      />
+
+      {/* 삭제 확인 다이얼로그 */}
+      <DeleteConfirmDialog
+        open={isDeleteConfirmOpen}
+        onOpenChange={setIsDeleteConfirmOpen}
+        onConfirm={handleDeleteFromCategory}
+        onCancel={() => setIsDeleteConfirmOpen(false)}
+      />
+
+      {/* 카테고리 수정 바텀시트 */}
+      <NewCategoryBottomSheet
+        open={isEditBottomSheetOpen}
+        onOpenChange={setIsEditBottomSheetOpen}
+        categories={folders.filter((f): f is Category & { category_id: number } => f.category_id !== null).map(f => ({ category_id: f.category_id!, name: f.name }))}
+        onSelectCategory={handleSelectCategoryForEdit}
+        onAddNewCategory={handleAddNewCategory}
+        itemId={selectedNewsId || undefined}
+      />
     </div>
   );
 }

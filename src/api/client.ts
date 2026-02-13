@@ -1,6 +1,8 @@
 import axios from 'axios';
 
+// 1. 기본 설정
 export const apiClient = axios.create({
+  // 환경 변수가 없을 때를 대비한 기본값 유지
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://finsight-deploy.duckdns.org/api',
   timeout: 10000,
   headers: {
@@ -8,17 +10,17 @@ export const apiClient = axios.create({
   },
 });
 
-// 요청 인터셉터 (수정: accessToken 사용)
+// 2. 요청 인터셉터: 창고(localStorage)에서 열쇠(토큰) 꺼내서 배달원에게 주기
 apiClient.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('accessToken');
       
       if (token) {
+        // Bearer 형식으로 헤더에 부착
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
-    
     return config;
   },
   (error) => {
@@ -26,7 +28,7 @@ apiClient.interceptors.request.use(
   }
 );
 
-// 응답 인터셉터 (자동 토큰 재발급)
+// 3. 응답 인터셉터: 토큰 만료 시 자동으로 재발급 받기
 apiClient.interceptors.response.use(
   (response) => {
     return response;
@@ -34,7 +36,7 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // 401 에러이고, 재시도하지 않은 요청인 경우
+    // 401(인증 만료) 에러가 발생했을 때만 동작
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -43,9 +45,9 @@ apiClient.interceptors.response.use(
 
         if (refreshToken) {
           try {
-            // 토큰 재발급 API 호출
+            // 💡 주의: 재발급 시에는 apiClient 대신 일반 axios를 사용하거나 별도 설정을 해야 무한 루프를 방지합니다.
             const response = await axios.post(
-              `${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`,
+              `${apiClient.defaults.baseURL}/auth/refresh`, // baseURL을 그대로 활용
               { refreshToken }
             );
 
@@ -55,21 +57,17 @@ apiClient.interceptors.response.use(
             localStorage.setItem('accessToken', accessToken);
             localStorage.setItem('refreshToken', newRefreshToken);
 
-            // 원래 요청에 새 토큰 적용
+            // 원래 실패했던 요청에 새 토큰을 넣어서 다시 시도
             originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-
-            // 원래 요청 재시도
             return apiClient(originalRequest);
           } catch (refreshError) {
-            // 리프레시 토큰도 만료 → 로그아웃
+            // 리프레시 토큰까지 문제가 있다면 강제 로그아웃
             localStorage.removeItem('accessToken');
             localStorage.removeItem('refreshToken');
             window.location.href = '/login';
             return Promise.reject(refreshError);
           }
         } else {
-          // 리프레시 토큰 없음 → 로그인 페이지로
-          localStorage.removeItem('accessToken');
           window.location.href = '/login';
         }
       }

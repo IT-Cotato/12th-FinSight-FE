@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 type ArchiveTermCardProps = {
   termId: number;
@@ -17,6 +19,7 @@ export function ArchiveTermCard({
   onMenuClick,
   onClick,
 }: ArchiveTermCardProps) {
+  const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
 
   const handleMenuClick = (e: React.MouseEvent) => {
@@ -88,10 +91,28 @@ export function ArchiveTermCard({
 
       {/* 설명 영역 (펼치기/접기) */}
       {isExpanded && (
-        <div className="px-4 pb-3 pt-0">
+        <div className="px-4 pb-3 pt-0 flex flex-col gap-3">
           <div className="text-gray-30 text-b3 leading-relaxed">
             {description}
           </div>
+          
+          {/* 이 용어가 들어간 뉴스 검색 버튼 */}
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              router.push(`/study/search?q=${encodeURIComponent(term)}`);
+            }}
+            className="w-full flex items-center justify-center gap-2 px-[10px] py-[8px] text-b2 text-gray-30 rounded-[8px] bg-bg-70"
+          >
+            <Image
+              src="/study/img-insight.png"
+              alt="검색"
+              width={16}
+              height={16}
+            />
+            <span>이 용어가 들어간 뉴스 검색</span>
+          </button>
         </div>
       )}
     </div>

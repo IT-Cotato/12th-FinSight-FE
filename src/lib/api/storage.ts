@@ -265,3 +265,31 @@ export async function getStorageNews(
 
   return response.json();
 }
+
+export type DeleteNewsFromStorageResponse = {
+  status: string;
+  message?: string;
+};
+
+/**
+ * 보관함에서 뉴스 삭제
+ * @param savedItemId 저장된 아이템 ID
+ * @returns 삭제 응답
+ */
+export async function deleteNewsFromStorage(
+  savedItemId: number
+): Promise<DeleteNewsFromStorageResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/storage/news/${savedItemId}`,
+    {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete news from storage: ${response.statusText}`);
+  }
+
+  return response.json();
+}

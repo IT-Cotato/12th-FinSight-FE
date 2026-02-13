@@ -1,32 +1,8 @@
 // 보관함(Storage) API 관련 함수들
 
+import { authenticatedFetch, getAuthHeaders } from "./auth";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || null;
-
-/**
- * 액세스 토큰을 가져옵니다.
- */
-function getAccessToken(): string | null {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("accessToken");
-  }
-  return null;
-}
-
-/**
- * API 요청을 위한 공통 헤더를 생성합니다.
- */
-function getAuthHeaders(): HeadersInit {
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-  };
-
-  const token = getAccessToken();
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  return headers;
-}
 
 export type StorageFolder = {
   folderId: number;
@@ -49,10 +25,12 @@ export type StorageFoldersResponse = {
 export async function getStorageFolders(type: string = "TERM"): Promise<StorageFoldersResponse> {
   const queryParams = new URLSearchParams({ type });
   
-  const response = await fetch(`${API_BASE_URL}/api/storage/folders?${queryParams.toString()}`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
+  const response = await authenticatedFetch(
+    `${API_BASE_URL}/api/storage/folders?${queryParams.toString()}`,
+    {
+      method: "GET",
+    }
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to fetch storage folders: ${response.statusText}`);
@@ -86,9 +64,8 @@ export async function createStorageFolder(
     folderName,
   };
 
-  const response = await fetch(`${API_BASE_URL}/api/storage/folders`, {
+  const response = await authenticatedFetch(`${API_BASE_URL}/api/storage/folders`, {
     method: "POST",
-    headers: getAuthHeaders(),
     body: JSON.stringify(requestBody),
   });
 
@@ -124,9 +101,8 @@ export async function saveTermToStorage(
     folderIds,
   };
 
-  const response = await fetch(`${API_BASE_URL}/api/storage/terms`, {
+  const response = await authenticatedFetch(`${API_BASE_URL}/api/storage/terms`, {
     method: "POST",
-    headers: getAuthHeaders(),
     body: JSON.stringify(requestBody),
   });
 
@@ -162,9 +138,8 @@ export async function saveNewsToStorage(
     folderIds,
   };
 
-  const response = await fetch(`${API_BASE_URL}/api/storage/news`, {
+  const response = await authenticatedFetch(`${API_BASE_URL}/api/storage/news`, {
     method: "POST",
-    headers: getAuthHeaders(),
     body: JSON.stringify(requestBody),
   });
 
@@ -192,11 +167,10 @@ export async function getStorageFoldersByItemId(
 ): Promise<StorageFoldersByItemResponse> {
   const queryParams = new URLSearchParams({ type });
   
-  const response = await fetch(
+  const response = await authenticatedFetch(
     `${API_BASE_URL}/api/storage/folders/items/${itemId}?${queryParams.toString()}`,
     {
       method: "GET",
-      headers: getAuthHeaders(),
     }
   );
 
@@ -254,9 +228,8 @@ export async function getStorageNews(
     queryParams.append("section", section);
   }
   
-  const response = await fetch(`${API_BASE_URL}/api/storage/news?${queryParams.toString()}`, {
+  const response = await authenticatedFetch(`${API_BASE_URL}/api/storage/news?${queryParams.toString()}`, {
     method: "GET",
-    headers: getAuthHeaders(),
   });
 
   if (!response.ok) {
@@ -279,16 +252,125 @@ export type DeleteNewsFromStorageResponse = {
 export async function deleteNewsFromStorage(
   savedItemId: number
 ): Promise<DeleteNewsFromStorageResponse> {
-  const response = await fetch(
+  const response = await authenticatedFetch(
     `${API_BASE_URL}/api/storage/news/${savedItemId}`,
     {
       method: "DELETE",
-      headers: getAuthHeaders(),
     }
   );
 
   if (!response.ok) {
     throw new Error(`Failed to delete news from storage: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+export type DeleteStorageFolderResponse = {
+  status: string;
+  message?: string;
+};
+
+/**
+ * 보관함 폴더 삭제
+ * @param folderId 폴더 ID
+ * @returns 삭제 응답
+ */
+export async function deleteStorageFolder(
+  folderId: number
+): Promise<DeleteStorageFolderResponse> {
+  const response = await authenticatedFetch(
+    `${API_BASE_URL}/api/storage/folders/${folderId}`,
+    {
+      method: "DELETE",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete storage folder: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+export type UpdateStorageFolderRequest = {
+  folderName: string;
+};
+
+export type UpdateStorageFolderResponse = {
+  status: string;
+  data: StorageFolder;
+};
+
+/**
+ * 보관함 폴더 수정
+ * @param folderId 폴더 ID
+ * @param folderName 새 폴더 이름
+ * @returns 수정된 폴더 응답
+ */
+export async function updateStorageFolder(
+  folderId: number,
+  folderName: string
+): Promise<UpdateStorageFolderResponse> {
+  const requestBody: UpdateStorageFolderRequest = {
+    folderName,
+  };
+
+  const response = await authenticatedFetch(
+    `${API_BASE_URL}/api/storage/folders/${folderId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(requestBody),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to update storage folder: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+export type StorageFolderOrderItem = {
+  folderId: number;
+  sortOrder: number;
+};
+
+export type UpdateStorageFolderOrderRequest = {
+  folderType: string;
+  folders: StorageFolderOrderItem[];
+};
+
+export type UpdateStorageFolderOrderResponse = {
+  status: string;
+  data: StorageFolder[];
+};
+
+/**
+ * 보관함 폴더 순서 업데이트
+ * @param folderType 폴더 타입 (TERM, NEWS)
+ * @param folders 폴더 순서 배열
+ * @returns 업데이트 응답
+ */
+export async function updateStorageFolderOrder(
+  folderType: string,
+  folders: StorageFolderOrderItem[]
+): Promise<UpdateStorageFolderOrderResponse> {
+  const requestBody: UpdateStorageFolderOrderRequest = {
+    folderType,
+    folders,
+  };
+
+  const response = await authenticatedFetch(
+    `${API_BASE_URL}/api/storage/folders/order`,
+    {
+      method: "PUT",
+      body: JSON.stringify(requestBody),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to update storage folder order: ${response.statusText}`);
   }
 
   return response.json();

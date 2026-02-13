@@ -35,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ko">
-      <body>
+      <body className="font-sans">
         <div id="app-shell">{children}</div>
       </body>
     </html>

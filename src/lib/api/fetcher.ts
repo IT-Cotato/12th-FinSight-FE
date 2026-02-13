@@ -21,9 +21,13 @@ export async function apiFetch<T>(
   if (!headers.get("content-type") && options.body)
     headers.set("content-type", "application/json");
 
-  if (options.token) headers.set("authorization", `Bearer ${options.token}`);
+  // 토큰 자동 주입
+  const token = options.token ?? getClientToken();
+  if (token) {
+    headers.set("authorization", `Bearer ${token}`);
+  }
 
-  const res = await fetch(url, { ...options, headers });
+  const res = await fetch(url, { ...options, headers, credentials: "include" });
 
   // 에러 처리
   const contentType = res.headers.get("content-type") ?? "";

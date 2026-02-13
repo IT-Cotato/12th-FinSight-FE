@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getWeeklyReport } from "@/lib/api/mypage";
+import {
+  getWeeklyReport,
+  getMyNotification,
+  updateMyNotification,
+} from "@/lib/api/mypage";
 import type { MyPageViewData, WeeklyReport } from "@/types/mypage";
 import ProfileHeader from "./ProfileHeader";
 import LevelProgress from "./LevelProgress";
@@ -30,6 +34,7 @@ export default function MyPageScreen({
   onWithdrawConfirm,
 }: Props) {
   const [notifyOn, setNotifyOn] = useState(true);
+  const [loadingNotify, setLoadingNotify] = useState(true);
 
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
@@ -54,6 +59,35 @@ export default function MyPageScreen({
       alive = false;
     };
   }, [weeksAgo]);
+
+  // 알림 설정 최초 조회
+  useEffect(() => {
+    (async () => {
+      try {
+        const enabled = await getMyNotification();
+        setNotifyOn(enabled);
+      } catch (e) {
+        console.error("알림 조회 실패", e);
+        setNotifyOn(false);
+      } finally {
+        setLoadingNotify(false);
+      }
+    })();
+  }, []);
+
+  async function handleToggleNotify(next: boolean) {
+    // UI 먼저 반영
+    setNotifyOn(next);
+
+    try {
+      await updateMyNotification(next);
+    } catch (e) {
+      console.error("알림 변경 실패", e);
+      // 실패 시 롤백
+      setNotifyOn(!next);
+      alert("알림 설정 변경에 실패했어요.");
+    }
+  }
 
   // 전 주
   const canGoPrev = report
@@ -109,7 +143,7 @@ export default function MyPageScreen({
 
       <SettingsSection
         notifyOn={notifyOn}
-        onToggleNotify={setNotifyOn}
+        onToggleNotify={handleToggleNotify}
         onGoChangePassword={onChangePassword}
         onLogout={() => setLogoutOpen(true)}
         onWithdraw={() => setWithdrawOpen(true)}

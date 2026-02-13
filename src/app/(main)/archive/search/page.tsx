@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/common/Header";
@@ -144,8 +144,8 @@ function Pagination({
 // 동적 렌더링 설정 (useSearchParams 사용으로 인해 필요)
 export const dynamic = 'force-dynamic';
 
-// 보관함 검색 페이지
-export default function ArchiveSearchPage() {
+// 보관함 검색 페이지 콘텐츠 (useSearchParams 사용)
+function ArchiveSearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [keyword, setKeyword] = useState("");
@@ -639,5 +639,20 @@ export default function ArchiveSearchPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// 보관함 검색 페이지 (Suspense로 감싸기)
+export default function ArchiveSearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col flex-1 min-h-0 bg-bg-100">
+        <div className="flex flex-1 items-center justify-center">
+          <p className="text-gray-400">로딩 중...</p>
+        </div>
+      </div>
+    }>
+      <ArchiveSearchContent />
+    </Suspense>
   );
 }

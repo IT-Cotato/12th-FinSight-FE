@@ -21,6 +21,9 @@ type NewCategoryBottomSheetProps = {
   onSelectCategory: (categoryId: number | null) => void;
   onAddNewCategory: () => void;
   itemId?: number; // 뉴스 ID 또는 단어 ID
+  folderType?: "NEWS" | "TERM"; // 폴더 타입
+  title?: string; // 바텀시트 제목
+  subtitle?: string; // 바텀시트 부제목
 };
 
 // 새 카테고리 생성 폼 컴포넌트
@@ -106,6 +109,8 @@ type CategorySelectListProps = {
   onAddNewCategory: () => void;
   loading?: boolean;
   savedFolderIds?: number[]; // 저장된 폴더 ID 목록
+  title?: string; // 바텀시트 제목
+  subtitle?: string; // 바텀시트 부제목
 };
 
 function CategorySelectList({
@@ -114,6 +119,8 @@ function CategorySelectList({
   onAddNewCategory,
   loading = false,
   savedFolderIds = [],
+  title = "카테고리 선택",
+  subtitle = "보관함에 저장할",
 }: CategorySelectListProps) {
   return (
     <div className="flex flex-col">
@@ -124,8 +131,10 @@ function CategorySelectList({
 
       {/* 헤더 */}
       <div className="px-5 pb-4">
-        <p className="text-sh5 text-gray-40 mb-1">보관함에 저장할</p>
-        <SheetTitle className="text-sh2 text-gray-10">카테고리 선택</SheetTitle>
+        {subtitle && subtitle.trim() !== "" && (
+          <p className="text-sh5 text-gray-40 mb-1">{subtitle}</p>
+        )}
+        <SheetTitle className="text-sh2 text-gray-10">{title}</SheetTitle>
       </div>
 
       {/* 카테고리 리스트 */}
@@ -210,6 +219,9 @@ export function NewCategoryBottomSheet({
   onSelectCategory,
   onAddNewCategory,
   itemId,
+  folderType = "NEWS",
+  title,
+  subtitle,
 }: NewCategoryBottomSheetProps) {
   const [isCreatingNewCategory, setIsCreatingNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -221,7 +233,7 @@ export function NewCategoryBottomSheet({
   const fetchFolders = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await getStorageFolders("NEWS");
+      const response = await getStorageFolders(folderType);
       const folderList: Category[] = response.data.map((folder: StorageFolder) => ({
         category_id: folder.folderId,
         name: folder.folderName,
@@ -234,7 +246,7 @@ export function NewCategoryBottomSheet({
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [folderType]);
 
   // 저장된 폴더 목록 조회 함수
   const fetchSavedFolders = useCallback(async () => {
@@ -244,14 +256,14 @@ export function NewCategoryBottomSheet({
     }
 
     try {
-      const response = await getStorageFoldersByItemId(itemId, "NEWS");
+      const response = await getStorageFoldersByItemId(itemId, folderType);
       const savedIds = response.data.map((folder: StorageFolder) => folder.folderId);
       setSavedFolderIds(savedIds);
     } catch (err) {
       console.warn("저장된 폴더 목록 조회 실패:", err);
       setSavedFolderIds([]);
     }
-  }, [itemId]);
+  }, [itemId, folderType]);
 
   // 바텀시트가 열릴 때 폴더 목록 및 저장된 폴더 목록 조회
   useEffect(() => {
@@ -287,7 +299,7 @@ export function NewCategoryBottomSheet({
     if (newCategoryName.trim()) {
       try {
         // 폴더 생성 API 호출
-        await createStorageFolder("NEWS", newCategoryName.trim());
+        await createStorageFolder(folderType, newCategoryName.trim());
         // 폴더 목록 다시 조회
         await fetchFolders();
         setIsCreatingNewCategory(false);
@@ -321,6 +333,8 @@ export function NewCategoryBottomSheet({
             onAddNewCategory={handleAddNewCategoryClick}
             loading={loading}
             savedFolderIds={savedFolderIds}
+            title={title}
+            subtitle={subtitle}
           />
         )}
       </SheetContent>

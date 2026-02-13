@@ -21,7 +21,7 @@ export function CategoryBar({
   onEditClick,
 }: CategoryBarProps) {
   return (
-    <div className="w-full overflow-x-auto pb-3 scrollbar-hide">
+    <div className="w-full overflow-x-auto scrollbar-hide">
       <div className="inline-flex items-center gap-2 py-[10px] pl-5 pr-0">
         {/* 수정 아이콘 */}
         <button

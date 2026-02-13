@@ -45,7 +45,7 @@ export default function AuthContainer({
         showBackButton={showBackButton}
       />
 
-      {totalSteps > 0 && (  // ✅ totalSteps가 0보다 클 때만 표시
+      {totalSteps > 0 && (  // totalSteps가 0보다 클 때만 표시
         <StepIndicator 
           currentStep={currentStep}
           totalSteps={totalSteps}
@@ -55,7 +55,7 @@ export default function AuthContainer({
       {/* 콘텐츠 영역 */}
       <div 
         style={{
-          marginTop: contentMarginTop,  // ✅ prop으로 받은 값 사용
+          marginTop: contentMarginTop,  // prop으로 받은 값 사용
           paddingLeft: '20px',
           paddingRight: '20px',
           flex: 1,

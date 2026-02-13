@@ -1,10 +1,15 @@
 "use client";
 
-import * as Dialog from "@radix-ui/react-dialog";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetClose,
+} from "@/components/ui/sheet";
 
 type Category = {
-  category_id: number;
+  category_id: number | null;
   name: string;
 };
 
@@ -21,28 +26,29 @@ export function CategoryEditBottomSheet({
   categories,
   onSave,
 }: CategoryEditBottomSheetProps) {
-  // "종합"(category_id: 0)을 제외한 카테고리만 편집
-  const editableCategories = categories.filter((cat) => cat.category_id !== 0);
+  // "종합"(category_id: null)을 제외한 카테고리만 편집
+  const editableCategories = categories.filter((cat) => cat.category_id !== null);
   const [editedCategories, setEditedCategories] = useState<Category[]>(editableCategories);
   const [isDragging, setIsDragging] = useState<number | null>(null);
   const [touchStartY, setTouchStartY] = useState<number | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // categories가 변경되면 editedCategories 업데이트
   useEffect(() => {
-    const filtered = categories.filter((cat) => cat.category_id !== 0);
+    const filtered = categories.filter((cat) => cat.category_id !== null);
     setEditedCategories(filtered);
   }, [categories]);
 
   // 초기화
   const handleReset = () => {
-    const filtered = categories.filter((cat) => cat.category_id !== 0);
+    const filtered = categories.filter((cat) => cat.category_id !== null);
     setEditedCategories(filtered);
   };
 
   // 저장 - "종합"을 맨 앞에 추가
   const handleSave = () => {
-    const generalCategory = categories.find((cat) => cat.category_id === 0);
+    const generalCategory = categories.find((cat) => cat.category_id === null);
     const finalCategories = generalCategory
       ? [generalCategory, ...editedCategories]
       : editedCategories;
@@ -58,98 +64,112 @@ export function CategoryEditBottomSheet({
     setIsDragging(index);
   };
 
-  // 터치 이동 (모바일)
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (draggedIndex === null) return;
-    e.preventDefault();
+  // 터치 이동 (모바일) - passive 이벤트 리스너로 직접 등록
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
 
-    const touch = e.touches[0];
-    const currentY = touch.clientY;
+    const handleTouchMove = (e: TouchEvent) => {
+      if (draggedIndex === null) return;
+      e.preventDefault();
 
-    // 모든 아이템 요소 가져오기
-    const allItems = document.querySelectorAll('[data-category-item]');
-    let targetIndex = draggedIndex;
+      const touch = e.touches[0];
+      const currentY = touch.clientY;
 
-    // 터치 위치에 해당하는 아이템 찾기
-    for (let idx = 0; idx < allItems.length; idx++) {
-      if (idx === draggedIndex) continue;
-      
-      const rect = allItems[idx].getBoundingClientRect();
-      
-      // 터치 위치가 이 아이템 영역 안에 있는지 확인
-      if (currentY >= rect.top && currentY <= rect.bottom) {
-        const itemCenterY = rect.top + rect.height / 2;
-        // 아이템의 위쪽 절반이면 그 위에, 아래쪽 절반이면 그 아래에 배치
-        targetIndex = currentY < itemCenterY ? idx : idx + 1;
-        break;
+      // 모든 아이템 요소 가져오기
+      const allItems = container.querySelectorAll('[data-category-item]');
+      let targetIndex = draggedIndex;
+
+      // 터치 위치에 해당하는 아이템 찾기
+      for (let idx = 0; idx < allItems.length; idx++) {
+        if (idx === draggedIndex) continue;
+        
+        const rect = allItems[idx].getBoundingClientRect();
+        
+        // 터치 위치가 이 아이템 영역 안에 있는지 확인
+        if (currentY >= rect.top && currentY <= rect.bottom) {
+          const itemCenterY = rect.top + rect.height / 2;
+          // 아이템의 위쪽 절반이면 그 위에, 아래쪽 절반이면 그 아래에 배치
+          targetIndex = currentY < itemCenterY ? idx : idx + 1;
+          break;
+        }
       }
-    }
 
-    // 배열 범위 체크
-    if (targetIndex < 0) targetIndex = 0;
-    if (targetIndex > editedCategories.length - 1) targetIndex = editedCategories.length - 1;
+      // 배열 범위 체크
+      if (targetIndex < 0) targetIndex = 0;
+      if (targetIndex > editedCategories.length - 1) targetIndex = editedCategories.length - 1;
 
-    // 위치가 변경되었으면 배열 재정렬
-    if (targetIndex !== draggedIndex) {
-      const newCategories = [...editedCategories];
-      const draggedItem = newCategories[draggedIndex];
-      newCategories.splice(draggedIndex, 1);
-      newCategories.splice(targetIndex, 0, draggedItem);
-      setEditedCategories(newCategories);
-      setDraggedIndex(targetIndex);
-    }
-  };
+      // 위치가 변경되었으면 배열 재정렬
+      if (targetIndex !== draggedIndex) {
+        setEditedCategories((prev) => {
+          const newCategories = [...prev];
+          const draggedItem = newCategories[draggedIndex];
+          newCategories.splice(draggedIndex, 1);
+          newCategories.splice(targetIndex, 0, draggedItem);
+          return newCategories;
+        });
+        setDraggedIndex(targetIndex);
+      }
+    };
 
-  // 터치 종료 (모바일)
-  const handleTouchEnd = () => {
-    setTouchStartY(null);
-    setDraggedIndex(null);
-    setIsDragging(null);
-  };
+    const handleTouchEnd = () => {
+      setTouchStartY(null);
+      setDraggedIndex(null);
+      setIsDragging(null);
+    };
+
+    // passive: false로 이벤트 리스너 등록
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [draggedIndex, editedCategories.length]);
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50 z-50 data-[state=open]:animate-[fade-in_200ms_ease-out] data-[state=closed]:animate-[fade-out_200ms_ease-in]" />
-        <Dialog.Content className="fixed bottom-0 left-0 right-0 z-50 bg-bg-90 rounded-t-[20px] border-t-2 border-bg-80 shadow-[0_0_20px_0_rgba(11,11,11,0.70)] safe-area-inset-bottom data-[state=open]:animate-[slide-up_300ms_ease-out] data-[state=closed]:animate-[slide-down_250ms_ease-in]">
-          <div className="flex flex-col max-h-[150vh]">
-            {/* 헤더 */}
-            <div className="flex items-center justify-between px-5 pt-10 pb-5">
-              <Dialog.Title className="text-sh3 text-gray-10">
-                카테고리 순서 선택
-              </Dialog.Title>
-              <Dialog.Close asChild>
-                <button
-                  className="flex items-center justify-center w-5 h-5"
-                  aria-label="닫기"
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="bottom"
+        className="w-full max-w-[420px] left-auto right-auto border-t-2 border-bg-80 shadow-[0_0_20px_0_rgba(11,11,11,0.70)] pb-[safe-area-inset-bottom] p-0 rounded-t-[20px]"
+      >
+        <div className="flex flex-col max-h-[150vh]">
+          {/* 헤더 */}
+          <div className="flex items-center justify-between px-5 pt-10 pb-5">
+            <SheetTitle className="text-sh3 text-gray-10">
+              카테고리 순서 선택
+            </SheetTitle>
+            <SheetClose asChild>
+              <button
+                className="flex items-center justify-center w-5 h-5"
+                aria-label="닫기"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                  >
-                    <path
-                      d="M5 5L15 15M15 5L5 15"
-                      stroke="#D5D9E4"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </button>
-              </Dialog.Close>
-            </div>
+                  <path
+                    d="M5 5L15 15M15 5L5 15"
+                    stroke="#D5D9E4"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            </SheetClose>
+          </div>
 
             {/* 카테고리 목록 */}
-            <div className="flex flex-col">
+            <div ref={containerRef} className="flex flex-col">
                 {editedCategories.map((category, index) => (
                   <div
                     key={category.category_id}
                     data-category-item
                     onTouchStart={(e) => handleTouchStart(e, index)}
-                    onTouchMove={handleTouchMove}
-                    onTouchEnd={handleTouchEnd}
                     className={`flex items-center justify-between px-5 py-[14px] select-none ${
                       isDragging === index ? "opacity-50" : ""
                     }`}
@@ -183,9 +203,8 @@ export function CategoryEditBottomSheet({
                 저장하기
               </button>
             </div>
-          </div>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }

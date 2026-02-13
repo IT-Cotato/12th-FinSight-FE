@@ -3,7 +3,7 @@
 import Image from "next/image";
 
 type Category = {
-  category_id: number;
+  category_id: number | null;
   name: string;
 };
 
@@ -21,7 +21,7 @@ export function CategoryBar({
   onEditClick,
 }: CategoryBarProps) {
   return (
-    <div className="w-full overflow-x-auto pb-3 scrollbar-hide">
+    <div className="w-full overflow-x-auto scrollbar-hide">
       <div className="inline-flex items-center gap-2 py-[10px] pl-5 pr-0">
         {/* 수정 아이콘 */}
         <button
@@ -42,9 +42,9 @@ export function CategoryBar({
           const isSelected = category.category_id === selectedCategoryId;
           return (
             <button
-              key={category.category_id}
+              key={category.category_id ?? "all"}
               onClick={() => onCategoryChange(category.category_id)}
-              className={`flex-shrink-0 flex items-center justify-center px-[15px] py-[6px] rounded-[16px] gap-[10px] text-b3 transition-colors ${
+              className={`flex-shrink-0 flex items-center justify-center px-[15px] py-[6px] rounded-[16px] gap-[10px] text-b3 text-gray-10 transition-colors ${
                 isSelected
                   ? "bg-primary-50 border border-primary-40"
                   : "bg-bg-70 border border-bg-60"

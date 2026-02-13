@@ -7,10 +7,11 @@ import { Header } from "@/components/common/Header";
 import { CategoryBar } from "@/components/study/CategoryBar";
 import { ArchiveSortDropdown } from "@/components/archive/ArchiveSortDropdown";
 import { getCategoryOrder, type CategoryOrderItem } from "@/lib/api/user";
-import { getStorageFolders, getStorageNews, deleteNewsFromStorage, saveNewsToStorage, type StorageFolder, type StorageNewsItem } from "@/lib/api/storage";
+import { getStorageFolders, getStorageNews, deleteNewsFromStorage, saveNewsToStorage, deleteStorageFolder, updateStorageFolder, updateStorageFolderOrder, type StorageFolder, type StorageNewsItem } from "@/lib/api/storage";
 import { ArchiveNewsCard } from "@/components/archive/ArchiveNewsCard";
 import { ArchiveNewsMenuBottomSheet } from "@/components/archive/ArchiveNewsMenuBottomSheet";
 import { DeleteConfirmDialog } from "@/components/archive/DeleteConfirmDialog";
+import { ArchiveCategoryEditBottomSheet } from "@/components/archive/ArchiveCategoryEditBottomSheet";
 import { NewCategoryBottomSheet } from "@/components/study/NewCategoryBottomSheet";
 
 type TabType = "news" | "terms";
@@ -49,6 +50,7 @@ export default function ArchivePage() {
   const [isMenuBottomSheetOpen, setIsMenuBottomSheetOpen] = useState(false);
   const [isEditBottomSheetOpen, setIsEditBottomSheetOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isCategoryEditBottomSheetOpen, setIsCategoryEditBottomSheetOpen] = useState(false);
   const [selectedSavedItemId, setSelectedSavedItemId] = useState<number | null>(null);
   const [selectedNewsId, setSelectedNewsId] = useState<number | null>(null);
 
@@ -177,7 +179,90 @@ export default function ArchivePage() {
   };
 
   const handleFilterClick = () => {
-    // 필터 기능 구현 (나중에 추가)
+    setIsCategoryEditBottomSheetOpen(true);
+  };
+
+  const handleAddNewCategoryFromEdit = async () => {
+    // 새 카테고리 생성 후 폴더 목록 다시 조회
+    const folderType = activeTab === "news" ? "NEWS" : "TERM";
+    try {
+      const response = await getStorageFolders(folderType);
+      const folderList: Category[] = response.data.map((folder: StorageFolder) => ({
+        category_id: folder.folderId,
+        name: folder.folderName,
+      }));
+      setFolders(folderList);
+    } catch (err) {
+      console.warn("폴더 목록 조회 실패:", err);
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId: number) => {
+    try {
+      // 폴더 삭제 API 호출
+      await deleteStorageFolder(categoryId);
+      
+      // 삭제 후 폴더 목록 다시 조회
+      const folderType = activeTab === "news" ? "NEWS" : "TERM";
+      const response = await getStorageFolders(folderType);
+      const folderList: Category[] = response.data.map((folder: StorageFolder) => ({
+        category_id: folder.folderId,
+        name: folder.folderName,
+      }));
+      setFolders(folderList);
+      
+      // 삭제된 폴더가 현재 선택된 폴더인 경우 선택 해제
+      if (selectedCategoryId === categoryId) {
+        setSelectedCategoryId(null);
+        setNewsList([]);
+      }
+    } catch (err) {
+      console.error("폴더 삭제 실패:", err);
+    }
+  };
+
+  const handleEditCategoryName = async (categoryId: number, newName: string) => {
+    try {
+      // 폴더 이름 수정 API 호출
+      await updateStorageFolder(categoryId, newName);
+      
+      // 수정 후 폴더 목록 다시 조회
+      const folderType = activeTab === "news" ? "NEWS" : "TERM";
+      const response = await getStorageFolders(folderType);
+      const folderList: Category[] = response.data.map((folder: StorageFolder) => ({
+        category_id: folder.folderId,
+        name: folder.folderName,
+      }));
+      setFolders(folderList);
+    } catch (err) {
+      console.error("폴더 이름 수정 실패:", err);
+    }
+  };
+
+  const handleSaveCategoryOrder = async (categories: Category[]) => {
+    const folderType = activeTab === "news" ? "NEWS" : "TERM";
+    
+    try {
+      // "기본" 폴더를 제외한 카테고리만 folders 배열로 변환
+      const folders = categories
+        .filter((cat): cat is Category & { category_id: number } => cat.category_id !== null)
+        .map((cat, index) => ({
+          folderId: cat.category_id,
+          sortOrder: index + 1, // 1부터 시작하는 순서
+        }));
+
+      // 폴더 순서 저장 API 호출
+      const response = await updateStorageFolderOrder(folderType, folders);
+
+      // 응답으로 받은 폴더 목록으로 업데이트
+      const folderList: Category[] = response.data.map((folder: StorageFolder) => ({
+        category_id: folder.folderId,
+        name: folder.folderName,
+      }));
+      setFolders(folderList);
+    } catch (err) {
+      console.error("폴더 순서 저장 실패:", err);
+    }
   };
 
   const handleSortCategoryChange = (categoryId: number | null) => {
@@ -371,6 +456,18 @@ export default function ArchivePage() {
           </div>
         </div>
       )}
+
+      {/* 카테고리 편집 바텀시트 */}
+      <ArchiveCategoryEditBottomSheet
+        open={isCategoryEditBottomSheetOpen}
+        onOpenChange={setIsCategoryEditBottomSheetOpen}
+        categories={folders}
+        onAddNewCategory={handleAddNewCategoryFromEdit}
+        onDeleteCategory={handleDeleteCategory}
+        onEditCategory={handleEditCategoryName}
+        onSave={handleSaveCategoryOrder}
+        folderType={activeTab === "news" ? "NEWS" : "TERM"}
+      />
 
       {/* 뉴스 메뉴 바텀시트 */}
       <ArchiveNewsMenuBottomSheet

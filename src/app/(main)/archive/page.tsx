@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/common/Header";
@@ -89,6 +89,32 @@ export default function ArchivePage() {
     fetchCategoryOrder();
   }, []);
 
+  // 폴더 선택 시 해당 폴더의 뉴스 조회
+  const fetchStorageNews = useCallback(async (folderId: number | null, page: number = 1) => {
+    if (!folderId || activeTab !== "news") {
+      setNewsList([]);
+      return;
+    }
+
+    try {
+      setLoadingNews(true);
+      const response = await getStorageNews({
+        folderId,
+        page,
+        size: 4,
+      });
+      
+      setNewsList(response.data.news);
+      setTotalPages(response.data.totalPages);
+      setCurrentPage(response.data.currentPage);
+    } catch (err) {
+      console.error("보관함 뉴스 조회 실패:", err);
+      setNewsList([]);
+    } finally {
+      setLoadingNews(false);
+    }
+  }, [activeTab]);
+
   // 폴더 목록 조회 - 탭에 따라 다른 타입으로 조회
   useEffect(() => {
     const fetchFolders = async () => {
@@ -104,54 +130,39 @@ export default function ArchivePage() {
         }));
         
         setFolders(folderList);
+        
+        // "기본" 폴더 찾아서 선택
+        const defaultFolder = folderList.find((folder) => folder.name === "기본");
+        if (defaultFolder && defaultFolder.category_id !== null) {
+          setSelectedCategoryId(defaultFolder.category_id);
+          // 뉴스 탭이고 기본 폴더가 있으면 해당 폴더의 뉴스 조회
+          if (activeTab === "news") {
+            fetchStorageNews(defaultFolder.category_id, 1);
+          }
+        } else {
+          setSelectedCategoryId(null);
+        }
       } catch (err) {
         console.warn("폴더 목록 조회 실패:", err);
         setFolders([]);
+        setSelectedCategoryId(null);
       } finally {
         setLoadingFolders(false);
       }
     };
 
     fetchFolders();
-    // 탭 변경 시 선택된 폴더 초기화
-    setSelectedCategoryId(null);
-  }, [activeTab]);
+  }, [activeTab, fetchStorageNews]);
 
   const handleSearchClick = () => {
     router.push("/study/search");
-  };
-
-  // 폴더 선택 시 해당 폴더의 뉴스 조회
-  const fetchStorageNews = async (folderId: number | null) => {
-    if (!folderId || activeTab !== "news") {
-      setNewsList([]);
-      return;
-    }
-
-    try {
-      setLoadingNews(true);
-      const response = await getStorageNews({
-        folderId,
-        page: currentPage,
-        size: 4,
-      });
-      
-      setNewsList(response.data.news);
-      setTotalPages(response.data.totalPages);
-      setCurrentPage(response.data.currentPage);
-    } catch (err) {
-      console.error("보관함 뉴스 조회 실패:", err);
-      setNewsList([]);
-    } finally {
-      setLoadingNews(false);
-    }
   };
 
   const handleCategoryChange = (categoryId: number | null) => {
     setSelectedCategoryId(categoryId);
     setCurrentPage(1); // 폴더 변경 시 페이지 초기화
     if (activeTab === "news" && categoryId !== null) {
-      fetchStorageNews(categoryId);
+      fetchStorageNews(categoryId, 1);
     } else {
       setNewsList([]);
     }

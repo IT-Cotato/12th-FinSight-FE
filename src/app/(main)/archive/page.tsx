@@ -196,14 +196,18 @@ export default function ArchivePage() {
   }, [activeTab, fetchStorageNews, fetchStorageTerms]);
 
   const handleSearchClick = () => {
-    // 선택한 폴더 ID를 쿼리 파라미터로 전달
+    // 선택한 폴더 ID와 현재 탭을 쿼리 파라미터로 전달
     const folderId = selectedCategoryId;
-    console.log("검색 페이지로 이동 - 선택한 폴더 ID:", folderId);
+    const tab = activeTab;
+    console.log("검색 페이지로 이동 - 선택한 폴더 ID:", folderId, "탭:", tab);
+    
+    const params = new URLSearchParams();
     if (folderId !== null) {
-      router.push(`/archive/search?folderId=${folderId}`);
-    } else {
-      router.push("/archive/search");
+      params.set("folderId", folderId.toString());
     }
+    params.set("tab", tab);
+    
+    router.push(`/archive/search?${params.toString()}`);
   };
 
   const handleCategoryChange = (categoryId: number | null) => {

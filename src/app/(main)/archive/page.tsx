@@ -165,10 +165,18 @@ export default function ArchivePage() {
   }, [activeTab, fetchStorageNews]);
 
   const handleSearchClick = () => {
-    router.push("/study/search");
+    // 선택한 폴더 ID를 쿼리 파라미터로 전달
+    const folderId = selectedCategoryId;
+    console.log("검색 페이지로 이동 - 선택한 폴더 ID:", folderId);
+    if (folderId !== null) {
+      router.push(`/archive/search?folderId=${folderId}`);
+    } else {
+      router.push("/archive/search");
+    }
   };
 
   const handleCategoryChange = (categoryId: number | null) => {
+    console.log("카테고리바에서 폴더 선택:", { categoryId, folderName: folders.find(f => f.category_id === categoryId)?.name });
     setSelectedCategoryId(categoryId);
     setCurrentPage(1); // 폴더 변경 시 페이지 초기화
     if (activeTab === "news" && categoryId !== null) {

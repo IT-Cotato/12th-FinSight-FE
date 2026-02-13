@@ -141,6 +141,9 @@ function Pagination({
   );
 }
 
+// 동적 렌더링 설정 (useSearchParams 사용으로 인해 필요)
+export const dynamic = 'force-dynamic';
+
 // 보관함 검색 페이지
 export default function ArchiveSearchPage() {
   const router = useRouter();

@@ -45,8 +45,8 @@ export default function ScoreGuidePage() {
 
             <ul className="mt-4 list-disc pl-5 text-b1  text-gray-40">
               <li>
-                한 문제당 10점, 3문제를 모두 맞히면 보너스 +20점이
-                <br /> 추가돼요.
+                한 문제당 10점, 3문제를 모두 맞히면 보너스 +20점
+                <br />이 추가돼요.
               </li>
               <li>세트 하나의 최대 점수는 50점이에요.</li>
               <li>

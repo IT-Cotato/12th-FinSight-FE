@@ -6,9 +6,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/common/Header";
 import { CategoryBar } from "@/components/study/CategoryBar";
 import { ArchiveNewsCard } from "@/components/archive/ArchiveNewsCard";
+import { ArchiveTermCard } from "@/components/archive/ArchiveTermCard";
 import { ArchiveSortDropdown } from "@/components/archive/ArchiveSortDropdown";
 import { getCategoryOrder } from "@/lib/api/user";
-import { getStorageFolders, searchStorageNews, type StorageNewsSearchItem } from "@/lib/api/storage";
+import { getStorageFolders, searchStorageNews, searchStorageTerms, type StorageNewsSearchItem, type StorageTermsSearchItem } from "@/lib/api/storage";
 
 type TabType = "news" | "terms";
 
@@ -148,6 +149,7 @@ export default function ArchiveSearchPage() {
   const [searched, setSearched] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>("news");
   const [newsList, setNewsList] = useState<StorageNewsSearchItem[]>([]);
+  const [termsList, setTermsList] = useState<StorageTermsSearchItem[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -158,8 +160,16 @@ export default function ArchiveSearchPage() {
   const [categoryMapping, setCategoryMapping] = useState<Map<string, string>>(new Map());
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
 
-  // URL 쿼리 파라미터에서 폴더 ID 읽기 (최우선)
+  // URL 쿼리 파라미터에서 폴더 ID와 탭 읽기
   const urlFolderId = searchParams.get("folderId") ? parseInt(searchParams.get("folderId")!, 10) : null;
+  const urlTab = searchParams.get("tab") as TabType | null;
+  
+  // URL에서 받은 탭으로 초기 activeTab 설정
+  useEffect(() => {
+    if (urlTab === "news" || urlTab === "terms") {
+      setActiveTab(urlTab);
+    }
+  }, [urlTab]);
   
   useEffect(() => {
     if (urlFolderId && !isNaN(urlFolderId)) {
@@ -280,48 +290,59 @@ export default function ArchiveSearchPage() {
       }, 500);
       return;
     }
-    
-    if (activeTab !== "news") {
-      return;
-    }
 
     const searchParams = {
       folderId: folderIdToSearch,
       q: keyword.trim(),
       page: 1,
-      size: 12,
+      size: activeTab === "news" ? 12 : 10,
     };
-
-    console.log("보관함 검색 요청:", {
-      url: `/api/storage/news/search`,
-      params: searchParams,
-      selectedFolderId,
-      defaultFolderId,
-      folderIdToSearch,
-      "사용된 폴더 ID": folderIdToSearch,
-      "선택된 폴더": selectedFolderId ? "사용자 선택" : (defaultFolderId ? "기본 폴더" : "없음"),
-    });
 
     try {
       setLoading(true);
       setSearched(true);
       setCurrentPage(1);
 
-      const response = await searchStorageNews(searchParams);
+      if (activeTab === "news") {
+        console.log("보관함 뉴스 검색 요청:", {
+          url: `/api/storage/news/search`,
+          params: searchParams,
+        });
 
-      console.log("보관함 검색 응답:", {
-        newsCount: response.data.news.length,
-        totalPages: response.data.totalPages,
-        currentPage: response.data.currentPage,
-        totalElements: response.data.totalElements,
-        hasNext: response.data.hasNext,
-      });
+        const response = await searchStorageNews(searchParams);
 
-      setNewsList(response.data.news);
-      setTotalPages(response.data.totalPages);
+        console.log("보관함 뉴스 검색 응답:", {
+          newsCount: response.data.news.length,
+          totalPages: response.data.totalPages,
+        });
+
+        setNewsList(response.data.news);
+        setTotalPages(response.data.totalPages);
+        setTermsList([]);
+      } else {
+        console.log("보관함 용어 검색 요청:", {
+          url: `/api/storage/terms/search`,
+          params: searchParams,
+        });
+
+        const response = await searchStorageTerms(searchParams);
+
+        console.log("보관함 용어 검색 응답:", {
+          termsCount: response.data.terms.length,
+          totalPages: response.data.totalPages,
+        });
+
+        setTermsList(response.data.terms);
+        setTotalPages(response.data.totalPages);
+        setNewsList([]);
+      }
     } catch (err) {
       console.error("검색 실패:", err);
-      setNewsList([]);
+      if (activeTab === "news") {
+        setNewsList([]);
+      } else {
+        setTermsList([]);
+      }
       setTotalPages(1);
     } finally {
       setLoading(false);
@@ -336,7 +357,7 @@ export default function ArchiveSearchPage() {
     const folderIdToSearch = (urlFolderId && !isNaN(urlFolderId)) 
       ? urlFolderId 
       : (selectedFolderId ?? defaultFolderId);
-    if (!folderIdToSearch || activeTab !== "news") {
+    if (!folderIdToSearch) {
       return;
     }
 
@@ -344,28 +365,23 @@ export default function ArchiveSearchPage() {
       folderId: folderIdToSearch,
       q: keyword.trim(),
       page,
-      size: 12,
+      size: activeTab === "news" ? 12 : 10,
     };
-
-    console.log("보관함 검색 페이지 변경 요청:", {
-      url: `/api/storage/news/search`,
-      params: searchParams,
-    });
 
     try {
       setLoading(true);
 
-      const response = await searchStorageNews(searchParams);
+      if (activeTab === "news") {
+        const response = await searchStorageNews(searchParams);
+        setNewsList(response.data.news);
+        setTotalPages(response.data.totalPages);
+      } else {
+        const response = await searchStorageTerms(searchParams);
+        setTermsList(response.data.terms);
+        setTotalPages(response.data.totalPages);
+      }
 
-      console.log("보관함 검색 페이지 변경 응답:", {
-        newsCount: response.data.news.length,
-        totalPages: response.data.totalPages,
-        currentPage: response.data.currentPage,
-      });
-
-      setNewsList(response.data.news);
       setCurrentPage(page);
-      setTotalPages(response.data.totalPages);
 
       // 페이지 상단으로 스크롤
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -378,7 +394,7 @@ export default function ArchiveSearchPage() {
 
   // 폴더 변경 시 재검색
   useEffect(() => {
-    if (searched && keyword.trim() && activeTab === "news") {
+    if (searched && keyword.trim()) {
       // URL에서 받은 폴더 ID > selectedFolderId > defaultFolderId 순서로 우선순위
       const folderIdToSearch = (urlFolderId && !isNaN(urlFolderId)) 
         ? urlFolderId 
@@ -391,40 +407,32 @@ export default function ArchiveSearchPage() {
         folderId: folderIdToSearch,
         q: keyword.trim(),
         page: 1,
-        size: 12,
+        size: activeTab === "news" ? 12 : 10,
       };
-
-      console.log("보관함 검색 요청 (폴더 변경):", {
-        url: `/api/storage/news/search`,
-        params: searchParams,
-        urlFolderId,
-        selectedFolderId,
-        defaultFolderId,
-        folderIdToSearch,
-        "사용된 폴더 ID": folderIdToSearch,
-        "선택된 폴더": urlFolderId ? "URL에서 받음" : (selectedFolderId ? "사용자 선택" : (defaultFolderId ? "기본 폴더" : "없음")),
-      });
 
       const performSearch = async () => {
         try {
           setLoading(true);
           setCurrentPage(1);
 
-          const response = await searchStorageNews(searchParams);
-
-          console.log("보관함 검색 응답 (폴더 변경):", {
-            newsCount: response.data.news.length,
-            totalPages: response.data.totalPages,
-            currentPage: response.data.currentPage,
-            totalElements: response.data.totalElements,
-            hasNext: response.data.hasNext,
-          });
-
-          setNewsList(response.data.news);
-          setTotalPages(response.data.totalPages);
+          if (activeTab === "news") {
+            const response = await searchStorageNews(searchParams);
+            setNewsList(response.data.news);
+            setTotalPages(response.data.totalPages);
+            setTermsList([]);
+          } else {
+            const response = await searchStorageTerms(searchParams);
+            setTermsList(response.data.terms);
+            setTotalPages(response.data.totalPages);
+            setNewsList([]);
+          }
         } catch (err) {
           console.error("검색 실패:", err);
-          setNewsList([]);
+          if (activeTab === "news") {
+            setNewsList([]);
+          } else {
+            setTermsList([]);
+          }
           setTotalPages(1);
         } finally {
           setLoading(false);
@@ -433,7 +441,7 @@ export default function ArchiveSearchPage() {
 
       performSearch();
     }
-  }, [selectedFolderId, activeTab, keyword, searched, defaultFolderId]);
+  }, [selectedFolderId, activeTab, keyword, searched, defaultFolderId, urlFolderId]);
 
   const handleFolderChange = (folderId: number | null) => {
     console.log("폴더 변경:", { folderId, selectedFolderId, defaultFolderId });
@@ -475,7 +483,7 @@ export default function ArchiveSearchPage() {
       />
 
       {/* 탭 (뉴스/용어) - 검색 결과가 있을 때만 표시 */}
-      {searched && newsList.length > 0 && (
+      {searched && (newsList.length > 0 || termsList.length > 0) && (
         <div className="flex border-b border-bg-50 px-5">
           <button
             onClick={() => setActiveTab("news")}
@@ -501,7 +509,7 @@ export default function ArchiveSearchPage() {
       )}
 
       {/* 카테고리 바 및 정렬 */}
-      {searched && newsList.length > 0 && (
+      {searched && (newsList.length > 0 || termsList.length > 0) && (
         <>
           {/* 보관함 카테고리바 */}
           <CategoryBar
@@ -527,19 +535,19 @@ export default function ArchiveSearchPage() {
           </div>
         )}
 
-        {loading && newsList.length === 0 && (
+        {loading && newsList.length === 0 && termsList.length === 0 && (
           <div className="flex flex-1 items-center justify-center">
             <p className="text-gray-400">검색 중...</p>
           </div>
         )}
 
-        {searched && !loading && newsList.length === 0 && (
+        {searched && !loading && newsList.length === 0 && termsList.length === 0 && (
           <div className="flex flex-1 items-center justify-center">
             <SearchNoResult />
           </div>
         )}
 
-        {searched && newsList.length > 0 && (
+        {searched && activeTab === "news" && newsList.length > 0 && (
           <>
             <div className="flex-1 overflow-y-auto px-5 py-4">
               <div className="grid grid-cols-2 gap-4">
@@ -552,6 +560,66 @@ export default function ArchiveSearchPage() {
                     category={getCategoryName(news.category)}
                     href={`/study/${news.newsId}`}
                   />
+                ))}
+              </div>
+            </div>
+
+            {/* 페이지네이션 */}
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            )}
+          </>
+        )}
+
+        {searched && activeTab === "terms" && termsList.length > 0 && (
+          <>
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              <div className="flex flex-col gap-4">
+                {termsList.map((term) => (
+                  <div
+                    key={term.savedItemId}
+                    className="w-full bg-bg-80 rounded-lg p-5 flex flex-col gap-4"
+                  >
+                    {/* 용어 제목과 메뉴 */}
+                    <div className="flex items-start justify-between gap-2">
+                      <h3 className="text-sh5 text-gray-10 flex-1 break-words">
+                        {term.term}
+                      </h3>
+                      <button
+                        className="flex flex-col gap-[2px] p-1 flex-shrink-0"
+                        aria-label="메뉴"
+                      >
+                        <div className="w-[3px] h-[3px] bg-bg-30 rounded-full" />
+                        <div className="w-[3px] h-[3px] bg-bg-30 rounded-full" />
+                        <div className="w-[3px] h-[3px] bg-bg-30 rounded-full" />
+                      </button>
+                    </div>
+
+                    {/* 용어 설명 */}
+                    <p className="text-b3 text-gray-20 leading-relaxed break-words">
+                      {term.description}
+                    </p>
+
+                    {/* 이 용어가 들어간 뉴스 검색 버튼 */}
+                    <button
+                      onClick={() => {
+                        router.push(`/study/search?q=${encodeURIComponent(term.term)}`);
+                      }}
+                      className="w-full flex items-center justify-center gap-2 px-[10px] py-[8px] text-b2 text-gray-30 rounded-[8px] bg-bg-70"
+                    >
+                      <Image
+                        src="/study/img-insight.png"
+                        alt="검색"
+                        width={16}
+                        height={16}
+                      />
+                      <span>이 용어가 들어간 뉴스 검색</span>
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>

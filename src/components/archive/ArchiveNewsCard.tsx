@@ -9,6 +9,7 @@ type ArchiveNewsCardProps = {
   thumbnailUrl: string;
   category: string;
   href: string;
+  onMenuClick?: (e: React.MouseEvent) => void;
 };
 
 export function ArchiveNewsCard({
@@ -17,7 +18,14 @@ export function ArchiveNewsCard({
   thumbnailUrl,
   category,
   href,
+  onMenuClick,
 }: ArchiveNewsCardProps) {
+  const handleMenuClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onMenuClick?.(e);
+  };
+
   return (
     <Link href={href} className="block">
       <div className="w-40 h-44 relative bg-bg-100 overflow-hidden rounded-lg">
@@ -30,11 +38,15 @@ export function ArchiveNewsCard({
             className="object-cover"
           />
           {/* 더보기 메뉴 아이콘 (점 3개) */}
-          <div className="absolute right-2 top-2.5 flex flex-col gap-[2px]">
-            <div className="w-[3px] h-[3px] bg-bg-50 rounded-full" />
-            <div className="w-[3px] h-[3px] bg-bg-50 rounded-full" />
-            <div className="w-[3px] h-[3px] bg-bg-50 rounded-full" />
-          </div>
+          <button
+            onClick={handleMenuClick}
+            className="absolute right-2 top-2.5 flex flex-col gap-[2px] p-1"
+            aria-label="메뉴"
+          >
+            <div className="w-[3px] h-[3px] bg-bg-30 rounded-full" />
+            <div className="w-[3px] h-[3px] bg-bg-30 rounded-full" />
+            <div className="w-[3px] h-[3px] bg-bg-30 rounded-full" />
+          </button>
         </div>
 
         {/* 제목 */}

@@ -7,6 +7,8 @@ type DeleteConfirmDialogProps = {
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   onCancel: () => void;
+  title?: string;
+  description?: string;
 };
 
 export function DeleteConfirmDialog({
@@ -14,6 +16,8 @@ export function DeleteConfirmDialog({
   onOpenChange,
   onConfirm,
   onCancel,
+  title = "카테고리에서 삭제할까요?",
+  description = "카테고리에서 뉴스를 삭제하면\n삭제한 뉴스는 복구할 수 없어요.",
 }: DeleteConfirmDialogProps) {
   const handleCancel = () => {
     onCancel();
@@ -46,13 +50,11 @@ export function DeleteConfirmDialog({
           "
         >
           <Dialog.Title className="text-center text-h3 text-gray-10">
-            카테고리에서 삭제할까요?
+            {title}
           </Dialog.Title>
 
-          <Dialog.Description className="mt-3 text-center text-b4 text-gray-40">
-            카테고리에서 뉴스를 삭제하면
-            <br />
-            삭제한 뉴스는 복구할 수 없어요.
+          <Dialog.Description className="mt-3 text-center text-b4 text-gray-40 whitespace-pre-line">
+            {description}
           </Dialog.Description>
 
           <div className="mt-6 flex gap-3 justify-center">

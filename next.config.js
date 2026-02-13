@@ -4,18 +4,16 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'imgnews.pstatic.net', // 기존 도메인
-        port: '',
-        pathname: '/**',
+        hostname: 'imgnews.pstatic.net',
       },
       {
         protocol: 'https',
-        hostname: 'ssl.pstatic.net', // 이번에 새로 에러 난 도메인 추가!
-        port: '',
-        pathname: '/**',
+        hostname: 'ssl.pstatic.net',
       },
     ],
   },
 }
+
+module.exports = nextConfig
 
 module.exports = nextConfig

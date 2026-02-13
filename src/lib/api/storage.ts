@@ -266,6 +266,33 @@ export async function deleteNewsFromStorage(
   return response.json();
 }
 
+export type DeleteTermFromStorageResponse = {
+  status: string;
+  message?: string;
+};
+
+/**
+ * 보관함에서 용어 삭제
+ * @param savedItemId 저장된 아이템 ID
+ * @returns 삭제 응답
+ */
+export async function deleteTermFromStorage(
+  savedItemId: number
+): Promise<DeleteTermFromStorageResponse> {
+  const response = await authenticatedFetch(
+    `${API_BASE_URL}/api/storage/terms/${savedItemId}`,
+    {
+      method: "DELETE",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete term from storage: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 export type DeleteStorageFolderResponse = {
   status: string;
   message?: string;
@@ -429,6 +456,58 @@ export async function searchStorageNews(
 
   if (!response.ok) {
     throw new Error(`Failed to search storage news: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+export type StorageTermItem = {
+  savedItemId: number;
+  termId: number;
+  term: string;
+  description: string;
+  savedAt: string;
+};
+
+export type StorageTermsParams = {
+  folderId: number;
+  page?: number;
+  size?: number;
+};
+
+export type StorageTermsResponse = {
+  status: string;
+  data: {
+    terms: StorageTermItem[];
+    currentPage: number;
+    totalPages: number;
+    totalElements: number;
+    hasNext: boolean;
+  };
+};
+
+/**
+ * 보관함 폴더의 용어 조회
+ * @param params 쿼리 파라미터 (folderId 필수)
+ * @returns 폴더의 용어 목록 응답
+ */
+export async function getStorageTerms(
+  params: StorageTermsParams
+): Promise<StorageTermsResponse> {
+  const { folderId, page = 1, size = 10 } = params;
+  
+  const queryParams = new URLSearchParams({
+    folderId: folderId.toString(),
+    page: page.toString(),
+    size: size.toString(),
+  });
+  
+  const response = await authenticatedFetch(`${API_BASE_URL}/api/storage/terms?${queryParams.toString()}`, {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch storage terms: ${response.statusText}`);
   }
 
   return response.json();

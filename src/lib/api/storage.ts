@@ -375,3 +375,61 @@ export async function updateStorageFolderOrder(
 
   return response.json();
 }
+
+export type StorageNewsSearchParams = {
+  folderId: number;
+  q: string;
+  page?: number;
+  size?: number;
+};
+
+export type StorageNewsSearchItem = {
+  savedItemId: number;
+  newsId: number;
+  category: string;
+  title: string;
+  thumbnailUrl: string;
+  savedAt: string;
+};
+
+export type StorageNewsSearchResponse = {
+  status: string;
+  data: {
+    news: StorageNewsSearchItem[];
+    currentPage: number;
+    totalPages: number;
+    totalElements: number;
+    hasNext: boolean;
+  };
+};
+
+/**
+ * 저장된 뉴스 검색
+ * @param params 검색 파라미터 (folderId 필수)
+ * @returns 검색 결과 응답
+ */
+export async function searchStorageNews(
+  params: StorageNewsSearchParams
+): Promise<StorageNewsSearchResponse> {
+  const { folderId, q, page = 1, size = 12 } = params;
+
+  const queryParams = new URLSearchParams({
+    folderId: folderId.toString(),
+    q,
+    page: page.toString(),
+    size: size.toString(),
+  });
+
+  const response = await authenticatedFetch(
+    `${API_BASE_URL}/api/storage/news/search?${queryParams.toString()}`,
+    {
+      method: "GET",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to search storage news: ${response.statusText}`);
+  }
+
+  return response.json();
+}

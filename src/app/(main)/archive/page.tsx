@@ -7,8 +7,9 @@ import { Header } from "@/components/common/Header";
 import { CategoryBar } from "@/components/study/CategoryBar";
 import { ArchiveSortDropdown } from "@/components/archive/ArchiveSortDropdown";
 import { getCategoryOrder, type CategoryOrderItem } from "@/lib/api/user";
-import { getStorageFolders, getStorageNews, deleteNewsFromStorage, saveNewsToStorage, deleteStorageFolder, updateStorageFolder, updateStorageFolderOrder, type StorageFolder, type StorageNewsItem } from "@/lib/api/storage";
+import { getStorageFolders, getStorageNews, getStorageTerms, deleteNewsFromStorage, deleteTermFromStorage, saveNewsToStorage, saveTermToStorage, deleteStorageFolder, updateStorageFolder, updateStorageFolderOrder, type StorageFolder, type StorageNewsItem, type StorageTermItem } from "@/lib/api/storage";
 import { ArchiveNewsCard } from "@/components/archive/ArchiveNewsCard";
+import { ArchiveTermCard } from "@/components/archive/ArchiveTermCard";
 import { ArchiveNewsMenuBottomSheet } from "@/components/archive/ArchiveNewsMenuBottomSheet";
 import { DeleteConfirmDialog } from "@/components/archive/DeleteConfirmDialog";
 import { ArchiveCategoryEditBottomSheet } from "@/components/archive/ArchiveCategoryEditBottomSheet";
@@ -44,6 +45,8 @@ export default function ArchivePage() {
   const [loadingFolders, setLoadingFolders] = useState(false);
   const [newsList, setNewsList] = useState<StorageNewsItem[]>([]);
   const [loadingNews, setLoadingNews] = useState(false);
+  const [termsList, setTermsList] = useState<StorageTermItem[]>([]);
+  const [loadingTerms, setLoadingTerms] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [categoryMapping, setCategoryMapping] = useState<Map<string, string>>(new Map());
@@ -125,6 +128,32 @@ export default function ArchivePage() {
     }
   }, [activeTab]);
 
+  // 폴더 선택 시 해당 폴더의 용어 조회
+  const fetchStorageTerms = useCallback(async (folderId: number | null, page: number = 1) => {
+    if (!folderId || activeTab !== "terms") {
+      setTermsList([]);
+      return;
+    }
+
+    try {
+      setLoadingTerms(true);
+      const response = await getStorageTerms({
+        folderId,
+        page,
+        size: 10,
+      });
+      
+      setTermsList(response.data.terms);
+      setTotalPages(response.data.totalPages);
+      setCurrentPage(response.data.currentPage);
+    } catch (err) {
+      console.error("보관함 용어 조회 실패:", err);
+      setTermsList([]);
+    } finally {
+      setLoadingTerms(false);
+    }
+  }, [activeTab]);
+
   // 폴더 목록 조회 - 탭에 따라 다른 타입으로 조회
   useEffect(() => {
     const fetchFolders = async () => {
@@ -145,9 +174,11 @@ export default function ArchivePage() {
         const defaultFolder = folderList.find((folder) => folder.name === "기본");
         if (defaultFolder && defaultFolder.category_id !== null) {
           setSelectedCategoryId(defaultFolder.category_id);
-          // 뉴스 탭이고 기본 폴더가 있으면 해당 폴더의 뉴스 조회
+          // 탭에 따라 해당 폴더의 데이터 조회
           if (activeTab === "news") {
             fetchStorageNews(defaultFolder.category_id, 1);
+          } else if (activeTab === "terms") {
+            fetchStorageTerms(defaultFolder.category_id, 1);
           }
         } else {
           setSelectedCategoryId(null);
@@ -162,7 +193,7 @@ export default function ArchivePage() {
     };
 
     fetchFolders();
-  }, [activeTab, fetchStorageNews]);
+  }, [activeTab, fetchStorageNews, fetchStorageTerms]);
 
   const handleSearchClick = () => {
     // 선택한 폴더 ID를 쿼리 파라미터로 전달
@@ -181,8 +212,11 @@ export default function ArchivePage() {
     setCurrentPage(1); // 폴더 변경 시 페이지 초기화
     if (activeTab === "news" && categoryId !== null) {
       fetchStorageNews(categoryId, 1);
+    } else if (activeTab === "terms" && categoryId !== null) {
+      fetchStorageTerms(categoryId, 1);
     } else {
       setNewsList([]);
+      setTermsList([]);
     }
   };
 
@@ -298,10 +332,18 @@ export default function ArchivePage() {
     }
 
     try {
-      await deleteNewsFromStorage(selectedSavedItemId);
-      // 삭제 후 뉴스 목록 다시 조회
-      if (selectedCategoryId !== null) {
-        await fetchStorageNews(selectedCategoryId, currentPage);
+      if (activeTab === "news") {
+        await deleteNewsFromStorage(selectedSavedItemId);
+        // 삭제 후 뉴스 목록 다시 조회
+        if (selectedCategoryId !== null) {
+          await fetchStorageNews(selectedCategoryId, currentPage);
+        }
+      } else if (activeTab === "terms") {
+        await deleteTermFromStorage(selectedSavedItemId);
+        // 삭제 후 용어 목록 다시 조회
+        if (selectedCategoryId !== null) {
+          await fetchStorageTerms(selectedCategoryId, currentPage);
+        }
       }
     } catch (err) {
       console.error("카테고리에서 삭제 실패:", err);
@@ -318,11 +360,20 @@ export default function ArchivePage() {
     }
 
     try {
-      // 새 폴더에 추가
-      await saveNewsToStorage(selectedNewsId, [categoryId]);
-      // 뉴스 목록 다시 조회
-      if (selectedCategoryId !== null) {
-        await fetchStorageNews(selectedCategoryId, currentPage);
+      if (activeTab === "news") {
+        // 새 폴더에 추가
+        await saveNewsToStorage(selectedNewsId, [categoryId]);
+        // 뉴스 목록 다시 조회
+        if (selectedCategoryId !== null) {
+          await fetchStorageNews(selectedCategoryId, currentPage);
+        }
+      } else if (activeTab === "terms") {
+        // 새 폴더에 추가
+        await saveTermToStorage(selectedNewsId, [categoryId]);
+        // 용어 목록 다시 조회
+        if (selectedCategoryId !== null) {
+          await fetchStorageTerms(selectedCategoryId, currentPage);
+        }
       }
     } catch (err) {
       console.error("카테고리 수정 실패:", err);
@@ -424,6 +475,21 @@ export default function ArchivePage() {
             ))}
           </div>
         </div>
+      ) : activeTab === "terms" && selectedCategoryId !== null && termsList.length > 0 ? (
+        /* 용어 리스트 */
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          <div className="flex flex-col gap-3">
+            {termsList.map((term) => (
+              <ArchiveTermCard
+                key={term.termId}
+                termId={term.termId}
+                term={term.term}
+                description={term.description}
+                onMenuClick={() => handleNewsMenuClick(term.savedItemId, term.termId)}
+              />
+            ))}
+          </div>
+        </div>
       ) : (
         /* 엠티뷰 */
         <div className="flex-1 flex flex-col items-center justify-center px-5 py-20">
@@ -501,6 +567,9 @@ export default function ArchivePage() {
         onSelectCategory={handleSelectCategoryForEdit}
         onAddNewCategory={handleAddNewCategory}
         itemId={selectedNewsId || undefined}
+        folderType={activeTab === "news" ? "NEWS" : "TERM"}
+        title="카테고리 수정"
+        subtitle=""
       />
     </div>
   );

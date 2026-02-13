@@ -461,6 +461,63 @@ export async function searchStorageNews(
   return response.json();
 }
 
+export type StorageTermsSearchParams = {
+  folderId: number;
+  q: string;
+  page?: number;
+  size?: number;
+};
+
+export type StorageTermsSearchItem = {
+  savedItemId: number;
+  termId: number;
+  term: string;
+  description: string;
+  savedAt: string;
+};
+
+export type StorageTermsSearchResponse = {
+  status: string;
+  data: {
+    terms: StorageTermsSearchItem[];
+    currentPage: number;
+    totalPages: number;
+    totalElements: number;
+    hasNext: boolean;
+  };
+};
+
+/**
+ * 저장된 용어 검색
+ * @param params 검색 파라미터 (folderId 필수)
+ * @returns 검색 결과 응답
+ */
+export async function searchStorageTerms(
+  params: StorageTermsSearchParams
+): Promise<StorageTermsSearchResponse> {
+  const { folderId, q, page = 1, size = 10 } = params;
+
+  const queryParams = new URLSearchParams({
+    folderId: folderId.toString(),
+    q,
+    page: page.toString(),
+    size: size.toString(),
+  });
+
+  const response = await authenticatedFetch(
+    `${API_BASE_URL}/api/storage/terms/search?${queryParams.toString()}`,
+    {
+      method: "GET",
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to search storage terms: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 export type StorageTermItem = {
   savedItemId: number;
   termId: number;

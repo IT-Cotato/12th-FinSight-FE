@@ -1,84 +1,54 @@
 export type QuizType = "CONTENT" | "TERM";
-
-export type QuizOption = {
-  ai_quiz_set_id?: number;
-  quiz_set_id?: number;
-  quiz_type: QuizType;
-  question_count: number;
-};
+export type QuizTypeParam = "content" | "term";
 
 // 퀴즈 옵션 선택
-export type QuizOptionsResponse =
-  | {
-      status: "QUIZ-001";
-      message: string;
-      data: { quizzes: QuizOption[] };
-    }
-  | {
-      status: "QUIZ-002" | "QUIZ-003" | "COMMON-001";
-      message: string;
-      data?: undefined;
-    };
-
-// 퀴즈 문항 조회
-export type QuizChoice = { choice_id: number; choice_text: string };
-
-export type QuizQuestion = {
-  question_id: number;
-  question_text: string;
-  choices: QuizChoice[];
+// GET /api/quiz/{naverArticleId}
+export type QuizView = {
+  naverArticleId: number;
+  quizType: QuizType;
+  questions: Array<{
+    questionIndex: number;
+    question: string;
+    options: string[];
+    previousCorrect: boolean | null;
+  }>;
 };
 
-export type QuizQuestionsResponse =
-  | {
-      status: "QUIZ-004";
-      message: string;
-      data: {
-        quiz_set_id: number;
-        quiz_type: QuizType;
-        total_questions: number;
-        questions: QuizQuestion[];
-      };
-    }
-  | {
-      status: "QUIZ_404_2" | "QUIZ_202_2" | "COMMON_001";
-      message: string;
-    };
-
 // 퀴즈 제출
-export type QuizSubmitBody = {
-  quiz_set_id: number;
-  answers: { question_id: number; chosen_choice_no: number }[];
+// POST /api/quiz/submit
+export type QuizSubmitRequest = {
+  naverArticleId: number;
+  quizType: QuizTypeParam; // "content" | "term"
+  answers: Array<{
+    questionIndex: number; // 0-base
+    selectedIndex: number; // 0-base
+  }>;
 };
 
-export type QuizSubmitResponse =
-  | {
-      status: "QUIZ_200_4";
-      message: string;
-      data: {
-        score: number;
-        correct_count: number;
-        total_count: number;
-        level_info: {
-          current_lv: number;
-          next_lv: number;
-          current_exp: number;
-          total_exp: number;
-        };
-        results: {
-          question_id: number;
-          is_correct: "Y" | "N";
-          chosen_no: number;
-          correct_no: number;
-          explanation: string;
-        }[];
-      };
-    }
-  | { status: string; message: string };
+// POST /api/quiz/submit의 response data
+export type QuizSubmitResult = {
+  correctCount: number;
+  testScore: number;
+  totalExp: number;
+  level: number;
+  results: Array<{
+    questionIndex: number;
+    correct: boolean;
+    selectedIndex: number;
+    answerIndex: number;
+    question: string;
+    options: string[];
+    explanations: string[];
+  }>;
+};
 
 // 퀴즈 제출
-export function isQuizSubmitSuccess(
-  res: QuizSubmitResponse,
-): res is Extract<QuizSubmitResponse, { status: "QUIZ_200_4" }> {
-  return res.status === "QUIZ_200_4";
+export type QuizSubmitResponse = {
+  status: string;
+  data: QuizSubmitResult;
+};
+
+export function isQuizSubmitResponse(x: unknown): x is QuizSubmitResponse {
+  if (!x || typeof x !== "object") return false;
+  return "status" in x && "data" in x;
 }

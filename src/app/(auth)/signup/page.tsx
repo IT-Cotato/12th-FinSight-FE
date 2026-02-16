@@ -1,12 +1,12 @@
 'use client';
 
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AuthContainer from '../../(auth)/AuthContainer';
 import { sendVerificationCode, verifyCode, checkNickname, kakaoSignup } from '@/api/auth';
 
-export default function SignupPage() {
+function SignupPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -1032,5 +1032,25 @@ const handleVerifyCode = async () => {
     >
       {renderStepContent()}
     </AuthContainer>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col mx-auto" style={{
+        width: '390px',
+        height: '844px',
+        background: 'var(--color-bg-100, #131416)',
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <p style={{ color: '#fff' }}>로딩 중...</p>
+      </div>
+    }>
+      <SignupPageContent />
+    </Suspense>
   );
 }

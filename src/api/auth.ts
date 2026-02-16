@@ -14,6 +14,10 @@ import type {
   RefreshTokenResponse,
   CheckNicknameRequest,
   CheckNicknameResponse,
+  KakaoLoginRequest,
+  KakaoLoginResponse,
+  KakaoSignupRequest,
+  KakaoSignupResponse,
 } from '@/types/api';
 
 // 회원가입 - 인증번호 발송
@@ -97,5 +101,54 @@ export const checkNickname = async (data: CheckNicknameRequest): Promise<CheckNi
     return response.data;
   } catch (error: any) {
     throw error.response?.data || { message: '닉네임 확인에 실패했습니다.' };
+  }
+};
+
+// 카카오 로그인
+export const kakaoLogin = async (data: KakaoLoginRequest): Promise<KakaoLoginResponse> => {
+  try {
+    console.log('카카오 로그인 API 호출:', {
+      url: '/auth/kakao/login',
+      code: data.code,
+    });
+    
+    const response = await apiClient.post<KakaoLoginResponse>('/auth/kakao/login', data);
+    
+    console.log('카카오 로그인 성공:', response.data);
+    
+    // 토큰 저장
+    if (typeof window !== 'undefined' && response.data.data) {
+      localStorage.setItem('accessToken', response.data.data.accessToken);
+      localStorage.setItem('refreshToken', response.data.data.refreshToken);
+    }
+    
+    return response.data;
+  } catch (error: any) {
+    console.error('카카오 로그인 API 에러 상세:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      fullError: error,
+    });
+    
+    throw error.response?.data || { message: '카카오 로그인에 실패했습니다.' };
+  }
+};
+
+// 카카오 회원가입
+export const kakaoSignup = async (data: KakaoSignupRequest): Promise<KakaoSignupResponse> => {
+  try {
+    const response = await apiClient.post<KakaoSignupResponse>('/auth/kakao/signup', data);
+    
+    // 토큰 저장
+    if (typeof window !== 'undefined' && response.data.data) {
+      localStorage.setItem('accessToken', response.data.data.accessToken);
+      localStorage.setItem('refreshToken', response.data.data.refreshToken);
+    }
+    
+    return response.data;
+  } catch (error: any) {
+    throw error.response?.data || { message: '카카오 회원가입에 실패했습니다.' };
   }
 };

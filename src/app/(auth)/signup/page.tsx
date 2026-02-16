@@ -2,12 +2,18 @@
 
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import AuthContainer from '../../(auth)/AuthContainer';
-import { sendVerificationCode, verifyCode, checkNickname } from '@/api/auth';
+import { sendVerificationCode, verifyCode, checkNickname, kakaoSignup } from '@/api/auth';
 
 export default function SignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // 카카오 회원가입 모드 확인
+  const kakaoId = searchParams.get('kakaoId');
+  const isKakaoMode = !!kakaoId;
+  
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -215,7 +221,25 @@ const handleVerifyCode = async () => {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    // 카카오 모드이고 step 1(닉네임 입력) 완료 시 카카오 회원가입 API 호출
+    if (isKakaoMode && step === 1 && isNicknameChecked) {
+      try {
+        setLoading(true);
+        await kakaoSignup({
+          kakaoId: kakaoId!,
+          nickname: name.trim(),
+        });
+        // 회원가입 성공 시 홈으로 이동
+        router.push('/home');
+      } catch (err: any) {
+        setNicknameError(err.message || '회원가입에 실패했습니다.');
+        setLoading(false);
+      }
+      return;
+    }
+    
+    // 일반 회원가입 플로우
     if (step < 4) {
       setStep(step + 1);
     } else {
@@ -236,6 +260,11 @@ const handleVerifyCode = async () => {
   };
 
   const renderStepContent = () => {
+    // 카카오 모드일 때는 step 1만 보여줌
+    if (isKakaoMode && step !== 1) {
+      return null;
+    }
+    
     switch (step) {
       case 1:
         return (
@@ -951,15 +980,17 @@ const handleVerifyCode = async () => {
 
   return (
     <AuthContainer
-      title="회원가입"
+      title={isKakaoMode ? "카카오 회원가입" : "회원가입"}
       currentStep={step}
-      totalSteps={4}
+      totalSteps={isKakaoMode ? 0 : 4}
       buttonText={
-        step === 2 
-          ? (isCodeSent ? "인증하기" : "인증번호 전송")
-          : step === 4
-            ? "가입하기"
-            : "다음"
+        isKakaoMode && step === 1
+          ? "완료"
+          : step === 2 
+            ? (isCodeSent ? "인증하기" : "인증번호 전송")
+            : step === 4
+              ? "가입하기"
+              : "다음"
       }
       buttonDisabled={
         step === 1 ? (!name || !isNicknameChecked) :
@@ -973,6 +1004,12 @@ const handleVerifyCode = async () => {
         false
       }
       onNext={() => {
+        // 카카오 모드일 때는 step 1에서 바로 회원가입 처리
+        if (isKakaoMode && step === 1) {
+          handleNext();
+          return;
+        }
+        
         if (step === 2) {
           if (!isCodeSent) {
             handleSendVerificationCode();

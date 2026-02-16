@@ -113,8 +113,8 @@ export default function NewsDetailPage() {
   };
 
   const handleSolveProblems = () => {
-    // TODO: 문제 풀러가기 기능 구현
-    console.log("문제 풀러가기");
+    // 퀴즈 옵션 페이지로 이동 (newsId를 naverArticleId로 사용)
+    router.push(`/quiz?naverArticleId=${newsId}`);
   };
 
   // 핵심 단어를 하이라이트하는 함수 (각 단어는 첫 번째 매칭만 하이라이트)

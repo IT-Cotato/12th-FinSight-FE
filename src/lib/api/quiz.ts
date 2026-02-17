@@ -62,7 +62,7 @@ export async function submitQuiz(
   const d = res.data ?? {};
   const normalized: QuizSubmitResult = {
     correctCount: Number(d.correctCount ?? d.correct_count ?? 0),
-    testScore: Number(d.testScore ?? d.score ?? 0),
+    setScore: Number(d.setScore ?? d.score ?? 0),
     totalExp: Number(d.totalExp ?? d.totalExp ?? d.total_exp ?? 0),
     level: Number(d.level ?? d.level ?? 0),
     results: Array.isArray(d.results)

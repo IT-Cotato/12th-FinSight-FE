@@ -45,12 +45,12 @@ export default function QuizNextActionPage() {
 
             <NextActionCard
               iconSrc="/quiz/icon-word.svg"
-              title="용어퀴즈로 계속하기"
-              desc="퀴즈를 통해 용어를 이해해보세요."
+              title="다른 퀴즈로 계속하기"
+              desc="퀴즈를 통해 내용을 이해해보세요."
               badgeText="최대 +50점"
               iconScale={1.4}
               onClick={() => {
-                router.push("/quiz");
+                router.push(`/quiz/${quizSetId}`);
               }}
             />
 

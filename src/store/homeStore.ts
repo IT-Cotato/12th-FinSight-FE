@@ -82,6 +82,9 @@ interface HomeState {
 
   // 관심 분야 액션
   fetchUserCategories: () => Promise<void>;
+
+  // [추가] 일일 미션 상태 조회 액션
+  fetchMissionStatus: () => Promise<void>;
 }
 
 export const useHomeStore = create<HomeState>((set, get) => ({
@@ -132,8 +135,7 @@ export const useHomeStore = create<HomeState>((set, get) => ({
   // [관심 분야 조회 액션]
   fetchUserCategories: async () => {
     try {
-      const response = await apiClient.get('/api/users/categories');
-      // 스웨거 응답 구조인 data.categories에 맞춰 상태 업데이트
+      const response = await apiClient.get('/users/categories');
       const categories = response.data?.data?.categories || [];
       set({ userCategories: categories });
     } catch (error) {
@@ -161,6 +163,25 @@ export const useHomeStore = create<HomeState>((set, get) => ({
       isGuideChecked: !isGuideChecked, 
       isGuideRead: true 
     });
+  },
+
+  // [추가] 일일 미션 상태 조회 액션 (조회 API 명세 반영)
+  fetchMissionStatus: async () => {
+    try {
+      // API 엔드포인트는 실제 서버 주소에 맞춰 확인 필요 (예: /home/missions/today)
+      const response = await apiClient.get('/home/missions/today');
+      const serverData = response.data?.data;
+
+      if (serverData) {
+        set({
+          isNewsSaved: serverData.isNewsSaved,
+          isQuizSolved: serverData.isQuizSolved,
+          isQuizReviewChecked: serverData.isQuizReviewed // 서버 필드명 매핑
+        });
+      }
+    } catch (error) {
+      console.error("일일 미션 상태 조회 실패:", error);
+    }
   },
 
   toggleNewsSaved: () => set((state) => ({ isNewsSaved: !state.isNewsSaved })),

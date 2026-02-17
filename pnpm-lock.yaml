@@ -6485,8 +6485,11 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
+<<<<<<< HEAD
   tailwind-animate@0.2.10: {}
 
+=======
+>>>>>>> 9fcec9016ddc82d509e0e2cc15fc53abb2a4539f
   tailwind-merge@3.4.0: {}
 
   tailwindcss-animate@1.0.7(tailwindcss@3.4.19):

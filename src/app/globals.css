@@ -40,7 +40,6 @@
 
   --background: var(--color-bg-100);
   --foreground: #ededed;
-
 }
 
 html {
@@ -58,9 +57,7 @@ body {
   margin: 0;
   font-family: 'Pretendard', sans-serif;
   overscroll-behavior-y: none;
-  /* 데스크톱 바깥 배경 */
   background: #f3f4f6;
-  /* 가운데 정렬 */
   display: flex;
   justify-content: center;
 }
@@ -69,18 +66,15 @@ body {
   width: 100%;
   max-width: 420px;
   min-height: 100vh;
-
-  margin: 0 auto;          /* 가운데 정렬 */
+  margin: 0 auto;
   background: var(--color-bg-100);
   overflow-x: hidden;
 }
 
-/* Safe area for mobile devices */
 .safe-area-inset-bottom {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* 스크롤바 숨기기 - Chrome, Safari */
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -99,83 +93,49 @@ body {
     display: none;
   }
 
-  /* 흔들리는 애니메이션 */
-  @keyframes shake {
-    0%, 100% { transform: rotate(0deg); }
-    25% { transform: rotate(-5deg); }
-    50% { transform: rotate(5deg); }
-    75% { transform: rotate(-5deg); }
+  /* --- 애니메이션 정의 (충돌 해결 및 통합) --- */
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
-  /* 둥둥 떠 있는 애니메이션 */
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
   @keyframes float {
-    0%, 100% { transform: translateY(0); }
+    0%, 100% { transform: translateY(0px); }
     50% { transform: translateY(-10px); }
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-6deg); } /* 중간값으로 조정 */
+    75% { transform: rotate(6deg); }
+  }
+
+  /* Tailwind 유틸리티 클래스 */
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-in;
+  }
+
+  .animate-slideUp {
+    animation: slideUp 0.8s ease-out;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
   }
 
   .animate-shake {
     animation: shake 0.5s ease-in-out infinite;
   }
-
-  .animate-float {
-    animation: float 2s ease-in-out infinite;
-  }
-<<<<<<< Updated upstream
-  to {
-    transform: translateY(100%);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-/* Tailwind 클래스로 사용 가능하도록 */
-.animate-fadeIn {
-  animation: fadeIn 0.5s ease-in;
-}
-
-.animate-slideUp {
-  animation: slideUp 0.8s ease-out;
-}
-
-.animate-float {
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes shake {
-  0%, 100% { transform: rotate(0deg); }
-  25% { transform: rotate(-8deg); }
-  75% { transform: rotate(8deg); }
-}
-
-.animate-shake {
-  animation: shake 0.6s ease-in-out infinite;
-=======
->>>>>>> Stashed changes
 }

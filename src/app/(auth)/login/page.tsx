@@ -4,11 +4,7 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthContainer from '../AuthContainer';
-<<<<<<< Updated upstream
-import { login } from '@/api/auth'; // auth.ts의 login 함수 import
-=======
 import { login } from '@/api/auth';
->>>>>>> Stashed changes
 
 
 export default function LoginPage() {

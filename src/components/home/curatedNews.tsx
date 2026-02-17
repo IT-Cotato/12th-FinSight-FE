@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useMemo } from 'react';
-import Image from 'next/image';
 import { useInView } from 'react-intersection-observer';
 import { useHomeStore } from '@/store/homeStore';
+import { CategoryBar } from '@/components/study/CategoryBar';
+import { NewsCard } from '@/components/study/NewsCard';
 
 export default function CuratedNews() {
   const { 
@@ -20,14 +21,27 @@ export default function CuratedNews() {
 
   const { ref, inView } = useInView({ threshold: 0.1 });
 
-  // 1. 탭 메뉴 구성 로직 점검: '종합' + 서버에서 받아온 관심분야
+  // 탭 메뉴 구성 로직 점검: '종합' + 서버에서 받아온 관심분야
   const myCategories = useMemo(() => {
     const defaultTab = { section: 'ALL', displayName: '종합' };
-    // userCategories가 배열인지 확인 후 합치기
     return [defaultTab, ...(Array.isArray(userCategories) ? userCategories : [])];
   }, [userCategories]);
 
-  // 2. 컴포넌트 마운트 시 관심분야 API 호출
+  const formattedCategories = useMemo(() => {
+      return myCategories.map((cat, index) => ({
+        category_id: index, // 0부터 시작하는 숫자 ID 부여
+        name: cat.displayName,
+        section: cat.section // 내부 추적용
+      }));
+    }, [myCategories]);
+
+  // 현재 선택된 string(section)을 기반으로 현재 선택된 category_id 찾기
+  const selectedCategoryId = useMemo(() => {
+    const found = formattedCategories.find(c => c.section === selectedCategory);
+    return found ? found.category_id : 0;
+  }, [selectedCategory, formattedCategories]);
+
+  // 초기 카테고리 로드
   useEffect(() => {
     fetchUserCategories();
   }, [fetchUserCategories]);
@@ -52,59 +66,49 @@ export default function CuratedNews() {
         {nickname || '사용자'}님 맞춤 뉴스
       </h2>
 
-      {/* 3. 탭 메뉴 렌더링 영역 */}
-      <div className="flex gap-2 overflow-x-auto hide-scrollbar py-[10px]">
-        {myCategories.map((cat) => (
-          <button
-            key={cat.section}
-            onClick={() => setSelectedCategory(cat.section)}
-            className={`px-4 py-2 rounded-full text-[14px] font-semibold whitespace-nowrap transition-all ${
-              selectedCategory === cat.section
-                ? 'bg-[#8E8FFA] text-white' // 활성화 상태 (보라색)
-                : 'bg-[#1C1E22] text-[#8E8E93]' // 비활성화 상태
-            }`}
-          >
-            {cat.displayName}
-          </button>
-        ))}
+      {/* 기존 탭 렌더링 영역 -> CategoryBar 컴포넌트로 교체 */}
+      <div className='mx-[-20px]'>
+        <CategoryBar 
+          categories={formattedCategories}
+          selectedCategoryId={selectedCategoryId}
+          onCategoryChange={(id) => {
+            const target = formattedCategories.find(c => c.category_id === id);
+            if (target) setSelectedCategory(target.section);
+          }}
+        />
       </div>
 
-      {/* 4. 뉴스 리스트 영역 (기존 스타일 유지) */}
-      <div className="flex flex-col gap-6 mt-2">
+      {/*  뉴스 리스트 영역 */}
+      <div className="flex flex-col mx-[-20px] mt-2"> {/* NewsCard 자체 패딩을 고려하여 mx-[-20px] 추가 */}
         {curatedNews.length === 0 && !isCuratedLoading ? (
           <div className="py-10 text-center text-[#8E8E93]">표시할 뉴스가 없습니다.</div>
         ) : (
-          curatedNews.map((news, idx) => (
-            <div key={`${news.newsId}-${idx}`} className="flex gap-4 items-center group cursor-pointer">
-              {/* 뉴스 썸네일 */}
-              <div className="relative w-[100px] h-[75px] shrink-0 rounded-[12px] overflow-hidden bg-[#1C1E22]">
-                <Image 
-                  src={news.thumbnailUrl || "/home/news-placeholder.png"} 
-                  alt="" 
-                  fill 
-                  className="object-cover group-active:scale-105 transition-transform" 
-                />
-              </div>
+          curatedNews.map((news, idx) => {
+            // 카테고리DisplayName + 키워드 3개를 합쳐서 tags 생성
+            const categoryName = myCategories.find(c => c.section === news.category)?.displayName || news.category;
+            const newsTags = [categoryName, ...(news.terms?.map(t => t.displayName) || [])].slice(0, 3);
 
-              {/* 뉴스 정보 */}
-              <div className="flex flex-col gap-2 flex-1">
-                <h3 className="text-[15px] text-white font-medium line-clamp-2 leading-[140%] break-keep">
-                  {news.title}
-                </h3>
-                <div className="flex gap-1.5 flex-wrap">
-                  <span className="text-[10px] text-[#8E8E93] bg-[#1C1E22] px-2 py-0.5 rounded-[4px] font-bold">
-                    {/* 뉴스 카테고리 표시 */}
-                    {myCategories.find(c => c.section === news.category)?.displayName || news.category}
-                  </span>
-                  {news.terms?.slice(0, 3).map((term) => (
-                    <span key={term.termId} className="text-[10px] text-[#8E8E93] bg-[#1C1E22] px-2 py-0.5 rounded-[4px]">
-                      {term.displayName}
-                    </span>
-                  ))}
-                </div>
+            return (
+              /* NewsCard 내부의 썸네일 크기를 강제로 조정  */
+              <div key={`${news.newsId}-${idx}`} className="news-card-custom">
+                <NewsCard 
+                  title={news.title}
+                  thumbnailUrl={news.thumbnailUrl || "/home/news-placeholder.png"}
+                  tags={newsTags}
+                  href={`/news/${news.newsId}`}
+                />
+                
+                {/* 홈에서만 뉴스 썸네일 크기를 아래처럼 덮어 씌움
+*/}
+                <style jsx global>{`
+                  .news-card-custom .flex-shrink-0.w-20.h-20 {
+                    width: 98px !important;
+                    height: 75px !important;
+                  }
+                `}</style>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
       

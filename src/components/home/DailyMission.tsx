@@ -2,29 +2,29 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { useHomeStore } from '@/store/homeStore';
 
 export default function DailyMissionSection() {
   const router = useRouter();
-  // 스토어에서 상태만 가져오고, toggle 함수는 여기서 직접 호출 X
-  const { isNewsSaved, isQuizSolved, isQuizReviewChecked} = useHomeStore();
+  const { isNewsSaved, isQuizSolved, isQuizReviewChecked, fetchMissionStatus } = useHomeStore();
 
-  // 뉴스 1개 저장하기 핸들러
-  const handleNewsClick = () => {
-    router.push('/study'); // 학습 탭으로 이동
-  };
+  // 마운트 시 서버에서 최신 상태 불러오기
+  useEffect(() => {
+    fetchMissionStatus();
+  }, [fetchMissionStatus]);
 
-  // 퀴즈 1개 풀기 핸들러
-  const handleQuizClick = () => {
-    router.push('/study');   // 퀴즈 풀러 학습 탭 이동
-  };
+  // 학습탭 다녀온 후 돌아왔을 때도 상태 갱신
+  useEffect(() => {
+    const handleFocus = () => fetchMissionStatus();
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [fetchMissionStatus]);
 
-  // 보관한 퀴즈 복습하기 핸들러
-  const handleQuizReviewClick = () => {    
-    router.push('/archive'); // 퀴즈 복습하러 보관함으로 이동
-  };
+  const handleNewsClick = () => router.push('/study');
+  const handleQuizClick = () => router.push('/study');
+  const handleQuizReviewClick = () => router.push('/archive');
 
-  // 완료된 토글은 맨 뒤로 보내기 위해 미션 목록 데이터 배열로 정의
   const missions = [
     {
       id: 'news',
@@ -49,10 +49,7 @@ export default function DailyMissionSection() {
     },
   ];
 
-  // 완료된 항목(isActive: true)을 뒤로 보내는 정렬 로직
-  const sortedMissions = [...missions].sort((a, b) => {
-    return Number(a.isActive) - Number(b.isActive);
-  }); // false(0): 앞, true(1): 뒤
+  const sortedMissions = [...missions].sort((a, b) => Number(a.isActive) - Number(b.isActive));
 
   return (
     <div className="relative z-10 w-full">
@@ -66,10 +63,9 @@ export default function DailyMissionSection() {
       </header>
 
       <div className="flex gap-3 overflow-x-auto px-5 mb-5 touch-pan-x text-[14px] text-[--color-bg-10] hide-scrollbar">
-        {/* 정렬된 배열을 map으로 렌더링 */}
         {sortedMissions.map((mission) => (
-          <CheckItem 
-            key={mission.id} // key 필수
+          <CheckItem
+            key={mission.id}
             title={mission.title}
             iconPath={mission.iconPath}
             isActive={mission.isActive}
@@ -81,13 +77,14 @@ export default function DailyMissionSection() {
   );
 }
 
+// CheckItem은 그대로 유지
 function CheckItem({ title, iconPath, isActive, onClick }: { title: string, iconPath: string, isActive: boolean, onClick: () => void }) {
   return (
-    <button 
-      onClick={onClick} 
+    <button
+      onClick={onClick}
       className={`flex items-center justify-center py-[10px] px-5 transition-all active:scale-95 shrink-0 ${
-        isActive 
-          ? 'rounded-[16px] border border-bg-50 bg-bg-60' 
+        isActive
+          ? 'rounded-[16px] border border-bg-50 bg-bg-60'
           : 'rounded-[16px] border border-primary-70 bg-primary-80'
       }`}
     >

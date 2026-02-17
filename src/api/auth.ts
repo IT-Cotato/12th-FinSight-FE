@@ -60,13 +60,13 @@ export const resetPassword = async (data: ResetPasswordRequest): Promise<ResetPa
 export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   try {
     const response = await apiClient.post<LoginResponse>('/auth/login', data);
-    
+   
     // 💡 안전한 토큰 저장을 위해 분기 처리 유지
     if (typeof window !== 'undefined' && response.data.data) {
       localStorage.setItem('accessToken', response.data.data.accessToken);
       localStorage.setItem('refreshToken', response.data.data.refreshToken);
     }
-    
+   
     return response.data;
   } catch (error: any) {
     throw error.response?.data || { message: '로그인에 실패했습니다.' };
@@ -77,12 +77,12 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
 export const refreshAccessToken = async (data: RefreshTokenRequest): Promise<RefreshTokenResponse> => {
   try {
     const response = await apiClient.post<RefreshTokenResponse>('/auth/refresh', data);
-    
+   
     // 💡 재발급 받은 토큰도 다시 저장해줘야 합니다.
     if (typeof window !== 'undefined' && response.data.data) {
       localStorage.setItem('accessToken', response.data.data.accessToken);
     }
-    
+   
     return response.data;
   } catch (error: any) {
     throw error.response?.data || { message: '토큰 재발급에 실패했습니다.' };

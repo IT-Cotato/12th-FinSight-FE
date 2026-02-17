@@ -95,7 +95,7 @@ export default function CuratedNews() {
                   title={news.title}
                   thumbnailUrl={news.thumbnailUrl || "/home/news-placeholder.png"}
                   tags={newsTags}
-                  href={`/news/${news.newsId}`}
+                  href={`/study/${news.newsId}`}
                 />
                 
                 {/* 홈에서만 뉴스 썸네일 크기를 아래처럼 덮어 씌움

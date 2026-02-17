@@ -29,10 +29,6 @@ export const sendVerificationCode = async (data: SendVerificationRequest): Promi
 // 비밀번호 찾기 - 인증번호 발송
 export const sendPasswordResetCode = async (data: SendPasswordResetCodeRequest): Promise<SendPasswordResetCodeResponse> => {
   try {
-<<<<<<< Updated upstream
-    // 💡 다른 경로들과 일관성을 위해 'api/v1'이 생략된 base URL을 사용한다면 경로를 확인해 보세요.
-=======
->>>>>>> Stashed changes
     const response = await apiClient.post<SendPasswordResetCodeResponse>('/auth/password/send-code', data);
     return response.data;
   } catch (error: any) {

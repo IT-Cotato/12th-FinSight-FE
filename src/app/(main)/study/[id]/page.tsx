@@ -7,7 +7,10 @@ import { Header } from "@/components/common/Header";
 import { NewCategoryBottomSheet } from "@/components/study/NewCategoryBottomSheet";
 import { TermDescriptionCard } from "@/components/study/TermDescriptionCard";
 import { getNewsDetail, type NewsDetail, type CoreTerm } from "@/lib/api/news";
-import { saveNewsToStorage, getStorageFoldersByItemId } from "@/lib/api/storage";
+import {
+  saveNewsToStorage,
+  getStorageFoldersByItemId,
+} from "@/lib/api/storage";
 
 type Category = {
   category_id: number;
@@ -50,7 +53,7 @@ export default function NewsDetailPage() {
         setLoading(true);
         const data = await getNewsDetail(newsId);
         setNews(data.data);
-        
+
         // 뉴스 상세 조회 후 저장된 폴더 목록도 조회
         const articleId = parseInt(newsId, 10);
         if (!isNaN(articleId)) {
@@ -99,7 +102,6 @@ export default function NewsDetailPage() {
     }
   };
 
-
   const handleAddNewCategory = () => {
     // TODO: 새 카테고리 추가 기능 구현
     console.log("새 카테고리 추가");
@@ -114,7 +116,7 @@ export default function NewsDetailPage() {
 
   const handleSolveProblems = () => {
     // 퀴즈 옵션 페이지로 이동 (newsId를 naverArticleId로 사용)
-    router.push(`/quiz?naverArticleId=${newsId}`);
+    router.push(`/quiz/${newsId}`);
   };
 
   // 핵심 단어를 하이라이트하는 함수 (각 단어는 첫 번째 매칭만 하이라이트)
@@ -125,7 +127,12 @@ export default function NewsDetailPage() {
     }
 
     // 각 coreTerm별로 첫 번째 매칭만 찾기
-    const matches: Array<{ start: number; end: number; coreTerm: CoreTerm; term: string }> = [];
+    const matches: Array<{
+      start: number;
+      end: number;
+      coreTerm: CoreTerm;
+      term: string;
+    }> = [];
     const usedTerms = new Set<string>();
 
     news.coreTerms.forEach((coreTerm) => {
@@ -152,9 +159,9 @@ export default function NewsDetailPage() {
       .sort((a, b) => b.end - b.start - (a.end - a.start)) // 긴 단어 우선
       .filter((match, index, arr) => {
         // 겹치지 않는 것만 선택
-        return !arr.slice(0, index).some(
-          (m) => !(match.end <= m.start || match.start >= m.end)
-        );
+        return !arr
+          .slice(0, index)
+          .some((m) => !(match.end <= m.start || match.start >= m.end));
       })
       .sort((a, b) => a.start - b.start); // 인덱스 순서대로 정렬
 
@@ -180,7 +187,7 @@ export default function NewsDetailPage() {
           cursor-pointer"
         >
           {match.term}
-        </span>
+        </span>,
       );
       lastIndex = match.end;
     });
@@ -299,7 +306,9 @@ export default function NewsDetailPage() {
               viewBox="0 0 24 24"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              className={isSaved ? "text-primary-30 fill-primary-30" : "text-white"}
+              className={
+                isSaved ? "text-primary-30 fill-primary-30" : "text-white"
+              }
             >
               <path
                 d="M5 5C5 3.89543 5.89543 3 7 3H17C18.1046 3 19 3.89543 19 5V21L12 17L5 21V5Z"
@@ -315,122 +324,125 @@ export default function NewsDetailPage() {
       />
 
       <div className="flex-1 px-5">
-          <div className="flex flex-col items-start gap-5">
-            {/* 태그 */}
-            {news.coreTerms && news.coreTerms.length > 0 && (
-              <div className="flex items-center gap-[5px]">
-                {news.coreTerms.map((coreTerm, index) => (
-                  <span
-                    key={coreTerm.termId || index}
-                    className="flex items-center justify-center gap-[10px] px-[12px] py-[5px] rounded-[16px] border border-primary-70 bg-primary-80 text-b4 text-gray-20"
-                  >
-                    #{coreTerm.term}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* 제목과 발행일시 */}
-            <div className="flex flex-col items-start gap-[10px] self-stretch">
-              <h1 className="text-h2 text-gray-10">{news.title}</h1>
-              <p className="text-b3 text-gray-40">{news.date}</p>
-            </div>
-          </div>
-
-          {/* 썸네일 이미지 */}
-          {news.thumbnailUrl && (
-            <div className="w-full flex justify-center mt-5 mb-5">
-              <img
-                src={news.thumbnailUrl}
-                alt={news.title}
-                className="max-w-full h-auto object-contain rounded-lg"
-              />
-            </div>
-          )}
-
-          {/* AI 핵심 요약 */}
-          {news.summary3Lines && (
-            <div className="gap-[10px]">
-              <div className="inline-flex h-[25px] pt-[1px] justify-center items-center gap-[10px] mb-4">
-                <img
-                  src="/study/img-light.png"
-                  alt="AI 핵심 요약"
-                  className="h-full w-auto"
-                  width={15}
-                  height={24}
-                />
-                <h2 className="text-sh5 text-gray-20">AI 핵심 요약</h2>
-              </div>
-              <div className="flex flex-col items-start gap-[10px] px-5 py-6 rounded-[8px] bg-bg-80">
-                {summaryLines.map((line, index) => (
-                  <div key={index} className="flex items-start gap-2 text-b2 text-gray-20">
-                    <span className="flex-shrink-0">•</span>
-                    <span>{line}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* 본문 내용 */}
-          {news.bodySummary && (
-            <div className="flex flex-col items-center justify-center w-full px-5 py-6 mt-[25px] mb-[25px] gap-[10px] rounded-[8px] bg-bg-90">
-              <div className="text-b2 text-gray-20 whitespace-pre-line">
-                {highlightCoreTerms(news.bodySummary)}
-              </div>
-            </div>
-          )}
-
-          {/* 핵심 인사이트 */}
-          {news.insights && news.insights.length > 0 && (
-            <div className="gap-[10px]">
-              <div className="inline-flex pt-[1px] justify-center items-center gap-[10px]">
-                <img
-                  src="/study/img-insight.png"
-                  alt="핵심 인사이트"
-                  className="h-full w-auto"
-                  width={23}
-                  height={26}
-                />
-                <h2 className="text-sh5 text-gray-20">핵심 인사이트</h2>
-              </div>
-              {news.insights.map((insight, index) => (
-                <div
-                  key={index}
-                  className="flex flex-col items-start gap-[10px] px-5 py-6 rounded-[8px] bg-bg-90 mb-4"
+        <div className="flex flex-col items-start gap-5">
+          {/* 태그 */}
+          {news.coreTerms && news.coreTerms.length > 0 && (
+            <div className="flex items-center gap-[5px]">
+              {news.coreTerms.map((coreTerm, index) => (
+                <span
+                  key={coreTerm.termId || index}
+                  className="flex items-center justify-center gap-[10px] px-[12px] py-[5px] rounded-[16px] border border-primary-70 bg-primary-80 text-b4 text-gray-20"
                 >
-                  {insight.title && (
-                    <h3 className="text-b1 text-gray-10 font-semibold">
-                      {insight.title}
-                    </h3>
-                  )}
-                  {insight.detail && (
-                    <p className="text-b2 text-gray-20">{insight.detail}</p>
-                  )}
-                  {insight.whyItMatters && (
-                    <p className="text-b3 text-gray-30">
-                      <span className="font-semibold">왜 중요한가:</span>{" "}
-                      {insight.whyItMatters}
-                    </p>
-                  )}
-                </div>
+                  #{coreTerm.term}
+                </span>
               ))}
             </div>
           )}
 
-          {/* 하단 버튼들 */}
-          <button
-            onClick={handleViewOriginal}
-            className="flex-1 w-full px-[10px] py-2 justify-center items-center gap-[10px] mt-5 mb-5 rounded-[8px] bg-bg-90 text-b2 text-gray-40"
-          >
-            원문 보러가기
-          </button>
-          <button
-            onClick={handleSolveProblems}
-            className="flex-1 w-full justify-center items-center px-4 py-[18px] rounded-[12px] bg-primary-50 text-b1 text-gray-10 text-center"
-          >
-            문제 풀러가기
-          </button>
+          {/* 제목과 발행일시 */}
+          <div className="flex flex-col items-start gap-[10px] self-stretch">
+            <h1 className="text-h2 text-gray-10">{news.title}</h1>
+            <p className="text-b3 text-gray-40">{news.date}</p>
+          </div>
+        </div>
+
+        {/* 썸네일 이미지 */}
+        {news.thumbnailUrl && (
+          <div className="w-full flex justify-center mt-5 mb-5">
+            <img
+              src={news.thumbnailUrl}
+              alt={news.title}
+              className="max-w-full h-auto object-contain rounded-lg"
+            />
+          </div>
+        )}
+
+        {/* AI 핵심 요약 */}
+        {news.summary3Lines && (
+          <div className="gap-[10px]">
+            <div className="inline-flex h-[25px] pt-[1px] justify-center items-center gap-[10px] mb-4">
+              <img
+                src="/study/img-light.png"
+                alt="AI 핵심 요약"
+                className="h-full w-auto"
+                width={15}
+                height={24}
+              />
+              <h2 className="text-sh5 text-gray-20">AI 핵심 요약</h2>
+            </div>
+            <div className="flex flex-col items-start gap-[10px] px-5 py-6 rounded-[8px] bg-bg-80">
+              {summaryLines.map((line, index) => (
+                <div
+                  key={index}
+                  className="flex items-start gap-2 text-b2 text-gray-20"
+                >
+                  <span className="flex-shrink-0">•</span>
+                  <span>{line}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 본문 내용 */}
+        {news.bodySummary && (
+          <div className="flex flex-col items-center justify-center w-full px-5 py-6 mt-[25px] mb-[25px] gap-[10px] rounded-[8px] bg-bg-90">
+            <div className="text-b2 text-gray-20 whitespace-pre-line">
+              {highlightCoreTerms(news.bodySummary)}
+            </div>
+          </div>
+        )}
+
+        {/* 핵심 인사이트 */}
+        {news.insights && news.insights.length > 0 && (
+          <div className="gap-[10px]">
+            <div className="inline-flex pt-[1px] justify-center items-center gap-[10px]">
+              <img
+                src="/study/img-insight.png"
+                alt="핵심 인사이트"
+                className="h-full w-auto"
+                width={23}
+                height={26}
+              />
+              <h2 className="text-sh5 text-gray-20">핵심 인사이트</h2>
+            </div>
+            {news.insights.map((insight, index) => (
+              <div
+                key={index}
+                className="flex flex-col items-start gap-[10px] px-5 py-6 rounded-[8px] bg-bg-90 mb-4"
+              >
+                {insight.title && (
+                  <h3 className="text-b1 text-gray-10 font-semibold">
+                    {insight.title}
+                  </h3>
+                )}
+                {insight.detail && (
+                  <p className="text-b2 text-gray-20">{insight.detail}</p>
+                )}
+                {insight.whyItMatters && (
+                  <p className="text-b3 text-gray-30">
+                    <span className="font-semibold">왜 중요한가:</span>{" "}
+                    {insight.whyItMatters}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 하단 버튼들 */}
+        <button
+          onClick={handleViewOriginal}
+          className="flex-1 w-full px-[10px] py-2 justify-center items-center gap-[10px] mt-5 mb-5 rounded-[8px] bg-bg-90 text-b2 text-gray-40"
+        >
+          원문 보러가기
+        </button>
+        <button
+          onClick={handleSolveProblems}
+          className="flex-1 w-full justify-center items-center px-4 py-[18px] rounded-[12px] bg-primary-50 text-b1 text-gray-10 text-center"
+        >
+          문제 풀러가기
+        </button>
       </div>
 
       {/* 보관함 저장 바텀시트 */}
@@ -452,4 +464,3 @@ export default function NewsDetailPage() {
     </div>
   );
 }
-

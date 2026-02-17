@@ -44,7 +44,7 @@ export const QUIZ_SUBMIT_MOCK: QuizSubmitResponse = {
   status: "OK",
   data: {
     correctCount: 2,
-    testScore: 80,
+    setScore: 80,
     totalExp: 120,
     level: 3,
     results: [

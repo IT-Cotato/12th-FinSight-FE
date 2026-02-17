@@ -28,7 +28,7 @@ export type QuizSubmitRequest = {
 // POST /api/quiz/submit의 response data
 export type QuizSubmitResult = {
   correctCount: number;
-  testScore: number;
+  setScore: number;
   totalExp: number;
   level: number;
   results: Array<{

@@ -20,8 +20,8 @@ export default function StatTripletCard({
 }: Props) {
   return (
     <section className="mt-6 px-5">
-      <div className="h-[90px] rounded-xl border border-primary-90 bg-primary-100 px-6">
-        <div className="grid h-full grid-cols-5 items-center">
+      <div className="h-[90px] rounded-xl border border-primary-90 bg-primary-100 px-3">
+        <div className="grid h-full grid-cols-[1fr_auto_1fr_auto_1fr] items-center">
           <Stat label="저장한 뉴스" value={`${attendanceDays}일`} />
           <div className="mx-auto h-10 w-px bg-primary-90" />
           <Stat label="뉴스 저장" value={`${totalNewsSaved}개`} />

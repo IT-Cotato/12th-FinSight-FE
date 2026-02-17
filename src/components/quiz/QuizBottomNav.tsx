@@ -16,7 +16,7 @@ export default function QuizBottomNav({
   onNext,
 }: Props) {
   return (
-    <div className="fixed bottom-0 px-6 pb-6">
+    <div className="left-0 right-0 z-[60] px-6 pb-10">
       <div className="flex justify-center gap-24">
         {/* 이전문제 */}
         <button

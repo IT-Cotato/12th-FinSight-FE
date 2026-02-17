@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import PageHeader from "./PageHeader";
 import PasswordInput from "./PasswordInput";
+import Button from "@/components/Button";
 import { changeMyPassword } from "@/lib/api/mypage";
 import { MOCK_AUTH } from "@/lib/mock/mypage";
 
@@ -152,18 +153,11 @@ export default function PasswordChangeScreen({ email }: Props) {
       </section>
 
       {/* 저장 버튼 */}
-      <div className="fixed bottom-6 left-0 right-0 px-5">
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={!canSubmit || submitting}
-          className={`h-[60px] w-full rounded-xl text-b1 text-gray-10 transition-colors ${
-            canSubmit ? "bg-primary-50" : "bg-primary-20"
-          }`}
-        >
-          저장하기
-        </button>
-      </div>
+      <Button
+        text="저장하기"
+        onClick={handleSubmit}
+        disabled={!canSubmit || submitting}
+      />
     </main>
   );
 }

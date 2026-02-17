@@ -77,3 +77,32 @@ export interface CheckNicknameResponse {
   status: string;
   data: object;
 }
+
+// 카카오 로그인
+export interface KakaoLoginRequest {
+  code: string;
+}
+
+export interface KakaoLoginResponse {
+  status: string;
+  data: {
+    accessToken: string;
+    refreshToken: string;
+    kakaoId: string;
+    isNewUser: boolean;
+  };
+}
+
+// 카카오 회원가입
+export interface KakaoSignupRequest {
+  kakaoId: string;
+  nickname: string;
+}
+
+export interface KakaoSignupResponse {
+  status: string;
+  data: {
+    accessToken: string;
+    refreshToken: string;
+  };
+}

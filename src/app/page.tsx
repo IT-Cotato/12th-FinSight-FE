@@ -75,8 +75,22 @@ function LoginSelectScreen() {
 
   const handleKakaoLogin = () => {
     setLoading(true);
-    alert('카카오 로그인 (개발 중)');
-    setLoading(false);
+    
+    // 카카오 OAuth 인증 URL 생성
+    const kakaoClientId = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID;
+    // 프론트엔드 callback URL 사용
+    const redirectUri = process.env.NEXT_PUBLIC_KAKAO_REDIRECT_URI || 
+      `${window.location.origin}/auth/kakao/callback`;
+    
+    if (!kakaoClientId) {
+      alert('카카오 로그인 설정이 완료되지 않았습니다.');
+      setLoading(false);
+      return;
+    }
+
+    // 카카오 인증 페이지로 리다이렉트
+    const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${kakaoClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
+    window.location.href = kakaoAuthUrl;
   };
 
   return (

@@ -1,11 +1,19 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import AuthContainer from '../../(auth)/AuthContainer';
+import { sendVerificationCode, verifyCode, checkNickname, kakaoSignup } from '@/api/auth';
 
-export default function SignupPage() {
+function SignupPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // 카카오 회원가입 모드 확인
+  const kakaoId = searchParams.get('kakaoId');
+  const isKakaoMode = !!kakaoId;
+  
   const [step, setStep] = useState(1);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -25,6 +33,10 @@ export default function SignupPage() {
   const [emailTouched, setEmailTouched] = useState(false);
   const [codeTouched, setCodeTouched] = useState(false);
 
+  // 닉네임 중복 확인 관련 state
+  const [nicknameError, setNicknameError] = useState('');
+  const [isNicknameChecked, setIsNicknameChecked] = useState(false);  // 닉네임 사용 가능 여부
+
   // 3단계 - 비밀번호 관련 state
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
@@ -34,6 +46,32 @@ export default function SignupPage() {
   const [passwordConfirmTouched, setPasswordConfirmTouched] = useState(false);
 
   const [emailError, setEmailError] = useState('');
+
+  // 인증 완료 상태
+  const [isCodeVerified, setIsCodeVerified] = useState(false);
+
+  //닉네임 중복 확인 함수
+  const handleCheckNickname = async (nickname: string) => {
+    if (!nickname.trim()) {
+      setNicknameError('');
+      setIsNicknameChecked(false);
+      return;
+    }
+
+    try {
+      const response = await checkNickname({ nickname });
+      
+      if (response.status) {
+        // 사용 가능한 닉네임
+        setNicknameError('');
+        setIsNicknameChecked(true);
+      }
+    } catch (err: any) {
+      // 이미 존재하는 닉네임
+      setNicknameError('이미 존재하는 닉네임입니다.');
+      setIsNicknameChecked(false);
+    }
+  };
 
   // 비밀번호 유효성 검사 함수
   const validatePassword = (pwd: string) => {
@@ -58,6 +96,11 @@ export default function SignupPage() {
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const passwordValidation = validatePassword(password);
 
+  // 비밀번호 표시/숨김 상태
+  const [showPassword, setShowPassword] = useState(false);
+  // 회원가입 비밀번호 확인용
+  const [showPasswordConfirm2, setShowPasswordConfirm2] = useState(false);  
+
   // 이메일 유효성 검사 함수
   const isValidEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -76,7 +119,7 @@ export default function SignupPage() {
     case 2:
       return isValidEmail(email) && !isCodeSent;
     case 3:
-      return verificationCode.length >= 4;
+      return verificationCode.length == 6;
     case 4:
       return termsAgreed && privacyAgreed; // 두 필수 약관 모두 동의 시 활성화
     default:
@@ -87,33 +130,14 @@ export default function SignupPage() {
 // 회원가입 완료
 const handleSignup = async () => {
   setLoading(true);
+
   try {
-    /* [실제 API 연동 시 주석 해제]
-    const response = await fetch('/api/auth/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        email,
-        password,
-        termsAgreed,
-        privacyAgreed,
-      }),
-    });
-
-    if (!response.ok) throw new Error('회원가입 실패');
-    const data = await response.json();
-    */
-
-    // ✨ Mock (테스트용): 1초 대기 후 성공 처리
+    // 회원가입 API 호출
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // ✅ 회원가입 성공 시 온보딩 화면으로 이동
     router.push('/onboarding');
-    
-  } catch (error) {
-    console.error('Signup error:', error);
-    setError('회원가입에 실패했습니다. 다시 시도해주세요.');
+  } catch (err: any) {
+    setError(err.message || '회원가입에 실패했습니다.');
   } finally {
     setLoading(false);
   }
@@ -133,95 +157,62 @@ const handleSignup = async () => {
     return `${m}:${s < 10 ? `0${s}` : s}`;
   };
 
-  //---------------- 반드시 수정 (API 연동 대비 버전) -------------------
+  //---------------- API 연동 -------------------
   
   /** 1. 인증번호 전송 API 호출 */
 const handleSendVerificationCode = async () => {
   setLoading(true);
   setError('');
-  setEmailError(''); // 이메일 에러 초기화
+  setEmailError('');
   
   try {
-    /* [실제 API 연동 시 주석 해제]
-    const response = await fetch('/api/auth/send-verification-code', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
+    // API 호출
+    const response = await sendVerificationCode({ email });
     
-    if (!response.ok) {
-      const data = await response.json();
-      if (response.status === 409 || data.error === 'ALREADY_REGISTERED') {
-        setEmailError('이미 가입한 이메일입니다.');
-        setLoading(false);
-        return;
-      }
-      throw new Error('전송 실패');
+    if (response.status) {
+      setIsCodeSent(true);
+      setTimeLeft(180);
+      setVerificationCode('');
+      setError('');
+      setCodeTouched(false);
+      setIsCodeVerified(false); // 재전송 시 인증 상태 초기화
     }
-    const data = await response.json();
-    */
-
-    // ✨ Mock (테스트용): 1초 대기 후 성공 처리
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // 🧪 테스트용: 특정 이메일은 이미 가입된 것으로 처리
-    if (email === 'test@test.com') {
-      setEmailError('이미 가입한 이메일입니다.');
-      setLoading(false);
-      return;
-    }
-    
-    setIsCodeSent(true);      // 인증번호 입력창 활성화
-    setTimeLeft(180);         // 타이머 3분 리셋
-    setVerificationCode('');  // 인증번호 입력란 초기화
-    setError('');
-    // ✅ 수정: 재전송 시 인증번호 터치 상태 초기화
-    setCodeTouched(false);
-    alert('인증번호가 전송되었습니다! (테스트용: 123456)');
-    
-  } catch (err) {
-    setError('인증번호 전송에 실패했습니다. 다시 시도해주세요.');
+  } catch (err: any) {
+    // 에러 처리
+    setEmailError(err.message || '인증번호 발송에 실패했습니다.');
   } finally {
     setLoading(false);
   }
 };
 
   /** 2. 인증번호 확인 API 호출 */
-  const handleVerifyCode = async () => {
-    setLoading(true);
-    setError('');
+const handleVerifyCode = async () => {
+  setLoading(true);
+  setError('');
+  
+  try {
+    //  API 호출
+    const response = await verifyCode({ 
+      email, 
+      code: verificationCode 
+    });
     
-    try {
-      /* [실제 API 연동 시 주석 해제]
-      const response = await fetch('/api/auth/verify-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code: verificationCode }),
-      });
-      if (!response.ok) throw new Error('인증 실패');
-      const data = await response.json();
-      */
-
-      // ✨ Mock (테스트용): 1초 대기 후 번호 대조
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (verificationCode === '123456') {
-        // 인증 성공 시에만 다음 Step으로 이동
-        setStep(3); 
-        setError('');
-      } else {
-        setError('인증번호가 일치하지 않습니다.');
-      }
-      
-    } catch (err) {
-      setError('인증 확인 중 오류가 발생했습니다.');
-    } finally {
-      setLoading(false);
+    // 성공 처리 - 인증 완료 후 바로 다음 단계로
+    if (response.status) {
+      setIsCodeVerified(true);
+      setError('');
+      handleNext();  // 인증 성공 시 자동으로 다음 단계로
     }
-  };
-  //----------------------반드시 수정-----------------------
+  } catch (err: any) {
+    setError(err.message || '인증번호가 일치하지 않습니다.');
+    setIsCodeVerified(false);
+  } finally {
+    setLoading(false);
+  }
+};
+  //---------------------- 수정 완료 -----------------------
 
-  // ✨ 뒤로가기 핸들러 추가
+  // 뒤로가기 핸들러 추가
   const handleBack = () => {
     if (step > 1) {
       setStep(step - 1);  // 이전 단계로
@@ -230,7 +221,25 @@ const handleSendVerificationCode = async () => {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
+    // 카카오 모드이고 step 1(닉네임 입력) 완료 시 카카오 회원가입 API 호출
+    if (isKakaoMode && step === 1 && isNicknameChecked) {
+      try {
+        setLoading(true);
+        await kakaoSignup({
+          kakaoId: kakaoId!,
+          nickname: name.trim(),
+        });
+        // 회원가입 성공 시 홈으로 이동
+        router.push('/home');
+      } catch (err: any) {
+        setNicknameError(err.message || '회원가입에 실패했습니다.');
+        setLoading(false);
+      }
+      return;
+    }
+    
+    // 일반 회원가입 플로우
     if (step < 4) {
       setStep(step + 1);
     } else {
@@ -251,6 +260,11 @@ const handleSendVerificationCode = async () => {
   };
 
   const renderStepContent = () => {
+    // 카카오 모드일 때는 step 1만 보여줌
+    if (isKakaoMode && step !== 1) {
+      return null;
+    }
+    
     switch (step) {
       case 1:
         return (
@@ -263,9 +277,20 @@ const handleSendVerificationCode = async () => {
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  // 닉네임 변경 시 중복 확인 초기화
+                  setNicknameError('');
+                  setIsNicknameChecked(false);
+                }}
+                onBlur={() => {
+                  setIsNameFocused(false);
+                  // 포커스 벗어날 때 닉네임 중복 확인
+                  if (name.trim()) {
+                    handleCheckNickname(name);
+                  }
+                }}
                 onFocus={() => setIsNameFocused(true)}
-                onBlur={() => setIsNameFocused(false)}
                 style={{
                     top: '256px',
                     left: '20px',
@@ -288,12 +313,29 @@ const handleSendVerificationCode = async () => {
                 placeholder="이름 입력"
                 enterKeyHint="next"
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && name) {
+                  if (e.key === 'Enter' && name && isNicknameChecked) {  // 닉네임 확인 완료 시에만
                     handleNext();
                   }
                 }}
                 className="w-full p-4 rounded-lg text-white"
               />
+
+              {/* 닉네임 중복 에러 메시지 */}
+              {nicknameError && (
+                <p 
+                  style={{
+                    color: 'var(--color-primary-30)',
+                    fontSize: '14px',
+                    marginTop: '12px',
+                    fontFamily: 'Pretendard',
+                    fontWeight: '500',
+                    lineHeight: '180%',
+                    letterSpacing: '-0.14px',
+                  }}
+                >
+                  이미 존재하는 닉네임입니다.
+                </p>
+              )}
             </div>
           </>
         );
@@ -480,6 +522,21 @@ const handleSendVerificationCode = async () => {
                       3분이 지나 인증번호가 만료되었어요. 다시 전송해주세요.
                     </p>
                   )}
+
+                  {/* 인증번호 에러 메시지 */}
+                  {error && (
+                    <p style={{
+                      color: 'var(--color-primary-30, #9C95FA)',
+                      fontSize: '14px',
+                      marginTop: '12px',
+                      fontFamily: 'Pretendard',
+                      fontWeight: '500',
+                      lineHeight: '180%',
+                      letterSpacing: '-0.14px',
+                    }}>
+                      {error}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -506,10 +563,10 @@ const handleSendVerificationCode = async () => {
               영문, 숫자 조합 6 ~ 18자리
             </p>
 
-            {/* 비밀번호 입력 */}
-            <div className="mt-6">
+            {/* 비밀번호 입력 - 아이콘 추가 */}
+            <div className="mt-6 relative">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}  // 동적으로 type 변경
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
@@ -543,9 +600,33 @@ const handleSendVerificationCode = async () => {
                 }}
                 placeholder="비밀번호 입력"
                 enterKeyHint="next"
-                // disabled 처리
                 disabled={showPasswordConfirm}
               />
+
+              {/* 눈 아이콘 버튼 */}
+              {password.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '15px',
+                    top: '30px',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: 0,
+                  }}
+                >
+                  <Image
+                    src={showPassword ? '/eye-on.png' : '/eye-off.png'}
+                    alt="비밀번호 표시/숨김"
+                    width={20}
+                    height={12}
+                  />
+                </button>
+              )}
 
               {/* 비밀번호 유효성 검사 메시지 */}
               {password.length > 0 && !passwordValidation.isValid && (
@@ -564,11 +645,11 @@ const handleSendVerificationCode = async () => {
               )}
             </div>
 
-            {/* 비밀번호 확인 칸 - 조건부 렌더링 */}
+            {/* 비밀번호 확인 칸 - 아이콘 추가 */}
             {showPasswordConfirm && (
-              <div className="mt-3">
+              <div className="mt-3 relative">
                 <input
-                  type="password"
+                  type={showPasswordConfirm2 ? "text" : "password"}  // 동적으로 type 변경
                   value={passwordConfirm}
                   onChange={(e) => {
                     setPasswordConfirm(e.target.value);
@@ -590,7 +671,7 @@ const handleSendVerificationCode = async () => {
                     height: '60px',
                     backgroundColor: (passwordConfirmTouched || isPasswordConfirmFocused) ? '#2F3847' : '#1D2937',
                     borderRadius: '8px',
-                    padding: '18px 25px',
+                    padding: '18px 116px 18px 25px',  // 오른쪽 padding 추가
                     fontSize: '16px',
                     letterSpacing: '-0.14px',
                     lineHeight: '180%',
@@ -609,6 +690,31 @@ const handleSendVerificationCode = async () => {
                     }
                   }}
                 />
+
+                {/* 눈 아이콘 버튼 (비밀번호 확인) */}
+                {passwordConfirm.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordConfirm2(!showPasswordConfirm2)}
+                    style={{
+                      position: 'absolute',
+                      right: '15px',
+                      top: '30px',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                    }}
+                  >
+                    <Image
+                      src={showPasswordConfirm2 ? '/eye-on.png' : '/eye-off.png'}
+                      alt="비밀번호 표시/숨김"
+                      width={20}
+                      height={12}
+                    />
+                  </button>
+                )}
 
                 {/* 비밀번호 일치 여부 메시지 */}
                 {passwordConfirm.length > 0 && (
@@ -874,46 +980,49 @@ const handleSendVerificationCode = async () => {
 
   return (
     <AuthContainer
-      title="회원가입"
+      title={isKakaoMode ? "카카오 회원가입" : "회원가입"}
       currentStep={step}
-      totalSteps={4}
+      totalSteps={isKakaoMode ? 0 : 4}
       buttonText={
-        step === 2 
-          ? (isCodeSent ? "인증하기" : "인증번호 전송")
-          : step === 4
-            ? "가입하기"  // ✅ 추가: step 4일 때 버튼 텍스트
-            : "다음"
+        isKakaoMode && step === 1
+          ? "완료"
+          : step === 2 
+            ? (isCodeSent ? "인증하기" : "인증번호 전송")
+            : step === 4
+              ? "가입하기"
+              : "다음"
       }
       buttonDisabled={
-        step === 1 ? !name :
-        step === 2 ? (isCodeSent ? !verificationCode || verificationCode.length < 4 : !isValidEmail(email)) :
+        step === 1 ? (!name || !isNicknameChecked) :
+        step === 2 ? (isCodeSent ? verificationCode.length < 4 : !isValidEmail(email)) :  // 인증번호 4자리 입력 시 활성화
         step === 3 ? (
-          // 밀번호 확인 칸이 안 보이면 → 비밀번호 유효성만 체크
-          // 비밀번호 확인 칸이 보이면 → 비밀번호 일치 여부도 체크
           showPasswordConfirm 
             ? !passwordsMatch 
             : !validatePassword(password).isValid
         ) :
-        step === 4 ? !(termsAgreed && privacyAgreed) :  // ✅ 추가: step 4 조건
+        step === 4 ? !(termsAgreed && privacyAgreed) :
         false
       }
       onNext={() => {
+        // 카카오 모드일 때는 step 1에서 바로 회원가입 처리
+        if (isKakaoMode && step === 1) {
+          handleNext();
+          return;
+        }
+        
         if (step === 2) {
           if (!isCodeSent) {
             handleSendVerificationCode();
           } else {
-            handleVerifyCode();
+            handleVerifyCode();  // 인증하기 버튼 클릭 시 인증 시도
           }
         } else if (step === 3) {
-          // 비밀번호 확인 칸이 안 보이면 → 비밀번호 확인 칸 표시
           if (!showPasswordConfirm) {
             setShowPasswordConfirm(true);
           } else {
-            // 비밀번호 확인까지 완료 → 다음 단계로
             handleNext();
           }
         } else if (step === 4) {
-          // ✅ 추가: step 4일 때 회원가입 완료 처리
           handleSignup();
         } else {
           handleNext();
@@ -923,5 +1032,25 @@ const handleSendVerificationCode = async () => {
     >
       {renderStepContent()}
     </AuthContainer>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col mx-auto" style={{
+        width: '390px',
+        height: '844px',
+        background: 'var(--color-bg-100, #131416)',
+        position: 'relative',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <p style={{ color: '#fff' }}>로딩 중...</p>
+      </div>
+    }>
+      <SignupPageContent />
+    </Suspense>
   );
 }

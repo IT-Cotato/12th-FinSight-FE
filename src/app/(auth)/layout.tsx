@@ -34,11 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko">
-      <body>
-        <div id="app-shell">{children}</div>
-      </body>
-    </html>
+    <div id="app-shell">{children}</div>
   );
 }
 

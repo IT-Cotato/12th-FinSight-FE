@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthContainer from '../AuthContainer';
+import { sendPasswordResetCode, verifyCode, resetPassword } from '@/api/auth';
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -16,6 +17,9 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [timeLeft, setTimeLeft] = useState(180);
+
+  // 인증 완료 상태
+  const [isCodeVerified, setIsCodeVerified] = useState(false);
 
   // Focus 상태
   const [isEmailFocused, setIsEmailFocused] = useState(false);
@@ -40,7 +44,7 @@ export default function ForgotPasswordPage() {
 
   // 비밀번호 유효성 검사
   const validatePassword = (pwd: string) => {
-    const hasMinLength = pwd.length >= 6 && pwd.length <= 18;
+    const hasMinLength = pwd.length >= 8 && pwd.length <= 16;
     const hasUpperCase = /[A-Z]/.test(pwd);
     const hasLowerCase = /[a-z]/.test(pwd);
     const hasNumber = /[0-9]/.test(pwd);
@@ -60,11 +64,11 @@ export default function ForgotPasswordPage() {
   // 타이머
   useEffect(() => {
     let timer: NodeJS.Timeout;
-    if (step === 2 && timeLeft > 0) {
+    if (isCodeSent && timeLeft > 0) {  // step === 2 → isCodeSent
       timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
     }
     return () => clearInterval(timer);
-  }, [step, timeLeft]);
+  }, [isCodeSent, timeLeft]);
 
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60);
@@ -73,42 +77,24 @@ export default function ForgotPasswordPage() {
   };
 
 
-  // 인증번호 전송
+  //  비밀번호 찾기 용 인증번호 전송
   const handleSendVerificationCode = async () => {
     setLoading(true);
     setError('');
     
     try {
-      /* [실제 API 연동 시 주석 해제]
-      const response = await fetch('/api/auth/forgot-password/send-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
+      // 비밀번호 찾기 용 API 호출
+      const response = await sendPasswordResetCode({ email });
       
-      if (!response.ok) {
-        const data = await response.json();
-        if (response.status === 404) {
-          setError('가입되지 않은 이메일입니다.');
-          setLoading(false);
-          return;
-        }
-        throw new Error('전송 실패');
+      if (response.status) {
+        setIsCodeSent(true);
+        setStep(2);
+        setTimeLeft(180);
+        setVerificationCode('');
+        setIsCodeVerified(false);
       }
-      */
-
-      // Mock 테스트
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // 성공 후 Step 2로 이동
-      setStep(2);
-      setTimeLeft(180);
-      setVerificationCode('');
-      setCodeTouched(false);
-      alert('인증번호가 전송되었습니다! (테스트용: 123456)');
-      
-    } catch (err) {
-      setError('인증번호 전송에 실패했습니다.');
+    } catch (err: any) {
+      setError(err.message || '인증번호 발송에 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -120,28 +106,21 @@ export default function ForgotPasswordPage() {
     setError('');
     
     try {
-      /* [실제 API 연동 시 주석 해제]
-      const response = await fetch('/api/auth/forgot-password/verify-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code: verificationCode }),
+      // 실제 API 호출
+      const response = await verifyCode({ 
+        email, 
+        code: verificationCode 
       });
       
-      if (!response.ok) throw new Error('인증 실패');
-      */
-
-      // Mock 테스트
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (verificationCode === '123456') {
-        setStep(3); // ✅ 수정: 새 비밀번호 입력 단계로
+      // 성공 처리 - 인증 완료 후 다음 단계로
+      if (response.status) {
+        setIsCodeVerified(true);
         setError('');
-      } else {
-        setError('인증번호가 일치하지 않습니다.');
+        setStep(3);  // 비밀번호 입력 단계로
       }
-      
-    } catch (err) {
-      setError('인증 확인 중 오류가 발생했습니다.');
+    } catch (err: any) {
+      setError(err.message || '인증번호가 일치하지 않습니다.');
+      setIsCodeVerified(false);
     } finally {
       setLoading(false);
     }
@@ -152,24 +131,18 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     
     try {
-      /* [실제 API 연동 시 주석 해제]
-      const response = await fetch('/api/auth/forgot-password/reset', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code: verificationCode, newPassword: password }),
+      // API 호출
+      const response = await resetPassword({
+        email,
+        newPassword: password,
       });
       
-      if (!response.ok) throw new Error('비밀번호 재설정 실패');
-      */
-
-      // Mock 테스트
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      alert('비밀번호가 재설정되었습니다!');
-      router.push('/login');
-      
-    } catch (err) {
-      setError('비밀번호 재설정에 실패했습니다.');
+      if (response.status) {
+        alert('비밀번호가 재설정되었습니다!');
+        router.push('/login');
+      }
+    } catch (err: any) {
+      setError(err.message || '비밀번호 재설정에 실패했습니다.');
     } finally {
       setLoading(false);
     }
@@ -255,7 +228,7 @@ export default function ForgotPasswordPage() {
           </>
         );
 
-      // ✅ Step 2: 인증번호 입력
+      // Step 2: 인증번호 입력
       case 2:
         return (
           <>
@@ -343,6 +316,19 @@ export default function ForgotPasswordPage() {
                 </button>
               </div>
 
+              {/* ✨ 추가: 타이머 */}
+              {timeLeft > 0 && (
+                <div style={{
+                  marginTop: '14px',
+                  color: 'var(--color-primary-30)',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  fontFamily: 'Pretendard',
+                }}>
+                  {formatTime(timeLeft)}
+                </div>
+              )}
+
               {/* 시간 만료 메시지 */}
               {timeLeft === 0 && (
                 <p style={{
@@ -364,7 +350,7 @@ export default function ForgotPasswordPage() {
                   fontFamily: 'Pretendard',
                   fontWeight: '500',
                 }}>
-                  인증번호가 일치하지 않습니다.
+                  {error}
                 </p>
               )}
             </div>
@@ -389,7 +375,7 @@ export default function ForgotPasswordPage() {
               marginTop: '6px',
               marginBottom: '22px',
             }}>
-              영문, 숫자 조합 6 ~ 18자리
+              영문, 숫자 조합 6 ~ 16자리
             </p>
 
             {/* 비밀번호 입력 */}
@@ -469,16 +455,19 @@ export default function ForgotPasswordPage() {
                   placeholder="비밀번호 확인"
                 />
 
-                {passwordConfirm.length > 0 && !passwordsMatch && (
-                <p style={{
-                  color: 'var(--color-primary-30)',
-                  fontSize: '14px',
-                  marginTop: '12px',
-                  fontFamily: 'Pretendard',
-                }}>
-                  비밀번호가 일치하지 않습니다. 다시 확인해주세요.
-                </p>
-              )}
+                {/* ✨ 수정: 일치 여부 메시지 */}
+                {passwordConfirm.length > 0 && (
+                  <p style={{
+                    color: 'var(--color-primary-30)',
+                    fontSize: '14px',
+                    marginTop: '12px',
+                    fontFamily: 'Pretendard',
+                  }}>
+                    {passwordsMatch 
+                      ? '비밀번호가 일치합니다.' 
+                      : '비밀번호가 일치하지 않습니다.'}
+                  </p>
+                )}
               </div>
             )}
           </>
@@ -504,9 +493,9 @@ export default function ForgotPasswordPage() {
       }
       buttonDisabled={
         step === 1 
-          ? !isValidEmail(email)  // 이메일 형식 체크
+          ? !isValidEmail(email)
           : step === 2
-            ? !verificationCode || verificationCode.length < 4  // 인증번호 4자리 이상
+            ? verificationCode.length < 4  // ✨ 수정: 인증번호 4자리 입력 시 활성화
             : showPasswordConfirm 
               ? !passwordsMatch 
               : !passwordValidation.isValid

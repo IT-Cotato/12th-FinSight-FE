@@ -1,13 +1,39 @@
 // 뉴스 API 관련 함수들
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "/api/v1";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || null;
+
+/**
+ * 액세스 토큰을 가져옵니다.
+ */
+function getAccessToken(): string | null {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem("accessToken");
+  }
+  return null;
+}
+
+/**
+ * API 요청을 위한 공통 헤더를 생성합니다.
+ */
+function getAuthHeaders(): HeadersInit {
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+
+  const token = getAccessToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  return headers;
+}
 
 export type NewsCategory =
   | "ALL"
   | "FINANCE"
   | "STOCK"
   | "INDUSTRY"
-  | "VENTURE"
+  | "SME"
   | "REAL_ESTATE"
   | "GLOBAL"
   | "LIVING"
@@ -18,6 +44,7 @@ export type NewsSort = "LATEST" | "POPULARITY";
 export type CoreTerm = {
   termId: number;
   term: string;
+  description?: string;
 };
 
 export type NewsItem = {
@@ -30,7 +57,7 @@ export type NewsItem = {
 
 export type NewsListResponse = {
   status: string;
-  message: string;
+  message?: string;
   data: {
     category: string;
     sort: string;
@@ -48,31 +75,32 @@ export type NewsListParams = {
   cursor?: string;
 };
 
-export type Highlight = {
-  termId: number;
-  term: string;
-  startIndex: number;
-  endIndex: number;
+export type Summary3Lines = {
+  event: string;
+  reason: string;
+  impact: string;
+};
+
+export type Insight = {
+  title: string;
+  detail: string;
+  whyItMatters: string;
 };
 
 export type NewsDetail = {
-  newsId: number;
   category: string;
-  title: string;
-  publishedAt: string;
-  thumbnailUrl: string;
-  url: string;
-  isSaved: boolean;
   coreTerms: CoreTerm[];
-  summary3Lines: string;
-  summaryFull: string;
-  insight: string;
-  highlights: Highlight[];
+  title: string;
+  date: string;
+  thumbnailUrl: string;
+  originalUrl: string;
+  summary3Lines: Summary3Lines;
+  bodySummary: string;
+  insights: Insight[];
 };
 
 export type NewsDetailResponse = {
   status: string;
-  message: string;
   data: NewsDetail;
 };
 
@@ -81,7 +109,9 @@ export type NewsDetailResponse = {
  * @param params 쿼리 파라미터
  * @returns 뉴스 리스트 응답
  */
-export async function getNewsList(params: NewsListParams = {}): Promise<NewsListResponse> {
+export async function getNewsList(
+  params: NewsListParams = {},
+): Promise<NewsListResponse> {
   const { category = "ALL", sort = "LATEST", size = 40, cursor } = params;
 
   const queryParams = new URLSearchParams({
@@ -94,12 +124,13 @@ export async function getNewsList(params: NewsListParams = {}): Promise<NewsList
     queryParams.append("cursor", cursor);
   }
 
-  const response = await fetch(`${API_BASE_URL}/news?${queryParams.toString()}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
+const response = await fetch(
+    `${API_BASE_URL}/api/news?${queryParams.toString()}`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
     },
-  });
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to fetch news list: ${response.statusText}`);
@@ -113,13 +144,16 @@ export async function getNewsList(params: NewsListParams = {}): Promise<NewsList
  * @param newsId 뉴스 ID
  * @returns 뉴스 상세 정보 응답
  */
-export async function getNewsDetail(newsId: string): Promise<NewsDetailResponse> {
-  const response = await fetch(`${API_BASE_URL}/news/${newsId}`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
+export async function getNewsDetail(
+  newsId: string,
+): Promise<NewsDetailResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/news/${newsId}`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
     },
-  });
+  );
 
   if (!response.ok) {
     throw new Error(`Failed to fetch news: ${response.statusText}`);
@@ -128,3 +162,50 @@ export async function getNewsDetail(newsId: string): Promise<NewsDetailResponse>
   return response.json();
 }
 
+export type NewsSearchParams = {
+  q: string;
+  category?: NewsCategory;
+  sort?: NewsSort;
+  page?: number;
+};
+
+export type NewsSearchResponse = {
+  status: string;
+  message?: string;
+  data: {
+    q: string;
+    category: string;
+    sort: string;
+    page: number;
+    totalPages: number;
+    totalElements: number;
+    news: NewsItem[];
+  };
+};
+
+/**
+ * 뉴스 검색
+ * @param params 검색 파라미터
+ * @returns 검색 결과 응답
+ */
+export async function searchNews(params: NewsSearchParams): Promise<NewsSearchResponse> {
+  const { q, category = "ALL", sort = "LATEST", page = 1 } = params;
+
+  const queryParams = new URLSearchParams({
+    q,
+    category,
+    sort,
+    page: page.toString(),
+  });
+
+  const response = await fetch(`${API_BASE_URL}/api/news/search?${queryParams.toString()}`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to search news: ${response.statusText}`);
+  }
+
+  return response.json();
+}

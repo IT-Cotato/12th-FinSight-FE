@@ -2,7 +2,8 @@
 
 import { useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { useHomeStore, type NewsItem } from '@/store/homeStore'; // 스토어에서 정의한 타입을 가져옵니다.
+import Link from 'next/link';
+import { useHomeStore, type NewsItem, CATEGORY_MAP } from '@/store/homeStore';
 
 export default function PopularNews() {
   const { popularNews, isLoadingNews, hasMoreNews, fetchPopularNews, loadMoreNews } = useHomeStore();
@@ -53,7 +54,6 @@ export default function PopularNews() {
         ) : (
           <>
             {popularNews.map((news, idx) => (
-              // news.newsId를 키값으로 사용
               <PopularNewsCard key={`${news.newsId}-${idx}`} news={news} rank={idx + 1} />
             ))}
             
@@ -69,31 +69,36 @@ export default function PopularNews() {
   );
 }
 
-// 스토어에서 가져온 NewsItem 타입을 인자로 명시합니다.
 function PopularNewsCard({ news, rank }: { news: NewsItem; rank: number }) {
+  // 영어 카테고리를 한글로 변환 (매핑된 게 없으면 원래 영어 사용)
+  const categoryName = CATEGORY_MAP[news?.category] || news?.category;
+
   return (
-    <div className="relative shrink-0 w-[140px] h-[200px] rounded-[16px] overflow-hidden bg-[#1C1E22] active:scale-95 transition-transform group cursor-pointer">
-      <Image 
-        // 외부 이미지 에러를 방지하기 위해 옵셔널 체이닝 추가
-        src={news?.thumbnailUrl || "/home/mockData.svg"}
-        alt={news?.title || "뉴스 이미지"} 
-        fill 
-        className="object-cover opacity-60 group-hover:opacity-80 transition-opacity" 
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-      <div className="absolute inset-0 p-3 flex flex-col justify-between">
-        <h3 className="text-[13px] font-semibold leading-[140%] text-white line-clamp-2 break-keep">
-          {news?.title}
-        </h3>
-        <div className="flex justify-between items-end">
-          <span className="px-2 py-0.5 bg-[--color-primary-80] text-[--color-primary-10] text-[10px] font-bold rounded-full">
-            #{news?.category}
-          </span>
-          <span className="text-[40px] font-black italic leading-[1] text-white opacity-90 tracking-tighter">
-            {rank}
-          </span>
+    // Link로 감싸서 클릭 시 상세 페이지로 이동
+    <Link href={`/study/${news.newsId}`}>
+      <div className="relative shrink-0 w-[140px] h-[200px] rounded-[16px] overflow-hidden bg-[#1C1E22] active:scale-95 transition-transform group cursor-pointer">
+        <Image 
+          src={news?.thumbnailUrl || "/home/mockData.svg"}
+          alt={news?.title || "뉴스 이미지"} 
+          fill 
+          className="object-cover opacity-60 group-hover:opacity-80 transition-opacity" 
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+        <div className="absolute inset-0 p-3 flex flex-col justify-between">
+          <h3 className="text-[13px] font-semibold leading-[140%] text-white line-clamp-2 break-keep">
+            {news?.title}
+          </h3>
+          <div className="flex justify-between items-end">
+            <span className="px-2 py-0.5 bg-[--color-primary-80] text-[--color-primary-10] text-[10px] font-bold rounded-full">
+              {/* 한글 카테고리 표시 */}
+              #{categoryName}
+            </span>
+            <span className="text-[40px] font-black italic leading-[1] text-white opacity-90 tracking-tighter">
+              {rank}
+            </span>
+          </div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }

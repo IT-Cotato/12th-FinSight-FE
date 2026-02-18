@@ -25,7 +25,6 @@ export default function HomePage() {
     <div className="w-full min-h-screen bg-[#131416]">
       <div className="relative mx-auto w-full min-h-screen font-pretendard select-none bg-[#131416]">
         
-        {/* 상단 섹션 */}
         <section 
           className="relative w-full h-[463px] flex flex-col items-center shrink-0"
           style={{
@@ -41,14 +40,49 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* 캐릭터 인터랙션 영역 */}
           <div 
             className="relative z-10 flex-1 flex flex-col items-center justify-center mt-[30px] cursor-pointer"
             onClick={checkGuide}
           >
             {isGuideChecked && (
-              <div className="absolute top-[0] left-[79.43px] z-30 animate-fade-in">
-                <div className="relative bg-primary-30 text-gray-90 text-[12px] px-[15px] py-1 rounded-[16px] whitespace-nowrap font-medium">
+              <div 
+                className="absolute z-30 animate-fade-in flex items-center"
+                style={{
+                  top: '-30px',
+                  left: '50%',
+                  transform: 'translateX(-52%)',
+                }}
+              >
+                <div 
+                  className="flex-shrink-0"
+                  style={{
+                    width: '63px',
+                    height: '48px',
+                    boxShadow: '0 0 20px 0 rgba(21, 21, 64, 0.70)',
+                  }}
+                >
+                  <Image 
+                    src="/home/notif.svg" 
+                    alt="편지" 
+                    width={63} 
+                    height={48}
+                    style={{ width: '63px', height: '48px' }}
+                  />
+                </div>
+                
+                <div 
+                  className="relative bg-primary-30 text-gray-90 font-medium"
+                  style={{
+                    fontSize: '12px',
+                    lineHeight: '180%',
+                    paddingLeft: '12px',
+                    paddingRight: '12px',
+                    paddingTop: '4px',
+                    paddingBottom: '4px',
+                    borderRadius: '16px',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
                   {guideMessage}
                 </div>
               </div>
@@ -56,30 +90,47 @@ export default function HomePage() {
 
             <div className={`relative z-20 ${!isGuideRead ? 'animate-shake' : 'animate-float'}`}>
               <Image src="/img-character-main.png" alt="핀토" width={111} height={155} priority />
-            </div>  
-
-            <div className={`absolute top-[-5px] z-30 transition-all duration-500 ease-in-out ${
-              isGuideChecked ? 'left-[32px]' : 'right-[125px]'
-            }`}>
-              <div className="relative w-[63px] h-[48px]">
-                <Image src="/home/notif.svg" alt="알림" fill className="object-contain" />
-                {!isGuideRead && (
-                  <div className="absolute top-[-2px] right-[-2px] z-10 w-[13px] h-[13px]">
-                    <Image src="/home/dot.svg" alt="알림 도트" fill className="object-contain" />
+              
+              {!isGuideChecked && (
+                <div 
+                  className="absolute z-30"
+                  style={{
+                    top: '3px',
+                    right: '-20px',
+                  }}
+                >
+                  <div className="relative" style={{ width: '63px', height: '48px' }}>
+                    <Image 
+                      src="/home/notif.svg" 
+                      alt="알림" 
+                      width={63} 
+                      height={48}
+                      style={{ width: '63px', height: '48px' }}
+                    />
+                    {!isGuideRead && (
+                      <div 
+                        className="absolute z-10 w-[13px] h-[13px]"
+                        style={{
+                          top: '6px',
+                          right: '10px',
+                        }}
+                      >
+                        <Image src="/home/dot.svg" alt="알림 도트" width={13} height={13} />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
+
             <div className="mt-[-36px] px-[78px] mb-3">
               <Image src="/home/Ellipse.svg" alt="핀토 그림자" width={234} height={52} priority />
             </div>
           </div>
 
-          {/* 체크리스트 영역: 외부 컴포넌트로 대체 */}
           <DailyMissionSection />
         </section>
 
-        {/* 뉴스 섹션 */}
         <div className="flex flex-col w-full py-5">
           <PopularNews />
           <CuratedNews />

@@ -528,6 +528,7 @@ export type StorageTermItem = {
 
 export type StorageTermsParams = {
   folderId: number;
+  section?: string;
   page?: number;
   size?: number;
 };
@@ -551,13 +552,17 @@ export type StorageTermsResponse = {
 export async function getStorageTerms(
   params: StorageTermsParams
 ): Promise<StorageTermsResponse> {
-  const { folderId, page = 1, size = 10 } = params;
+  const { folderId, section, page = 1, size = 10 } = params;
   
   const queryParams = new URLSearchParams({
     folderId: folderId.toString(),
     page: page.toString(),
     size: size.toString(),
   });
+  
+  if (section) {
+    queryParams.append("section", section);
+  }
   
   const response = await authenticatedFetch(`${API_BASE_URL}/api/storage/terms?${queryParams.toString()}`, {
     method: "GET",

@@ -20,6 +20,7 @@ type TabType = "news" | "terms";
 type Category = {
   category_id: number | null;
   name: string;
+  code?: string; // API section 코드 (FINANCE, STOCK 등)
 };
 
 // 페이지네이션 컴포넌트
@@ -123,12 +124,13 @@ export default function ArchivePage() {
         const response = await getCategoryOrder();
         const items = response.data.categories;
 
-        // 종합을 맨 앞에 추가하고, API에서 받은 카테고리 사용
+        // 종합을 맨 앞에 추가하고, API에서 받은 카테고리 사용 (code 포함)
         const sortedCategories: Category[] = [
           { category_id: null, name: "종합" },
           ...items.map((item) => ({
             category_id: item.categoryId,
             name: item.nameKo,
+            code: item.code,
           })),
         ];
 
@@ -142,14 +144,26 @@ export default function ArchivePage() {
         setCategoryMapping(mapping);
       } catch (err) {
         console.warn("카테고리 순서 API 호출 실패, 기본 카테고리 사용:", err);
-        setCategories(DEFAULT_CATEGORIES);
+        // 기본 카테고리에 code 추가
+        const defaultCategoriesWithCode: Category[] = [
+          { category_id: null, name: "종합" },
+          { category_id: 1, name: "금융", code: "FINANCE" },
+          { category_id: 2, name: "증권", code: "STOCK" },
+          { category_id: 3, name: "산업/재계", code: "INDUSTRY" },
+          { category_id: 4, name: "부동산", code: "REAL_ESTATE" },
+          { category_id: 5, name: "중기/벤처", code: "SME" },
+          { category_id: 6, name: "글로벌 경제", code: "GLOBAL" },
+          { category_id: 7, name: "경제 일반", code: "GENERAL" },
+          { category_id: 8, name: "생활 경제", code: "LIVING" },
+        ];
+        setCategories(defaultCategoriesWithCode);
         // 기본 매핑 설정
         const defaultMapping = new Map<string, string>([
           ["FINANCE", "금융"],
           ["STOCK", "증권"],
           ["INDUSTRY", "산업/재계"],
           ["REAL_ESTATE", "부동산"],
-          ["VENTURE", "중기/벤처"],
+          ["SME", "중기/벤처"],
           ["GLOBAL", "글로벌 경제"],
           ["GENERAL", "경제 일반"],
           ["LIVING", "생활 경제"],
@@ -162,7 +176,7 @@ export default function ArchivePage() {
   }, []);
 
   // 폴더 선택 시 해당 폴더의 뉴스 조회
-  const fetchStorageNews = useCallback(async (folderId: number | null, page: number = 1) => {
+  const fetchStorageNews = useCallback(async (folderId: number | null, page: number = 1, section?: string) => {
     if (!folderId || activeTab !== "news") {
       setNewsList([]);
       return;
@@ -175,6 +189,7 @@ export default function ArchivePage() {
         folderId,
         page,
         size: 4,
+        section,
       });
       
       setNewsList(response.data.news);
@@ -189,7 +204,7 @@ export default function ArchivePage() {
   }, [activeTab]);
 
   // 폴더 선택 시 해당 폴더의 용어 조회
-  const fetchStorageTerms = useCallback(async (folderId: number | null, page: number = 1) => {
+  const fetchStorageTerms = useCallback(async (folderId: number | null, page: number = 1, section?: string) => {
     if (!folderId || activeTab !== "terms") {
       setTermsList([]);
       return;
@@ -201,6 +216,7 @@ export default function ArchivePage() {
         folderId,
         page,
         size: 10,
+        section,
       });
       
       setTermsList(response.data.terms);
@@ -234,11 +250,16 @@ export default function ArchivePage() {
         const defaultFolder = folderList.find((folder) => folder.name === "기본");
         if (defaultFolder && defaultFolder.category_id !== null) {
           setSelectedCategoryId(defaultFolder.category_id);
+          
+          // 현재 선택된 소트 카테고리의 section 코드 찾기
+          const selectedCategory = categories.find((cat) => cat.category_id === selectedSortCategory);
+          const sectionCode = selectedCategory?.code;
+          
           // 탭에 따라 해당 폴더의 데이터 조회
           if (activeTab === "news") {
-            fetchStorageNews(defaultFolder.category_id, 1);
+            fetchStorageNews(defaultFolder.category_id, 1, sectionCode);
           } else if (activeTab === "terms") {
-            fetchStorageTerms(defaultFolder.category_id, 1);
+            fetchStorageTerms(defaultFolder.category_id, 1, sectionCode);
           }
         } else {
           setSelectedCategoryId(null);
@@ -274,10 +295,15 @@ export default function ArchivePage() {
     console.log("카테고리바에서 폴더 선택:", { categoryId, folderName: folders.find(f => f.category_id === categoryId)?.name });
     setSelectedCategoryId(categoryId);
     setCurrentPage(1); // 폴더 변경 시 페이지 초기화
+    
+    // 현재 선택된 소트 카테고리의 section 코드 찾기
+    const selectedCategory = categories.find((cat) => cat.category_id === selectedSortCategory);
+    const sectionCode = selectedCategory?.code;
+    
     if (activeTab === "news" && categoryId !== null) {
-      fetchStorageNews(categoryId, 1);
+      fetchStorageNews(categoryId, 1, sectionCode);
     } else if (activeTab === "terms" && categoryId !== null) {
-      fetchStorageTerms(categoryId, 1);
+      fetchStorageTerms(categoryId, 1, sectionCode);
     } else {
       setNewsList([]);
       setTermsList([]);
@@ -287,10 +313,15 @@ export default function ArchivePage() {
   // 페이지 변경 핸들러
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+    
+    // 현재 선택된 소트 카테고리의 section 코드 찾기
+    const selectedCategory = categories.find((cat) => cat.category_id === selectedSortCategory);
+    const sectionCode = selectedCategory?.code;
+    
     if (activeTab === "news" && selectedCategoryId !== null) {
-      fetchStorageNews(selectedCategoryId, page);
+      fetchStorageNews(selectedCategoryId, page, sectionCode);
     } else if (activeTab === "terms" && selectedCategoryId !== null) {
-      fetchStorageTerms(selectedCategoryId, page);
+      fetchStorageTerms(selectedCategoryId, page, sectionCode);
     }
   };
 
@@ -383,6 +414,20 @@ export default function ArchivePage() {
 
   const handleSortCategoryChange = (categoryId: number | null) => {
     setSelectedSortCategory(categoryId);
+    setCurrentPage(1); // 소트 변경 시 페이지 초기화
+    
+    // 선택한 카테고리의 section 코드 찾기
+    const selectedCategory = categories.find((cat) => cat.category_id === categoryId);
+    const sectionCode = selectedCategory?.code;
+    
+    // 현재 선택된 폴더가 있으면 해당 폴더의 데이터를 section 필터로 다시 조회
+    if (selectedCategoryId !== null) {
+      if (activeTab === "news") {
+        fetchStorageNews(selectedCategoryId, 1, sectionCode);
+      } else if (activeTab === "terms") {
+        fetchStorageTerms(selectedCategoryId, 1, sectionCode);
+      }
+    }
   };
 
   const handleGoToNews = () => {
@@ -406,17 +451,21 @@ export default function ArchivePage() {
     }
 
     try {
+      // 현재 선택된 소트 카테고리의 section 코드 찾기
+      const selectedCategory = categories.find((cat) => cat.category_id === selectedSortCategory);
+      const sectionCode = selectedCategory?.code;
+      
       if (activeTab === "news") {
         await deleteNewsFromStorage(selectedSavedItemId);
         // 삭제 후 뉴스 목록 다시 조회
         if (selectedCategoryId !== null) {
-          await fetchStorageNews(selectedCategoryId, currentPage);
+          await fetchStorageNews(selectedCategoryId, currentPage, sectionCode);
         }
       } else if (activeTab === "terms") {
         await deleteTermFromStorage(selectedSavedItemId);
         // 삭제 후 용어 목록 다시 조회
         if (selectedCategoryId !== null) {
-          await fetchStorageTerms(selectedCategoryId, currentPage);
+          await fetchStorageTerms(selectedCategoryId, currentPage, sectionCode);
         }
       }
     } catch (err) {
@@ -434,19 +483,23 @@ export default function ArchivePage() {
     }
 
     try {
+      // 현재 선택된 소트 카테고리의 section 코드 찾기
+      const selectedCategory = categories.find((cat) => cat.category_id === selectedSortCategory);
+      const sectionCode = selectedCategory?.code;
+      
       if (activeTab === "news") {
         // 새 폴더에 추가
         await saveNewsToStorage(selectedNewsId, [categoryId]);
         // 뉴스 목록 다시 조회
         if (selectedCategoryId !== null) {
-          await fetchStorageNews(selectedCategoryId, currentPage);
+          await fetchStorageNews(selectedCategoryId, currentPage, sectionCode);
         }
       } else if (activeTab === "terms") {
         // 새 폴더에 추가
         await saveTermToStorage(selectedNewsId, [categoryId]);
         // 용어 목록 다시 조회
         if (selectedCategoryId !== null) {
-          await fetchStorageTerms(selectedCategoryId, currentPage);
+          await fetchStorageTerms(selectedCategoryId, currentPage, sectionCode);
         }
       }
     } catch (err) {

@@ -105,14 +105,15 @@ function LoginSelectScreen() {
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#131416',
-        overflow: 'hidden',
+        overflow: 'auto',
       }}
     >
       <div 
         style={{
           position: 'relative',
           width: '390px',
-          height: '844px',
+          minHeight: '100vh',
+          maxHeight: '844px',
         }}
       >
         {/* 배경 이미지 */}
@@ -123,7 +124,9 @@ function LoginSelectScreen() {
           height={844}
           style={{ 
             width: '390px',
-            height: '844px',
+            height: '100%',
+            minHeight: '100vh',
+            objectFit: 'cover',
           }}
           priority
         />
@@ -171,10 +174,12 @@ function LoginSelectScreen() {
             left: '0',
             right: '0',
             height: '20px',
+            minHeight: '20px',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
             gap: '24px',
+            paddingBottom: 'env(safe-area-inset-bottom, 0px)',
           }}>
             <Link 
               href="/signup" 

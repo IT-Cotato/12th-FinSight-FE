@@ -59,6 +59,15 @@ export default function NewsDetailPage() {
         if (!isNaN(articleId)) {
           await fetchSavedFolders(articleId);
         }
+
+        // 읽은 기사로 표시 (localStorage에 저장)
+        const readNewsIds = JSON.parse(
+          localStorage.getItem("readNewsIds") || "[]"
+        ) as string[];
+        if (!readNewsIds.includes(newsId)) {
+          readNewsIds.push(newsId);
+          localStorage.setItem("readNewsIds", JSON.stringify(readNewsIds));
+        }
       } catch (err) {
         console.warn("API 호출 실패: ", err);
         setError(null);
@@ -324,7 +333,7 @@ export default function NewsDetailPage() {
       />
 
       <div className="flex-1 px-5">
-        <div className="flex flex-col items-start gap-5">
+        <div className="flex flex-col items-start gap-5 mt-3">
           {/* 태그 */}
           {news.coreTerms && news.coreTerms.length > 0 && (
             <div className="flex items-center gap-[5px]">
@@ -439,7 +448,7 @@ export default function NewsDetailPage() {
         </button>
         <button
           onClick={handleSolveProblems}
-          className="flex-1 w-full justify-center items-center px-4 py-[18px] rounded-[12px] bg-primary-50 text-b1 text-gray-10 text-center"
+          className="flex-1 w-full justify-center items-center px-4 py-[18px] mb-[20px] rounded-[12px] bg-primary-50 text-b1 text-gray-10 text-center"
         >
           문제 풀러가기
         </button>

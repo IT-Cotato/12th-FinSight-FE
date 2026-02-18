@@ -14,15 +14,16 @@ import {
   type NewsSort,
 } from "@/lib/api/news";
 import { getCategoryOrder, type CategoryOrderItem } from "@/lib/api/user";
+import { CATEGORY_MAP } from "@/store/homeStore";
 
 type Category = {
-  category_id: number;
+  category_id: number | null;
   name: string;
 };
 
 // 기본 카테고리 (API 실패 시 사용)
 const DEFAULT_CATEGORIES: Category[] = [
-  { category_id: 0, name: "종합" },
+  { category_id: null, name: "종합" },
   { category_id: 1, name: "금융" },
   { category_id: 2, name: "증권" },
   { category_id: 3, name: "산업/재계" },
@@ -179,7 +180,7 @@ export default function SearchPage() {
       const categoryItems = response.data.categories;
 
       const sortedCategories: Category[] = [
-        { category_id: 0, name: "종합" },
+        { category_id: null, name: "종합" },
         ...categoryItems
           .sort((a, b) => a.sortOrder - b.sortOrder)
           .map((item) => ({
@@ -353,15 +354,27 @@ export default function SearchPage() {
         {searched && newsList.length > 0 && (
           <>
             <div className="flex-1 overflow-y-auto">
-              {newsList.map((news) => (
-                <NewsCard
-                  key={news.newsId}
-                  title={news.title}
-                  thumbnailUrl={news.thumbnailUrl}
-                  tags={news.coreTerms.map((term) => term.term)}
-                  href={`/study/${news.newsId}`}
-                />
-              ))}
+              {newsList.map((news) => {
+                // 카테고리바가 "종합"으로 선택되어 있을 때만 카테고리를 태그 맨 앞에 추가
+                const categoryName = CATEGORY_MAP[news.category];
+                const baseTags = news.coreTerms?.map((term) => term.term) || [];
+
+                // 종합 선택 시 카테고리를 태그 맨 앞에 추가 (카테고리 매핑이 있을 때만)
+                const tags = selectedCategoryId === null && categoryName
+                  ? [categoryName, ...baseTags].slice(0, 3)
+                  : baseTags.slice(0, 3);
+
+                return (
+                  <NewsCard
+                    key={news.newsId}
+                    title={news.title}
+                    thumbnailUrl={news.thumbnailUrl}
+                    tags={tags}
+                    href={`/study/${news.newsId}`}
+                    newsId={news.newsId}
+                  />
+                );
+              })}
             </div>
 
             {/* 페이지네이션 */}

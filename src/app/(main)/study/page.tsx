@@ -14,6 +14,7 @@ import {
   type NewsCategory,
   type NewsSort,
 } from "@/lib/api/news";
+import { CATEGORY_MAP } from "@/store/homeStore";
 import {
   getCategoryOrder,
   updateCategoryOrder,
@@ -279,15 +280,27 @@ export default function StudyPage() {
             <p className="text-gray-400">뉴스가 없습니다.</p>
           </div>
         ) : (
-          newsList.map((news) => (
-            <NewsCard
-              key={news.newsId}
-              title={news.title}
-              thumbnailUrl={news.thumbnailUrl}
-              tags={news.coreTerms.map((term) => term.term)}
-              href={`/study/${news.newsId}`}
-            />
-          ))
+          newsList.map((news) => {
+            // 카테고리바가 "종합"으로 선택되어 있을 때만 카테고리를 태그 맨 앞에 추가
+            const categoryName = "#" + CATEGORY_MAP[news.category];
+            const baseTags = news.coreTerms?.map((term) => term.term) || [];
+
+            // 종합 선택 시 카테고리를 태그 맨 앞에 추가 (카테고리 매핑이 있을 때만)
+            const tags = selectedCategoryId === null && categoryName
+              ? [categoryName, ...baseTags].slice(0, 3)
+              : baseTags.slice(0, 3);
+
+            return (
+              <NewsCard
+                key={news.newsId}
+                title={news.title}
+                thumbnailUrl={news.thumbnailUrl}
+                tags={tags}
+                href={`/study/${news.newsId}`}
+                newsId={news.newsId}
+              />
+            );
+          })
         )}
       </div>
 

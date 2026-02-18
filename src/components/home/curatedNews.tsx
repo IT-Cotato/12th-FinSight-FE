@@ -93,6 +93,7 @@ export default function CuratedNews() {
                   tags={newsTags}
                   // 💡 [수정 포인트 2] 검증된 ID를 주소에 사용
                   href={`/study/${currentNewsId}`}
+                  newsId={currentNewsId}
                 />
                 
                 <style jsx global>{`

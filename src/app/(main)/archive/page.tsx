@@ -22,6 +22,65 @@ type Category = {
   name: string;
 };
 
+// 페이지네이션 컴포넌트
+function Pagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  const pages = [];
+  const maxVisiblePages = 5;
+
+  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+  if (endPage - startPage < maxVisiblePages - 1) {
+    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i);
+  }
+
+  return (
+    <div className="flex items-center justify-center gap-2 px-4 py-4">
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label="이전 페이지"
+      >
+        <span className="text-b3 text-gray-40">&lt;</span>
+      </button>
+      {pages.map((page) => (
+        <button
+          key={page}
+          onClick={() => onPageChange(page)}
+          className={`px-3 py-1 rounded ${
+            page === currentPage
+              ? "bg-primary-50 text-gray-10"
+              : "text-gray-40"
+          } text-b3`}
+        >
+          {page}
+        </button>
+      ))}
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label="다음 페이지"
+      >
+        <span className="text-b3 text-gray-40">&gt;</span>
+      </button>
+    </div>
+  );
+}
+
 // 기본 카테고리 (API 실패 시 사용)
 const DEFAULT_CATEGORIES: Category[] = [
   { category_id: null, name: "종합" },
@@ -111,6 +170,7 @@ export default function ArchivePage() {
 
     try {
       setLoadingNews(true);
+      // 모든 페이지는 4개로 고정
       const response = await getStorageNews({
         folderId,
         page,
@@ -221,6 +281,16 @@ export default function ArchivePage() {
     } else {
       setNewsList([]);
       setTermsList([]);
+    }
+  };
+
+  // 페이지 변경 핸들러
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    if (activeTab === "news" && selectedCategoryId !== null) {
+      fetchStorageNews(selectedCategoryId, page);
+    } else if (activeTab === "terms" && selectedCategoryId !== null) {
+      fetchStorageTerms(selectedCategoryId, page);
     }
   };
 
@@ -462,40 +532,148 @@ export default function ArchivePage() {
       />
 
       {/* 콘텐츠 영역 */}
-      {activeTab === "news" && selectedCategoryId !== null && newsList.length > 0 ? (
-        /* 뉴스 리스트 */
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            {newsList.map((news) => (
-              <ArchiveNewsCard
-                key={news.newsId}
-                newsId={news.newsId}
-                title={news.title}
-                thumbnailUrl={news.thumbnailUrl}
-                category={categoryMapping.get(news.category) || news.category}
-                href={`/study/${news.newsId}`}
-                onMenuClick={() => handleNewsMenuClick(news.savedItemId, news.newsId)}
-              />
-            ))}
+      {activeTab === "news" && selectedCategoryId !== null ? (
+        loadingNews ? (
+          /* 로딩 중 */
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-b2 text-gray-50">로딩 중...</div>
           </div>
-        </div>
-      ) : activeTab === "terms" && selectedCategoryId !== null && termsList.length > 0 ? (
-        /* 용어 리스트 */
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          <div className="flex flex-col gap-3">
-            {termsList.map((term) => (
-              <ArchiveTermCard
-                key={term.termId}
-                termId={term.termId}
-                term={term.term}
-                description={term.description}
-                onMenuClick={() => handleNewsMenuClick(term.savedItemId, term.termId)}
+        ) : newsList.length > 0 ? (
+          /* 뉴스 리스트 */
+          <div className="flex-1 overflow-y-auto px-5 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              {newsList.map((news) => (
+                <ArchiveNewsCard
+                  key={news.newsId}
+                  newsId={news.newsId}
+                  title={news.title}
+                  thumbnailUrl={news.thumbnailUrl}
+                  category={categoryMapping.get(news.category) || news.category}
+                  href={`/study/${news.newsId}`}
+                  onMenuClick={() => handleNewsMenuClick(news.savedItemId, news.newsId)}
+                />
+              ))}
+            </div>
+            
+            {/* 페이지네이션 */}
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
               />
-            ))}
+            )}
           </div>
-        </div>
+        ) : (
+          /* 엠티뷰 */
+          <div className="flex-1 flex flex-col items-center justify-center px-5 py-20">
+            <div className="flex flex-col items-center gap-[5px]">
+              {/* 문어 캐릭터 이미지 */}
+              <div className="relative">
+                <Image
+                  src="/study/img-sweat.svg"
+                  alt="빈 보관함"
+                  width={130}
+                  height={166}
+                  className="object-contain"
+                />
+              </div>
+
+              {/* 메시지 */}
+              <p className="text-b1 text-bg-30 text-center">
+                {activeTab === "news" 
+                  ? "아직 저장한 뉴스가 없어요!" 
+                  : "아직 저장한 용어가 없어요!"}
+              </p>
+
+              {/* 뉴스 읽으러 가기 버튼 */}
+              <button
+                onClick={handleGoToNews}
+                className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[8px] bg-bg-70"
+              >
+                <Image
+                  src="/archive/book-icon.svg"
+                  alt="책 아이콘"
+                  width={24}
+                  height={18}
+                />
+                <span className="text-b4 text-bg-20">
+                  뉴스 읽으러 가기
+                </span>
+              </button>
+            </div>
+          </div>
+        )
+      ) : activeTab === "terms" && selectedCategoryId !== null ? (
+        loadingTerms ? (
+          /* 로딩 중 */
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-b2 text-gray-50">로딩 중...</div>
+          </div>
+        ) : termsList.length > 0 ? (
+          /* 용어 리스트 */
+          <div className="flex-1 overflow-y-auto px-5 py-4">
+            <div className="flex flex-col gap-3">
+              {termsList.map((term) => (
+                <ArchiveTermCard
+                  key={term.termId}
+                  termId={term.termId}
+                  term={term.term}
+                  description={term.description}
+                  onMenuClick={() => handleNewsMenuClick(term.savedItemId, term.termId)}
+                />
+              ))}
+            </div>
+            
+            {/* 페이지네이션 */}
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            )}
+          </div>
+        ) : (
+          /* 엠티뷰 */
+          <div className="flex-1 flex flex-col items-center justify-center px-5 py-20">
+            <div className="flex flex-col items-center gap-[5px]">
+              {/* 문어 캐릭터 이미지 */}
+              <div className="relative">
+                <Image
+                  src="/study/img-sweat.svg"
+                  alt="빈 보관함"
+                  width={130}
+                  height={166}
+                  className="object-contain"
+                />
+              </div>
+
+              {/* 메시지 */}
+              <p className="text-b1 text-bg-30 text-center">
+                아직 저장한 용어가 없어요!
+              </p>
+
+              {/* 뉴스 읽으러 가기 버튼 */}
+              <button
+                onClick={handleGoToNews}
+                className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[8px] bg-bg-70"
+              >
+                <Image
+                  src="/archive/book-icon.svg"
+                  alt="책 아이콘"
+                  width={24}
+                  height={18}
+                />
+                <span className="text-b4 text-bg-20">
+                  뉴스 읽으러 가기
+                </span>
+              </button>
+            </div>
+          </div>
+        )
       ) : (
-        /* 엠티뷰 */
+        /* 엠티뷰 (폴더 미선택) */
         <div className="flex-1 flex flex-col items-center justify-center px-5 py-20">
           <div className="flex flex-col items-center gap-[5px]">
             {/* 문어 캐릭터 이미지 */}

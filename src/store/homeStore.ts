@@ -135,11 +135,12 @@ export const useHomeStore = create<HomeState>((set, get) => ({
     try {
       const response = await apiClient.get('/home/checklist');
       const serverData = response.data?.data;
+      
       if (serverData) {
         set({
           isNewsSaved: serverData.isNewsSaved,
           isQuizSolved: serverData.isQuizSolved,
-          isQuizReviewChecked: serverData.isQuizReviewed
+          isQuizReviewChecked: serverData.isQuizReviewed 
         });
       }
     } catch (error) {
@@ -205,8 +206,11 @@ export const useHomeStore = create<HomeState>((set, get) => ({
 
   fetchCuratedNews: async (isInitial = false) => {
     const { selectedCategory, nextCursor, curatedNews, isCuratedLoading, curatedHasMore } = get();
+    
     if (isCuratedLoading || (!isInitial && !curatedHasMore)) return;
+
     set({ isCuratedLoading: true });
+
     try {
       const response = await apiClient.get('/home/news/personalized', {
         params: {
@@ -215,17 +219,27 @@ export const useHomeStore = create<HomeState>((set, get) => ({
           limit: 40
         }
       });
+
       const serverData = response.data?.data;
-      const newsList = serverData?.news || [];
+      const rawNews = serverData?.news || [];
+
+      // ✅ 뉴스 아이디가 확실히 있는지 재검증하며 매핑
+      const newsList = rawNews.map((item: any) => ({
+        ...item,
+        newsId: item.newsId || item.id // 로그상 newsId가 있지만 안전장치 추가
+      }));
+
+      console.log("📦 맞춤 뉴스 데이터 로드 완료:", newsList);
+
       set({
         curatedNews: isInitial ? newsList : [...curatedNews, ...newsList],
         nextCursor: serverData?.nextCursor || null,
         curatedHasMore: serverData?.hasNext ?? false,
-        isCuratedLoading: false
+        isCuratedLoading: false // ✅ 성공 시 로딩 해제
       });
     } catch (error) {
       console.error("맞춤 뉴스 호출 실패:", error);
-      set({ isCuratedLoading: false });
+      set({ isCuratedLoading: false }); // ✅ 에러 시에도 로딩 해제
     }
   }
 }));

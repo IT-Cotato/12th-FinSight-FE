@@ -448,7 +448,7 @@ export default function NewsDetailPage() {
         </button>
         <button
           onClick={handleSolveProblems}
-          className="flex-1 w-full justify-center items-center px-4 py-[18px] rounded-[12px] bg-primary-50 text-b1 text-gray-10 text-center"
+          className="flex-1 w-full justify-center items-center px-4 py-[18px] mb-[20px] rounded-[12px] bg-primary-50 text-b1 text-gray-10 text-center"
         >
           문제 풀러가기
         </button>

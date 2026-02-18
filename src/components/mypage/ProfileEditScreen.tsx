@@ -128,7 +128,7 @@ export default function ProfileEditScreen() {
       />
 
       {/* 저장 버튼 */}
-      <div className="fixed bottom-6 left-0 right-0 px-5">
+      <div className="fixed bottom-[110px] left-0 right-0 px-5 z-[60]">
         <button
           type="button"
           onClick={() => setOpenConfirm(true)}

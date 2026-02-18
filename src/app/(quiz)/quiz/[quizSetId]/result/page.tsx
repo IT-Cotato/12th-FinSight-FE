@@ -20,6 +20,7 @@ export default function QuizResultPage() {
   const { lastSubmit } = useQuizResultStore();
   const submit = (lastSubmit ?? QUIZ_SUBMIT_MOCK) as QuizSubmitResponse;
   const data = submit.data;
+  console.log("submit data:", data);
 
   // 보너스 토스트: 전부 맞으면 +20점
   const showBonusToast = data.correctCount === data.results.length;
@@ -77,7 +78,7 @@ export default function QuizResultPage() {
         {/* 통계 */}
         <QuizResultStats
           correctCount={data.correctCount}
-          score={data.testScore}
+          score={data.setScore}
           totalScore={data.totalExp}
           level={data.level}
         />

@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
 import Image from "next/image";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Header } from "@/components/common/Header";
 import QuizOptionCard from "@/components/quiz/QuizOptionCard";
 
@@ -14,13 +13,14 @@ function toDescription(kind: "content" | "term") {
 
 export default function QuizOptionsPage() {
   const router = useRouter();
-  const sp = useSearchParams();
-  const naverArticleId = useMemo(() => {
-    const v = Number(sp.get("naverArticleId"));
-    return Number.isFinite(v) && v > 0 ? v : 247;
-  }, [sp]);
+  const params = useParams<{ quizSetId: string }>();
+  const quizSetId = params.quizSetId;
 
   const bonusText = "3문제 다 맞으면 보너스 +20점이 있어요!";
+
+  if (!quizSetId) {
+    return <div className="p-6">잘못된 접근입니다.</div>;
+  }
 
   return (
     <div className="min-h-screen">
@@ -39,7 +39,7 @@ export default function QuizOptionsPage() {
         rightSlot={
           <button
             type="button"
-            onClick={() => router.push(`/quiz/score-guide`)}
+            onClick={() => router.push("/quiz/score-guide")}
             className="flex items-center gap-2 px-2 py-1"
           >
             <span className="text-b4 text-gray-20">점수안내</span>
@@ -64,30 +64,31 @@ export default function QuizOptionsPage() {
           </div>
         </div>
 
-        {/* 타이틀/서브 */}
+        {/* 타이틀 */}
         <h1 className="mt-4 text-center text-h3 text-primary-30">
           어떤 퀴즈를 풀어볼까요?
         </h1>
+
         <p className="mt-2 text-center text-b3 text-gray-40">{bonusText}</p>
 
         {/* 옵션 카드 */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="mt-6 grid grid-cols-2 gap-4">
           <QuizOptionCard
             title="내용 퀴즈"
             description={toDescription("content")}
-            countText={`총 3문제`}
+            countText="총 3문제"
             iconSrc="/quiz/icon-content.svg"
             iconScale={1}
-            onClick={() => router.push(`/quiz/${naverArticleId}?type=content`)}
+            onClick={() => router.push(`/quiz/${quizSetId}/play?type=content`)}
           />
 
           <QuizOptionCard
             title="용어 퀴즈"
             description={toDescription("term")}
-            countText={`총 3문제`}
+            countText="총 3문제"
             iconSrc="/quiz/icon-word.svg"
             iconScale={2}
-            onClick={() => router.push(`/quiz/${naverArticleId}?type=term`)}
+            onClick={() => router.push(`/quiz/${quizSetId}/play?type=term`)}
           />
         </div>
       </div>

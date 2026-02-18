@@ -3,7 +3,7 @@
 import { useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useHomeStore, type NewsItem, CATEGORY_MAP } from '@/store/homeStore'; 
+import { useHomeStore, type NewsItem, CATEGORY_MAP } from '@/store/homeStore';
 
 export default function PopularNews() {
   const { popularNews, isLoadingNews, hasMoreNews, fetchPopularNews, loadMoreNews } = useHomeStore();
@@ -70,11 +70,11 @@ export default function PopularNews() {
 }
 
 function PopularNewsCard({ news, rank }: { news: NewsItem; rank: number }) {
-  // 카테고리 매핑 로직 추가
-  // CATEGORY_MAP에 없는 키가 올 경우를 대비해 원래 값(news.category)을 보여줌
+  // 영어 카테고리를 한글로 변환 (매핑된 게 없으면 원래 영어 사용)
   const categoryName = CATEGORY_MAP[news?.category] || news?.category;
 
   return (
+    // Link로 감싸서 클릭 시 상세 페이지로 이동
     <Link href={`/study/${news.newsId}`}>
       <div className="relative shrink-0 w-[140px] h-[200px] rounded-[16px] overflow-hidden bg-[#1C1E22] active:scale-95 transition-transform group cursor-pointer">
         <Image 

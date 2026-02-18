@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import QuizQuestionCard from "@/components/quiz/QuizQuestionCard";
@@ -23,20 +23,8 @@ export default function QuizPlayPage() {
   const router = useRouter();
   const params = useParams<{ quizSetId: string }>();
   const sp = useSearchParams();
-  const naverArticleId = useMemo(() => {
-    // querystring 우선
-    const qs = Number(sp.get("naverArticleId"));
-    if (Number.isFinite(qs) && qs > 0) return qs;
 
-    // localStorage fallback
-    if (typeof window !== "undefined") {
-      const dev = Number(localStorage.getItem("dev_naverArticleId"));
-      if (Number.isFinite(dev) && dev > 0) return dev;
-    }
-
-    // 최후 fallback
-    return 247;
-  }, [sp]);
+  const naverArticleId = Number(params.quizSetId);
   const type = (sp.get("type") ?? "content") as QuizTypeParam;
 
   const [state, setState] = useState<LoadState>({ kind: "loading" });
@@ -46,8 +34,15 @@ export default function QuizPlayPage() {
 
   const { setLastSubmit } = useQuizResultStore();
 
-  // 1. 퀴즈 조회
   useEffect(() => {
+    if (!Number.isFinite(naverArticleId) || naverArticleId <= 0) {
+      setState({
+        kind: "error",
+        message: "올바르지 않은 기사 정보입니다.",
+      });
+      return;
+    }
+
     let alive = true;
 
     (async () => {
@@ -58,7 +53,6 @@ export default function QuizPlayPage() {
         setState({ kind: "success", quiz });
       } catch {
         if (!alive) return;
-        // API 실패 시 mock fallback
         setState({ kind: "success", quiz: QUIZ_VIEW_MOCK });
       }
     })();
@@ -69,19 +63,25 @@ export default function QuizPlayPage() {
   }, [naverArticleId, type]);
 
   const quiz = state.kind === "success" ? state.quiz : null;
-  const total = quiz?.questions.length ?? 3;
+  const total = quiz?.questions.length ?? 0;
   const current = quiz?.questions[currentIndex];
 
-  const progressText = `${Math.min(currentIndex + 1, total)}/${total}`;
-  const isLast = currentIndex === total - 1;
+  const progressText = total > 0 ? `${currentIndex + 1}/${total}` : "0/0";
+  const isLast = total > 0 && currentIndex === total - 1;
 
-  const chosenIndex = current ? answers[current.questionIndex] : undefined;
+  const chosenIndex =
+    current && answers[current.questionIndex] !== undefined
+      ? answers[current.questionIndex]
+      : undefined;
+
   const canNext = chosenIndex !== undefined;
   const canPrev = currentIndex > 0;
 
   function selectChoice(selectedIndex: number) {
-    if (!current) return;
-    setAnswers((prev) => ({ ...prev, [current.questionIndex]: selectedIndex }));
+    setAnswers((prev) => ({
+      ...prev,
+      [currentIndex]: selectedIndex,
+    }));
   }
 
   function goPrev() {
@@ -89,7 +89,6 @@ export default function QuizPlayPage() {
     setCurrentIndex((v) => v - 1);
   }
 
-  // 2. 다음/제출
   async function goNext() {
     if (!current || !canNext || !quiz) return;
 
@@ -100,29 +99,29 @@ export default function QuizPlayPage() {
 
     try {
       const submitRes = await submitQuiz({
-        naverArticleId: quiz.naverArticleId,
+        naverArticleId,
         quizType: type,
-        answers: quiz.questions.map((q) => ({
-          questionIndex: q.questionIndex,
-          selectedIndex: answers[q.questionIndex] ?? 0,
+        answers: quiz.questions.map((_, idx) => ({
+          questionIndex: idx,
+          selectedIndex: answers[idx] ?? 0,
         })),
       });
 
-      setLastSubmit(submitRes as any);
+      // setLastSubmit(submitRes as any);
+      setLastSubmit(submitRes);
       router.push(`/quiz/${naverArticleId}/result`);
     } catch {
-      setLastSubmit(QUIZ_SUBMIT_MOCK as any);
+      setLastSubmit(QUIZ_SUBMIT_MOCK);
       router.push(`/quiz/${naverArticleId}/result`);
     }
   }
 
   function exitQuiz() {
-    router.push("/quiz");
+    router.push(`/quiz/${naverArticleId}`);
   }
 
   return (
     <div className="min-h-screen bg-bg-100">
-      {/* 상단 : 진행도 + close 버튼 */}
       <header className="relative px-6 pt-16">
         <p className="text-center text-h4 font-semibold text-primary-30">
           {progressText}
@@ -146,12 +145,9 @@ export default function QuizPlayPage() {
         {state.kind === "error" && (
           <div className="rounded-2xl border border-bg-70/60 bg-bg-90/40 p-5">
             <p className="text-b4 text-gray-20">{state.message}</p>
-            <p className="mt-2 text-b5 text-gray-50">
-              잠시 후 다시 시도해주세요.
-            </p>
             <button
               type="button"
-              onClick={() => router.push("/quiz")}
+              onClick={() => router.push(`/quiz/${naverArticleId}`)}
               className="mt-4 w-full rounded-xl bg-primary-60 py-3 text-b3 font-semibold text-gray-20"
             >
               퀴즈 선택으로

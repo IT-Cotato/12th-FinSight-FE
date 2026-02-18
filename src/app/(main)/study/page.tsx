@@ -297,6 +297,7 @@ export default function StudyPage() {
                 thumbnailUrl={news.thumbnailUrl}
                 tags={tags}
                 href={`/study/${news.newsId}`}
+                newsId={news.newsId}
               />
             );
           })

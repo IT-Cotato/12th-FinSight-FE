@@ -360,6 +360,7 @@ export default function SearchPage() {
                   thumbnailUrl={news.thumbnailUrl}
                   tags={news.coreTerms.map((term) => term.term)}
                   href={`/study/${news.newsId}`}
+                  newsId={news.newsId}
                 />
               ))}
             </div>

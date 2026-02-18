@@ -59,6 +59,15 @@ export default function NewsDetailPage() {
         if (!isNaN(articleId)) {
           await fetchSavedFolders(articleId);
         }
+
+        // 읽은 기사로 표시 (localStorage에 저장)
+        const readNewsIds = JSON.parse(
+          localStorage.getItem("readNewsIds") || "[]"
+        ) as string[];
+        if (!readNewsIds.includes(newsId)) {
+          readNewsIds.push(newsId);
+          localStorage.setItem("readNewsIds", JSON.stringify(readNewsIds));
+        }
       } catch (err) {
         console.warn("API 호출 실패: ", err);
         setError(null);

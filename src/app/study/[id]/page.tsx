@@ -333,7 +333,7 @@ export default function NewsDetailPage() {
       />
 
       <div className="flex-1 px-5">
-        <div className="flex flex-col items-start gap-5">
+        <div className="flex flex-col items-start gap-5 mt-3">
           {/* 태그 */}
           {news.coreTerms && news.coreTerms.length > 0 && (
             <div className="flex items-center gap-[5px]">

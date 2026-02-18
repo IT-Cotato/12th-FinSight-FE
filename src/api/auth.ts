@@ -73,7 +73,7 @@ export const login = async (data: LoginRequest): Promise<LoginResponse> => {
         response.data.data.refreshToken
       );
     }
-    
+   
     return response.data;
   } catch (error: any) {
     throw error.response?.data || { message: '로그인에 실패했습니다.' };
@@ -93,7 +93,7 @@ export const refreshAccessToken = async (data: RefreshTokenRequest): Promise<Ref
         newRefreshToken || data.refreshToken // 새 리프레시 토큰이 없으면 기존 것 유지
       );
     }
-    
+   
     return response.data;
   } catch (error: any) {
     throw error.response?.data || { message: '토큰 재발급에 실패했습니다.' };

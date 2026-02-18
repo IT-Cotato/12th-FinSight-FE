@@ -90,7 +90,7 @@ function PopularNewsCard({ news, rank }: { news: NewsItem; rank: number }) {
           </h3>
           <div className="flex justify-between items-end">
             <span className="px-2 py-0.5 bg-[--color-primary-80] text-[--color-primary-10] text-[10px] font-bold rounded-full">
-              {/* 한글 카테고리 표시 */}
+              {/* 변환된 한글 카테고리명 사용 */}
               #{categoryName}
             </span>
             <span className="text-[40px] font-black italic leading-[1] text-white opacity-90 tracking-tighter">

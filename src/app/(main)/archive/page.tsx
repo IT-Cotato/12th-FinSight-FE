@@ -20,7 +20,67 @@ type TabType = "news" | "terms";
 type Category = {
   category_id: number | null;
   name: string;
+  code?: string; // API section 코드 (FINANCE, STOCK 등)
 };
+
+// 페이지네이션 컴포넌트
+function Pagination({
+  currentPage,
+  totalPages,
+  onPageChange,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}) {
+  const pages = [];
+  const maxVisiblePages = 5;
+
+  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+  if (endPage - startPage < maxVisiblePages - 1) {
+    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(i);
+  }
+
+  return (
+    <div className="flex items-center justify-center gap-2 px-4 py-4">
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label="이전 페이지"
+      >
+        <span className="text-b3 text-gray-40">&lt;</span>
+      </button>
+      {pages.map((page) => (
+        <button
+          key={page}
+          onClick={() => onPageChange(page)}
+          className={`px-3 py-1 rounded ${
+            page === currentPage
+              ? "bg-primary-50 text-gray-10"
+              : "text-gray-40"
+          } text-b3`}
+        >
+          {page}
+        </button>
+      ))}
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label="다음 페이지"
+      >
+        <span className="text-b3 text-gray-40">&gt;</span>
+      </button>
+    </div>
+  );
+}
 
 // 기본 카테고리 (API 실패 시 사용)
 const DEFAULT_CATEGORIES: Category[] = [
@@ -64,12 +124,13 @@ export default function ArchivePage() {
         const response = await getCategoryOrder();
         const items = response.data.categories;
 
-        // 종합을 맨 앞에 추가하고, API에서 받은 카테고리 사용
+        // 종합을 맨 앞에 추가하고, API에서 받은 카테고리 사용 (code 포함)
         const sortedCategories: Category[] = [
           { category_id: null, name: "종합" },
           ...items.map((item) => ({
             category_id: item.categoryId,
             name: item.nameKo,
+            code: item.code,
           })),
         ];
 
@@ -83,14 +144,26 @@ export default function ArchivePage() {
         setCategoryMapping(mapping);
       } catch (err) {
         console.warn("카테고리 순서 API 호출 실패, 기본 카테고리 사용:", err);
-        setCategories(DEFAULT_CATEGORIES);
+        // 기본 카테고리에 code 추가
+        const defaultCategoriesWithCode: Category[] = [
+          { category_id: null, name: "종합" },
+          { category_id: 1, name: "금융", code: "FINANCE" },
+          { category_id: 2, name: "증권", code: "STOCK" },
+          { category_id: 3, name: "산업/재계", code: "INDUSTRY" },
+          { category_id: 4, name: "부동산", code: "REAL_ESTATE" },
+          { category_id: 5, name: "중기/벤처", code: "SME" },
+          { category_id: 6, name: "글로벌 경제", code: "GLOBAL" },
+          { category_id: 7, name: "경제 일반", code: "GENERAL" },
+          { category_id: 8, name: "생활 경제", code: "LIVING" },
+        ];
+        setCategories(defaultCategoriesWithCode);
         // 기본 매핑 설정
         const defaultMapping = new Map<string, string>([
           ["FINANCE", "금융"],
           ["STOCK", "증권"],
           ["INDUSTRY", "산업/재계"],
           ["REAL_ESTATE", "부동산"],
-          ["VENTURE", "중기/벤처"],
+          ["SME", "중기/벤처"],
           ["GLOBAL", "글로벌 경제"],
           ["GENERAL", "경제 일반"],
           ["LIVING", "생활 경제"],
@@ -103,7 +176,7 @@ export default function ArchivePage() {
   }, []);
 
   // 폴더 선택 시 해당 폴더의 뉴스 조회
-  const fetchStorageNews = useCallback(async (folderId: number | null, page: number = 1) => {
+  const fetchStorageNews = useCallback(async (folderId: number | null, page: number = 1, section?: string) => {
     if (!folderId || activeTab !== "news") {
       setNewsList([]);
       return;
@@ -111,10 +184,12 @@ export default function ArchivePage() {
 
     try {
       setLoadingNews(true);
+      // 모든 페이지는 4개로 고정
       const response = await getStorageNews({
         folderId,
         page,
         size: 4,
+        section,
       });
       
       setNewsList(response.data.news);
@@ -129,7 +204,7 @@ export default function ArchivePage() {
   }, [activeTab]);
 
   // 폴더 선택 시 해당 폴더의 용어 조회
-  const fetchStorageTerms = useCallback(async (folderId: number | null, page: number = 1) => {
+  const fetchStorageTerms = useCallback(async (folderId: number | null, page: number = 1, section?: string) => {
     if (!folderId || activeTab !== "terms") {
       setTermsList([]);
       return;
@@ -141,6 +216,7 @@ export default function ArchivePage() {
         folderId,
         page,
         size: 10,
+        section,
       });
       
       setTermsList(response.data.terms);
@@ -174,11 +250,16 @@ export default function ArchivePage() {
         const defaultFolder = folderList.find((folder) => folder.name === "기본");
         if (defaultFolder && defaultFolder.category_id !== null) {
           setSelectedCategoryId(defaultFolder.category_id);
+          
+          // 현재 선택된 소트 카테고리의 section 코드 찾기
+          const selectedCategory = categories.find((cat) => cat.category_id === selectedSortCategory);
+          const sectionCode = selectedCategory?.code;
+          
           // 탭에 따라 해당 폴더의 데이터 조회
           if (activeTab === "news") {
-            fetchStorageNews(defaultFolder.category_id, 1);
+            fetchStorageNews(defaultFolder.category_id, 1, sectionCode);
           } else if (activeTab === "terms") {
-            fetchStorageTerms(defaultFolder.category_id, 1);
+            fetchStorageTerms(defaultFolder.category_id, 1, sectionCode);
           }
         } else {
           setSelectedCategoryId(null);
@@ -214,13 +295,33 @@ export default function ArchivePage() {
     console.log("카테고리바에서 폴더 선택:", { categoryId, folderName: folders.find(f => f.category_id === categoryId)?.name });
     setSelectedCategoryId(categoryId);
     setCurrentPage(1); // 폴더 변경 시 페이지 초기화
+    
+    // 현재 선택된 소트 카테고리의 section 코드 찾기
+    const selectedCategory = categories.find((cat) => cat.category_id === selectedSortCategory);
+    const sectionCode = selectedCategory?.code;
+    
     if (activeTab === "news" && categoryId !== null) {
-      fetchStorageNews(categoryId, 1);
+      fetchStorageNews(categoryId, 1, sectionCode);
     } else if (activeTab === "terms" && categoryId !== null) {
-      fetchStorageTerms(categoryId, 1);
+      fetchStorageTerms(categoryId, 1, sectionCode);
     } else {
       setNewsList([]);
       setTermsList([]);
+    }
+  };
+
+  // 페이지 변경 핸들러
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    
+    // 현재 선택된 소트 카테고리의 section 코드 찾기
+    const selectedCategory = categories.find((cat) => cat.category_id === selectedSortCategory);
+    const sectionCode = selectedCategory?.code;
+    
+    if (activeTab === "news" && selectedCategoryId !== null) {
+      fetchStorageNews(selectedCategoryId, page, sectionCode);
+    } else if (activeTab === "terms" && selectedCategoryId !== null) {
+      fetchStorageTerms(selectedCategoryId, page, sectionCode);
     }
   };
 
@@ -313,6 +414,20 @@ export default function ArchivePage() {
 
   const handleSortCategoryChange = (categoryId: number | null) => {
     setSelectedSortCategory(categoryId);
+    setCurrentPage(1); // 소트 변경 시 페이지 초기화
+    
+    // 선택한 카테고리의 section 코드 찾기
+    const selectedCategory = categories.find((cat) => cat.category_id === categoryId);
+    const sectionCode = selectedCategory?.code;
+    
+    // 현재 선택된 폴더가 있으면 해당 폴더의 데이터를 section 필터로 다시 조회
+    if (selectedCategoryId !== null) {
+      if (activeTab === "news") {
+        fetchStorageNews(selectedCategoryId, 1, sectionCode);
+      } else if (activeTab === "terms") {
+        fetchStorageTerms(selectedCategoryId, 1, sectionCode);
+      }
+    }
   };
 
   const handleGoToNews = () => {
@@ -336,17 +451,21 @@ export default function ArchivePage() {
     }
 
     try {
+      // 현재 선택된 소트 카테고리의 section 코드 찾기
+      const selectedCategory = categories.find((cat) => cat.category_id === selectedSortCategory);
+      const sectionCode = selectedCategory?.code;
+      
       if (activeTab === "news") {
         await deleteNewsFromStorage(selectedSavedItemId);
         // 삭제 후 뉴스 목록 다시 조회
         if (selectedCategoryId !== null) {
-          await fetchStorageNews(selectedCategoryId, currentPage);
+          await fetchStorageNews(selectedCategoryId, currentPage, sectionCode);
         }
       } else if (activeTab === "terms") {
         await deleteTermFromStorage(selectedSavedItemId);
         // 삭제 후 용어 목록 다시 조회
         if (selectedCategoryId !== null) {
-          await fetchStorageTerms(selectedCategoryId, currentPage);
+          await fetchStorageTerms(selectedCategoryId, currentPage, sectionCode);
         }
       }
     } catch (err) {
@@ -364,19 +483,23 @@ export default function ArchivePage() {
     }
 
     try {
+      // 현재 선택된 소트 카테고리의 section 코드 찾기
+      const selectedCategory = categories.find((cat) => cat.category_id === selectedSortCategory);
+      const sectionCode = selectedCategory?.code;
+      
       if (activeTab === "news") {
         // 새 폴더에 추가
         await saveNewsToStorage(selectedNewsId, [categoryId]);
         // 뉴스 목록 다시 조회
         if (selectedCategoryId !== null) {
-          await fetchStorageNews(selectedCategoryId, currentPage);
+          await fetchStorageNews(selectedCategoryId, currentPage, sectionCode);
         }
       } else if (activeTab === "terms") {
         // 새 폴더에 추가
         await saveTermToStorage(selectedNewsId, [categoryId]);
         // 용어 목록 다시 조회
         if (selectedCategoryId !== null) {
-          await fetchStorageTerms(selectedCategoryId, currentPage);
+          await fetchStorageTerms(selectedCategoryId, currentPage, sectionCode);
         }
       }
     } catch (err) {
@@ -462,40 +585,148 @@ export default function ArchivePage() {
       />
 
       {/* 콘텐츠 영역 */}
-      {activeTab === "news" && selectedCategoryId !== null && newsList.length > 0 ? (
-        /* 뉴스 리스트 */
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          <div className="grid grid-cols-2 gap-4">
-            {newsList.map((news) => (
-              <ArchiveNewsCard
-                key={news.newsId}
-                newsId={news.newsId}
-                title={news.title}
-                thumbnailUrl={news.thumbnailUrl}
-                category={categoryMapping.get(news.category) || news.category}
-                href={`/study/${news.newsId}`}
-                onMenuClick={() => handleNewsMenuClick(news.savedItemId, news.newsId)}
-              />
-            ))}
+      {activeTab === "news" && selectedCategoryId !== null ? (
+        loadingNews ? (
+          /* 로딩 중 */
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-b2 text-gray-50">로딩 중...</div>
           </div>
-        </div>
-      ) : activeTab === "terms" && selectedCategoryId !== null && termsList.length > 0 ? (
-        /* 용어 리스트 */
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          <div className="flex flex-col gap-3">
-            {termsList.map((term) => (
-              <ArchiveTermCard
-                key={term.termId}
-                termId={term.termId}
-                term={term.term}
-                description={term.description}
-                onMenuClick={() => handleNewsMenuClick(term.savedItemId, term.termId)}
+        ) : newsList.length > 0 ? (
+          /* 뉴스 리스트 */
+          <div className="flex-1 overflow-y-auto px-5 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              {newsList.map((news) => (
+                <ArchiveNewsCard
+                  key={news.newsId}
+                  newsId={news.newsId}
+                  title={news.title}
+                  thumbnailUrl={news.thumbnailUrl}
+                  category={categoryMapping.get(news.category) || news.category}
+                  href={`/study/${news.newsId}`}
+                  onMenuClick={() => handleNewsMenuClick(news.savedItemId, news.newsId)}
+                />
+              ))}
+            </div>
+            
+            {/* 페이지네이션 */}
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
               />
-            ))}
+            )}
           </div>
-        </div>
+        ) : (
+          /* 엠티뷰 */
+          <div className="flex-1 flex flex-col items-center justify-center px-5 py-20">
+            <div className="flex flex-col items-center gap-[5px]">
+              {/* 문어 캐릭터 이미지 */}
+              <div className="relative">
+                <Image
+                  src="/study/img-sweat.svg"
+                  alt="빈 보관함"
+                  width={130}
+                  height={166}
+                  className="object-contain"
+                />
+              </div>
+
+              {/* 메시지 */}
+              <p className="text-b1 text-bg-30 text-center">
+                {activeTab === "news" 
+                  ? "아직 저장한 뉴스가 없어요!" 
+                  : "아직 저장한 용어가 없어요!"}
+              </p>
+
+              {/* 뉴스 읽으러 가기 버튼 */}
+              <button
+                onClick={handleGoToNews}
+                className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[8px] bg-bg-70"
+              >
+                <Image
+                  src="/archive/book-icon.svg"
+                  alt="책 아이콘"
+                  width={24}
+                  height={18}
+                />
+                <span className="text-b4 text-bg-20">
+                  뉴스 읽으러 가기
+                </span>
+              </button>
+            </div>
+          </div>
+        )
+      ) : activeTab === "terms" && selectedCategoryId !== null ? (
+        loadingTerms ? (
+          /* 로딩 중 */
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-b2 text-gray-50">로딩 중...</div>
+          </div>
+        ) : termsList.length > 0 ? (
+          /* 용어 리스트 */
+          <div className="flex-1 overflow-y-auto px-5 py-4">
+            <div className="flex flex-col gap-3">
+              {termsList.map((term) => (
+                <ArchiveTermCard
+                  key={term.termId}
+                  termId={term.termId}
+                  term={term.term}
+                  description={term.description}
+                  onMenuClick={() => handleNewsMenuClick(term.savedItemId, term.termId)}
+                />
+              ))}
+            </div>
+            
+            {/* 페이지네이션 */}
+            {totalPages > 1 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            )}
+          </div>
+        ) : (
+          /* 엠티뷰 */
+          <div className="flex-1 flex flex-col items-center justify-center px-5 py-20">
+            <div className="flex flex-col items-center gap-[5px]">
+              {/* 문어 캐릭터 이미지 */}
+              <div className="relative">
+                <Image
+                  src="/study/img-sweat.svg"
+                  alt="빈 보관함"
+                  width={130}
+                  height={166}
+                  className="object-contain"
+                />
+              </div>
+
+              {/* 메시지 */}
+              <p className="text-b1 text-bg-30 text-center">
+                아직 저장한 용어가 없어요!
+              </p>
+
+              {/* 뉴스 읽으러 가기 버튼 */}
+              <button
+                onClick={handleGoToNews}
+                className="flex items-center gap-[5px] px-[10px] py-[5px] rounded-[8px] bg-bg-70"
+              >
+                <Image
+                  src="/archive/book-icon.svg"
+                  alt="책 아이콘"
+                  width={24}
+                  height={18}
+                />
+                <span className="text-b4 text-bg-20">
+                  뉴스 읽으러 가기
+                </span>
+              </button>
+            </div>
+          </div>
+        )
       ) : (
-        /* 엠티뷰 */
+        /* 엠티뷰 (폴더 미선택) */
         <div className="flex-1 flex flex-col items-center justify-center px-5 py-20">
           <div className="flex flex-col items-center gap-[5px]">
             {/* 문어 캐릭터 이미지 */}

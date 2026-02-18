@@ -35,7 +35,7 @@ export default function QuizResultItem({ kind, title, onClick }: Props) {
         />
       </div>
 
-      <p className="flex-1 truncate text-b2">
+      <p className="flex-1 min-w-0 truncate text-b2 text-gray-10">
         {qLabel && <span className="mr-1 text-primary-30">{qLabel}</span>}
         <span className="text-gray-10">{restText}</span>
       </p>

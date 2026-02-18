@@ -93,71 +93,76 @@ export default function PasswordChangeScreen({ email }: Props) {
   }
 
   return (
-    <main className="min-h-dvh bg-bg-100 px-5 pb-24">
+    <main className="min-h-dvh bg-bg-100 px-5 flex flex-col">
       <PageHeader title="비밀번호 변경" />
 
-      <section className="mt-12">
-        <h2 className="text-h4 font-semibold text-bg-10">현재 비밀번호</h2>
-        <div className="mt-2">
-          <PasswordInput
-            placeholder="비밀번호 입력"
-            value={currentPw}
-            onChange={(v) => {
-              setCurrentPw(v);
-              if (submitError) setSubmitError(null);
-            }}
-          />
-        </div>
+      {/* 입력 영역 */}
+      <div className="flex-1">
+        <section className="mt-12">
+          <h2 className="text-h4 font-semibold text-bg-10">현재 비밀번호</h2>
+          <div className="mt-2">
+            <PasswordInput
+              placeholder="비밀번호 입력"
+              value={currentPw}
+              onChange={(v) => {
+                setCurrentPw(v);
+                if (submitError) setSubmitError(null);
+              }}
+            />
+          </div>
 
-        {submitError ? (
-          <p className="mt-1 text-b2 text-primary-30">{submitError}</p>
-        ) : null}
-      </section>
+          {submitError ? (
+            <p className="mt-1 text-b2 text-primary-30">{submitError}</p>
+          ) : null}
+        </section>
 
-      <section className="mt-6">
-        <h2 className="text-h4 font-semibold text-bg-10">새 비밀번호</h2>
-        <div className="mt-2">
-          <PasswordInput
-            placeholder="영문, 숫자 조합 6~18자리"
-            value={newPw}
-            onChange={setNewPw}
-          />
-        </div>
+        <section className="mt-6">
+          <h2 className="text-h4 font-semibold text-bg-10">새 비밀번호</h2>
+          <div className="mt-2">
+            <PasswordInput
+              placeholder="영문, 숫자 조합 6~18자리"
+              value={newPw}
+              onChange={setNewPw}
+            />
+          </div>
 
-        <p className="mt-1 text-b2 text-primary-30">
-          {newPwValid === null
-            ? ""
-            : newPwValid
-              ? "사용가능 비밀번호입니다."
-              : "사용불가 비밀번호입니다. (영문, 숫자 6~18자리)"}
-        </p>
-      </section>
+          <p className="mt-1 text-b2 text-primary-30">
+            {newPwValid === null
+              ? ""
+              : newPwValid
+                ? "사용가능 비밀번호입니다."
+                : "사용불가 비밀번호입니다. (영문, 숫자 6~18자리)"}
+          </p>
+        </section>
 
-      <section className="mt-6">
-        <h2 className="text-h4 font-semibold text-bg-10">새 비밀번호 확인</h2>
-        <div className="mt-2">
-          <PasswordInput
-            placeholder="영문, 숫자 조합 6~18자리"
-            value={confirmPw}
-            onChange={setConfirmPw}
-          />
-        </div>
+        <section className="mt-6">
+          <h2 className="text-h4 font-semibold text-bg-10">새 비밀번호 확인</h2>
+          <div className="mt-2">
+            <PasswordInput
+              placeholder="영문, 숫자 조합 6~18자리"
+              value={confirmPw}
+              onChange={setConfirmPw}
+            />
+          </div>
 
-        <p className="mt-1 text-b2 text-primary-30">
-          {confirmMatch === null
-            ? ""
-            : confirmMatch
-              ? "비밀번호가 일치합니다."
-              : "비밀번호가 일치하지 않습니다."}
-        </p>
-      </section>
+          <p className="mt-1 text-b2 text-primary-30">
+            {confirmMatch === null
+              ? ""
+              : confirmMatch
+                ? "비밀번호가 일치합니다."
+                : "비밀번호가 일치하지 않습니다."}
+          </p>
+        </section>
+      </div>
 
       {/* 저장 버튼 */}
-      <Button
-        text="저장하기"
-        onClick={handleSubmit}
-        disabled={!canSubmit || submitting}
-      />
+      <div className="pb-32">
+        <Button
+          text="저장하기"
+          onClick={handleSubmit}
+          disabled={!canSubmit || submitting}
+        />
+      </div>
     </main>
   );
 }

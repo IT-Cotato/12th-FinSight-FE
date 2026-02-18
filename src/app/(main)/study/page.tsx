@@ -287,7 +287,7 @@ export default function StudyPage() {
 
             // 종합 선택 시 카테고리를 태그 맨 앞에 추가 (카테고리 매핑이 있을 때만)
             const tags = selectedCategoryId === null && categoryName
-              ? [categoryName, ...baseTags].slice(0, 4)
+              ? [categoryName, ...baseTags].slice(0, 3)
               : baseTags.slice(0, 3);
 
             return (

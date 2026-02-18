@@ -39,7 +39,7 @@ export function NewsCard({
         </h3>
 
         {/* 태그 */}
-        <div className="flex w-full items-center gap-[5px]">
+        <div className="flex w-full flex-wrap items-start gap-[5px]">
           {tags.map((tag, index) => (
             <span
               key={index}

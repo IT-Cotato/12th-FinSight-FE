@@ -1,15 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import WelcomeLayout from '@/components/onboarding/WelcomeLayout';
 import InterestSelection from '@/components/onboarding/InterestSelection';
 import { INTERESTS } from '@/constants/onboarding';
+/* 추가: Zustand 스토어 임포트 */
 import { useOnboardingStore } from '@/store/onboardingStore';
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);  // ✅ 추가
 
   /* 추가: Zustand 스토어에서 상태와 액션 가져오기 */
   const { 
@@ -18,8 +18,7 @@ export default function OnboardingPage() {
     selectedInterests, 
     setStep, 
     setShowText, 
-    toggleInterest,
-    saveInterests,
+    toggleInterest 
   } = useOnboardingStore();
 
   /* 변경: selectedInterests가 스토어 값이므로 그대로 사용 */
@@ -38,25 +37,17 @@ export default function OnboardingPage() {
   }, [step, setShowText]); // setShowText 의존성 추가
 
   // handleNext는 페이지 이동만 담당
-  const handleNext = async () => {
+  const handleNext = () => {
     if (step === 1) {
       setStep(2);
     } else if (step === 2) {
       setStep(3);
-    } else if (step === 3) {
-      // ✅ 관심분야 저장 API 호출
-      setLoading(true);
-      const result = await saveInterests();
-      setLoading(false);
-
-      if (result.success) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        router.push('/home');
-      } else {
-        alert(result.message || '저장에 실패했습니다.');
-      }
+    } else {
+      router.push('/home');
     }
   };
+
+  /* 삭제: 내부 toggleInterest 함수 삭제 (스토어의 액션으로 대체됨) */
 
   return (
     <div 
@@ -65,6 +56,7 @@ export default function OnboardingPage() {
         background: 'radial-gradient(ellipse 200% 200% at 85% 21.21%, #151540 5.77%, #131416 100%)',
       }}
     >
+      {/* Step 1, 2 */}
       {(step === 1 || step === 2) && (
         <WelcomeLayout
           step={step as 1 | 2}
@@ -73,13 +65,14 @@ export default function OnboardingPage() {
         />
       )}
 
+      {/* Step 3 */}
       {step === 3 && (
         <InterestSelection
           interests={INTERESTS}
           selectedInterests={selectedInterests}
           toggleInterest={toggleInterest}
           handleNext={handleNext}
-          isButtonEnabled={isButtonEnabled && !loading}  // ✅ 수정
+          isButtonEnabled={isButtonEnabled}
         />
       )}
     </div>

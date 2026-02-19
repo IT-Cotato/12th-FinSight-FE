@@ -11,6 +11,7 @@ import {
   deleteTermFromStorage,
   type StorageFolder,
 } from "@/lib/api/storage";
+import Loading from "../common/Loading";
 
 type CardMode = "front" | "select" | "create"; // 카드 모드 (앞면, 선택, 생성)
 
@@ -379,7 +380,7 @@ export function TermDescriptionCard({
               {/* 사용자 폴더들 */}
               {loadingFolders ? (
                 <div className="w-full py-[14px] text-center text-b2 text-gray-40">
-                  로딩 중...
+                  <Loading className="min-h-[200px]" />
                 </div>
               ) : (
                 userFolders.map((folder) => {

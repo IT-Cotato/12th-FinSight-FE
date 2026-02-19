@@ -10,7 +10,7 @@ import { ArchiveTermCard } from "@/components/archive/ArchiveTermCard";
 import { ArchiveSortDropdown } from "@/components/archive/ArchiveSortDropdown";
 import { getCategoryOrder } from "@/lib/api/user";
 import { getStorageFolders, searchStorageNews, searchStorageTerms, type StorageNewsSearchItem, type StorageTermsSearchItem } from "@/lib/api/storage";
-
+import Loading from "@/components/common/Loading";
 type TabType = "news" | "terms";
 
 type Category = {
@@ -647,9 +647,7 @@ export default function ArchiveSearchPage() {
   return (
     <Suspense fallback={
       <div className="flex flex-col flex-1 min-h-0 bg-bg-100">
-        <div className="flex flex-1 items-center justify-center">
-          <p className="text-gray-400">로딩 중...</p>
-        </div>
+        <Loading />
       </div>
     }>
       <ArchiveSearchContent />

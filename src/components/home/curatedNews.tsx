@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo } from 'react';
 import { useInView } from 'react-intersection-observer';
-import { useHomeStore } from '@/store/homeStore';
+import { useHomeStore, CATEGORY_MAP } from '@/store/homeStore'; // ✅ CATEGORY_MAP 임포트
 import { CategoryBar } from '@/components/study/CategoryBar';
 import { NewsCard } from '@/components/study/NewsCard';
 
@@ -78,12 +78,12 @@ export default function CuratedNews() {
           <div className="py-10 text-center text-[#8E8E93]">표시할 뉴스가 없습니다.</div>
         ) : (
           curatedNews.map((news, idx) => {
-            // 💡 [수정 포인트 1] ID 방어 로직: newsId가 없으면 id라도 사용하고, 둘 다 없으면 렌더링하지 않음
             const currentNewsId = news.newsId || (news as any).id;
             if (!currentNewsId) return null;
 
-            const categoryName = myCategories.find(c => c.section === news.category)?.displayName || news.category;
-            const newsTags = [categoryName, ...(news.terms?.map(t => t.displayName) || [])].slice(0, 3);
+            // ✅ CATEGORY_MAP을 사용하여 영문 카테고리를 한글로 변환
+            const categoryDisplayName = CATEGORY_MAP[news.category] || news.category;
+            const newsTags = [categoryDisplayName, ...(news.terms?.map(t => t.displayName) || [])].slice(0, 3);
 
             return (
               <div key={`${currentNewsId}-${idx}`} className="news-card-custom">
@@ -91,7 +91,6 @@ export default function CuratedNews() {
                   title={news.title}
                   thumbnailUrl={news.thumbnailUrl || "/home/news-placeholder.png"}
                   tags={newsTags}
-                  // 💡 [수정 포인트 2] 검증된 ID를 주소에 사용
                   href={`/study/${currentNewsId}`}
                   newsId={currentNewsId}
                 />

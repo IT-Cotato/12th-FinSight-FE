@@ -304,29 +304,31 @@ export default function StudyPage() {
       </div>
 
       {/* 기사 더보기 버튼 */}
-      <div className="px-4 py-4 flex justify-center">
-        <button
-          onClick={handleLoadMore}
-          disabled={loading}
-          className="flex items-center justify-center w-full gap-[5px] px-[10px] py-[10px] rounded-[8px] border border-bg-80 bg-bg-90 text-center text-b3 text-gray-40"
-        >
-          <span>기사 더보기</span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="10"
-            height="7"
-            viewBox="0 0 10 7"
-            fill="none"
+      {hasNext && nextCursor && (
+        <div className="px-4 py-4 flex justify-center">
+          <button
+            onClick={handleLoadMore}
+            disabled={loading}
+            className="flex items-center justify-center w-full gap-[5px] px-[10px] py-[10px] rounded-[8px] border border-bg-80 bg-bg-90 text-center text-b3 text-gray-40 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <path
-              d="M0.650024 0.649902L4.49385 5.45469C4.57392 5.55477 4.72613 5.55477 4.8062 5.45469L8.65002 0.649902"
-              stroke="#D5D5D5"
-              strokeWidth="1.3"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
-      </div>
+            <span>기사 더보기</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="10"
+              height="7"
+              viewBox="0 0 10 7"
+              fill="none"
+            >
+              <path
+                d="M0.650024 0.649902L4.49385 5.45469C4.57392 5.55477 4.72613 5.55477 4.8062 5.45469L8.65002 0.649902"
+                stroke="#D5D5D5"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* 카테고리 편집 바텀시트 */}
       <CategoryEditBottomSheet

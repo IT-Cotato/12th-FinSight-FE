@@ -1,8 +1,19 @@
 // FCM (Firebase Cloud Messaging) 토큰 관리 유틸리티
 
 import { messaging } from "./config";
-import { getToken, onMessage, MessagePayload } from "firebase/messaging";
+import { getToken, onMessage } from "firebase/messaging";
 import { registerFCMToken, deleteFCMToken as deleteFCMTokenAPI } from "@/lib/api/fcm";
+
+// Firebase MessagePayload 타입 (Firebase SDK에서 직접 export되지 않을 수 있으므로 any 사용)
+export type MessagePayload = {
+  notification?: {
+    title?: string;
+    body?: string;
+    icon?: string;
+  };
+  data?: Record<string, string>;
+  [key: string]: any;
+};
 
 // VAPID 키는 Firebase Console > 프로젝트 설정 > 클라우드 메시징에서 확인 가능
 // Web Push 인증서 키를 여기에 설정해야 합니다

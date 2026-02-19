@@ -136,9 +136,9 @@ export default function MyPageScreen({
       />
 
       <StatTripletCard
-        attendanceDays={data.report.attendanceDays}
         totalNewsSaved={data.report.totalNewsSaved}
         totalQuizSolved={data.report.totalQuizSolved}
+        totalQuizReviewed={data.report.totalQuizReviewed}
       />
 
       <WeeklyReportCard

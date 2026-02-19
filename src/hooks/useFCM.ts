@@ -6,6 +6,7 @@ import {
   getCurrentFCMToken,
   onForegroundMessage,
   getNotificationPermission,
+  deleteFCMToken,
   type MessagePayload,
 } from "@/lib/firebase/fcm";
 
@@ -56,6 +57,26 @@ export function useFCM() {
     }
   }, []);
 
+  // FCM 토큰 삭제
+  const removeToken = useCallback(async (fcmToken?: string) => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const success = await deleteFCMToken(fcmToken);
+      if (success) {
+        setToken(null);
+      }
+      return success;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error("Failed to delete FCM token");
+      setError(error);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   // 포그라운드 메시지 수신 리스너 설정
   useEffect(() => {
     if (!token) return;
@@ -89,5 +110,6 @@ export function useFCM() {
     error,
     registerToken,
     getToken,
+    deleteToken: removeToken,
   };
 }

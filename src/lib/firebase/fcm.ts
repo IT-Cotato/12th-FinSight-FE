@@ -2,7 +2,7 @@
 
 import { messaging } from "./config";
 import { getToken, onMessage, MessagePayload } from "firebase/messaging";
-import { registerFCMToken } from "@/lib/api/fcm";
+import { registerFCMToken, deleteFCMToken as deleteFCMTokenAPI } from "@/lib/api/fcm";
 
 // VAPID 키는 Firebase Console > 프로젝트 설정 > 클라우드 메시징에서 확인 가능
 // Web Push 인증서 키를 여기에 설정해야 합니다
@@ -102,4 +102,32 @@ export function getNotificationPermission(): NotificationPermission {
     return "denied";
   }
   return Notification.permission;
+}
+
+/**
+ * FCM 토큰 삭제
+ * @param fcmToken 삭제할 FCM 토큰 (없으면 localStorage에서 가져옴)
+ */
+export async function deleteFCMToken(fcmToken?: string): Promise<boolean> {
+  try {
+    const tokenToDelete = fcmToken || (typeof window !== "undefined" ? localStorage.getItem("fcmToken") : null);
+    
+    if (!tokenToDelete) {
+      console.warn("No FCM token to delete");
+      return false;
+    }
+
+    await deleteFCMTokenAPI(tokenToDelete);
+    
+    // localStorage에서 토큰 제거
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("fcmToken");
+    }
+
+    console.log("FCM token deleted successfully");
+    return true;
+  } catch (error) {
+    console.error("Failed to delete FCM token:", error);
+    return false;
+  }
 }

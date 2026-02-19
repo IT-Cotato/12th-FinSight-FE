@@ -3,7 +3,7 @@
 import { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { kakaoLogin } from '@/api/auth';
-
+import Loading from '@/components/common/Loading';
 function KakaoCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -51,21 +51,7 @@ function KakaoCallbackContent() {
 
   // 로딩 화면
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#131416',
-      }}
-    >
-      <div style={{ color: '#EAEFF5', fontSize: '16px' }}>카카오 로그인 처리 중...</div>
-    </div>
+    <Loading />
   );
 }
 
@@ -73,21 +59,7 @@ export default function KakaoCallbackPage() {
   return (
     <Suspense
       fallback={
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: '#131416',
-          }}
-        >
-          <div style={{ color: '#EAEFF5', fontSize: '16px' }}>로딩 중...</div>
-        </div>
+        <Loading />
       }
     >
       <KakaoCallbackContent />

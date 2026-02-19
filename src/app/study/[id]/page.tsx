@@ -11,7 +11,7 @@ import {
   saveNewsToStorage,
   getStorageFoldersByItemId,
 } from "@/lib/api/storage";
-
+import Loading from "@/components/common/Loading";
 type Category = {
   category_id: number;
   name: string;
@@ -213,7 +213,7 @@ export default function NewsDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-full bg-bg-100">
+      <div className="flex flex-col min-h-screen bg-bg-100">
         <Header
           title="뉴스 상세"
           leftSlot={
@@ -237,9 +237,7 @@ export default function NewsDetailPage() {
             </button>
           }
         />
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-gray-400">로딩 중...</p>
-        </div>
+        <Loading className="flex-1" />
       </div>
     );
   }

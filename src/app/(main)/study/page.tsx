@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/common/Header";
+import Loading from "@/components/common/Loading";
 import { CategoryBar } from "@/components/study/CategoryBar";
 import { SortDropdown, type SortOption } from "@/components/study/SortDropdown";
 import { NewsCard } from "@/components/study/NewsCard";
@@ -272,9 +273,7 @@ export default function StudyPage() {
       {/* 뉴스 리스트 */}
       <div className="flex-1">
         {loading && newsList.length === 0 ? (
-          <div className="flex items-center justify-center py-8">
-            <p className="text-gray-400">로딩 중...</p>
-          </div>
+          <Loading className="min-h-[60vh]" />
         ) : newsList.length === 0 ? (
           <div className="flex items-center justify-center py-8">
             <p className="text-gray-400">뉴스가 없습니다.</p>

@@ -14,6 +14,7 @@ import { ArchiveNewsMenuBottomSheet } from "@/components/archive/ArchiveNewsMenu
 import { DeleteConfirmDialog } from "@/components/archive/DeleteConfirmDialog";
 import { ArchiveCategoryEditBottomSheet } from "@/components/archive/ArchiveCategoryEditBottomSheet";
 import { NewCategoryBottomSheet } from "@/components/study/NewCategoryBottomSheet";
+import Loading from "@/components/common/Loading";
 
 type TabType = "news" | "terms";
 
@@ -588,9 +589,7 @@ export default function ArchivePage() {
       {activeTab === "news" && selectedCategoryId !== null ? (
         loadingNews ? (
           /* 로딩 중 */
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-b2 text-gray-50">로딩 중...</div>
-          </div>
+          <Loading className="flex-1 mt-20" />
         ) : newsList.length > 0 ? (
           /* 뉴스 리스트 */
           <div className="flex-1 overflow-y-auto px-5 py-4">
@@ -660,9 +659,7 @@ export default function ArchivePage() {
       ) : activeTab === "terms" && selectedCategoryId !== null ? (
         loadingTerms ? (
           /* 로딩 중 */
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-b2 text-gray-50">로딩 중...</div>
-          </div>
+          <Loading className="flex-1 mt-20" />
         ) : termsList.length > 0 ? (
           /* 용어 리스트 */
           <div className="flex-1 overflow-y-auto px-5 py-4">

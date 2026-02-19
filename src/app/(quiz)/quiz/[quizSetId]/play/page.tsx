@@ -116,7 +116,7 @@ export default function QuizPlayPage() {
   }
 
   function exitQuiz() {
-    router.push(`/quiz/${naverArticleId}`);
+    router.push(`/quiz/${naverArticleId}?from=play-exit`);
   }
 
   return (

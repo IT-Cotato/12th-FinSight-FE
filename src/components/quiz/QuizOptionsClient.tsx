@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { Header } from "@/components/common/Header";
 import QuizOptionCard from "@/components/quiz/QuizOptionCard";
 
@@ -14,12 +14,25 @@ function toDescription(kind: "content" | "term") {
 export default function QuizOptionsPage() {
   const router = useRouter();
   const params = useParams<{ quizSetId: string }>();
+  const searchParams = useSearchParams();
+  const from = searchParams.get("from");
   const quizSetId = params.quizSetId;
 
   const bonusText = "3문제 다 맞으면 보너스 +20점이 있어요!";
 
   if (!quizSetId) {
     return <div className="p-6">잘못된 접근입니다.</div>;
+  }
+
+  function handleBack() {
+    // play에서 종료하고 온 경우
+    if (from === "play-exit") {
+      router.push(`/study/${quizSetId}`);
+      return;
+    }
+
+    // 기본 동작
+    router.back();
   }
 
   return (
@@ -29,7 +42,7 @@ export default function QuizOptionsPage() {
         leftSlot={
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={handleBack}
             className="p-2"
             aria-label="뒤로가기"
           >

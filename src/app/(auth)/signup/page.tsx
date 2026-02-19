@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AuthContainer from '../../(auth)/AuthContainer';
-import { sendVerificationCode, verifyCode, checkNickname, kakaoSignup } from '@/api/auth';
+import { sendVerificationCode, verifyCode, checkNickname, kakaoSignup, signup  } from '@/api/auth';
 
 function SignupPageContent() {
   const router = useRouter();
@@ -147,8 +147,15 @@ const handleSignup = async () => {
       });
     } else {
       // 일반 회원가입 API 호출
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await signup({
+        email: email,
+        password: password,
+        nickname: name.trim(),
+      });
     }
+
+    // 토큰 저장 확인 후 이동
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     router.push('/onboarding');
   } catch (err: any) {

@@ -111,7 +111,6 @@ export const useHomeStore = create<HomeState>((set, get) => ({
 
   fetchGuideData: async () => {
     try {
-      // ✅ /api 중복 제거
       const response = await apiClient.get('/home/status');
       const message = response.data?.data?.message;
       if (message) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import Image from "next/image";
 import { Header } from "@/components/common/Header";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -160,8 +160,8 @@ function Pagination({
   );
 }
 
-// 검색 페이지
-export default function SearchPage() {
+// 검색 페이지 콘텐츠 (useSearchParams 사용)
+function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [keyword, setKeyword] = useState("");
@@ -410,5 +410,18 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// 검색 페이지 (Suspense로 감싸기)
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col flex-1 min-h-0 bg-bg-100">
+        <Loading className="flex-1" />
+      </div>
+    }>
+      <SearchPageContent />
+    </Suspense>
   );
 }

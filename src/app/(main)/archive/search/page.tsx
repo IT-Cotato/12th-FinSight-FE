@@ -162,6 +162,7 @@ function ArchiveSearchContent() {
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [categoryMapping, setCategoryMapping] = useState<Map<string, string>>(new Map());
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [categoryIdToCodeMapping, setCategoryIdToCodeMapping] = useState<Map<number, string>>(new Map());
 
   // URL 쿼리 파라미터에서 폴더 ID와 탭 읽기
   const urlFolderId = searchParams.get("folderId") ? parseInt(searchParams.get("folderId")!, 10) : null;
@@ -203,6 +204,13 @@ function ArchiveSearchContent() {
           mapping.set(item.code, item.nameKo);
         });
         setCategoryMapping(mapping);
+
+        // 카테고리 ID -> 코드 매핑 생성
+        const idToCodeMapping = new Map<number, string>();
+        items.forEach((item) => {
+          idToCodeMapping.set(item.categoryId, item.code);
+        });
+        setCategoryIdToCodeMapping(idToCodeMapping);
       } catch (err) {
         console.warn("카테고리 순서 API 호출 실패, 기본 카테고리 사용:", err);
         setCategories(DEFAULT_CATEGORIES);
@@ -217,6 +225,19 @@ function ArchiveSearchContent() {
           ["LIVING", "생활 경제"],
         ]);
         setCategoryMapping(defaultMapping);
+
+        // 기본 카테고리 ID -> 코드 매핑
+        const defaultIdToCodeMapping = new Map<number, string>([
+          [1, "FINANCE"],
+          [2, "STOCK"],
+          [3, "INDUSTRY"],
+          [4, "REAL_ESTATE"],
+          [5, "VENTURE"],
+          [6, "GLOBAL"],
+          [7, "GENERAL"],
+          [8, "LIVING"],
+        ]);
+        setCategoryIdToCodeMapping(defaultIdToCodeMapping);
       }
     };
 
@@ -294,11 +315,18 @@ function ArchiveSearchContent() {
       return;
     }
 
+    // 카테고리가 선택되었으면 해당 카테고리의 section 코드를 가져옴
+    // selectedCategoryId가 null이면 section을 전달하지 않아 전체 검색
+    const sectionCode = selectedCategoryId !== null 
+      ? categoryIdToCodeMapping.get(selectedCategoryId) 
+      : undefined;
+
     const searchParams = {
       folderId: folderIdToSearch,
       q: keyword.trim(),
       page: 1,
       size: activeTab === "news" ? 12 : 10,
+      ...(sectionCode && { section: sectionCode }),
     };
 
     try {
@@ -364,11 +392,18 @@ function ArchiveSearchContent() {
       return;
     }
 
+    // 카테고리가 선택되었으면 해당 카테고리의 section 코드를 가져옴
+    // selectedCategoryId가 null이면 section을 전달하지 않아 전체 검색
+    const sectionCode = selectedCategoryId !== null 
+      ? categoryIdToCodeMapping.get(selectedCategoryId) 
+      : undefined;
+
     const searchParams = {
       folderId: folderIdToSearch,
       q: keyword.trim(),
       page,
       size: activeTab === "news" ? 12 : 10,
+      ...(sectionCode && { section: sectionCode }),
     };
 
     try {
@@ -406,11 +441,18 @@ function ArchiveSearchContent() {
         return;
       }
 
+      // 카테고리가 선택되었으면 해당 카테고리의 section 코드를 가져옴
+      // selectedCategoryId가 null이면 section을 전달하지 않아 전체 검색
+      const sectionCode = selectedCategoryId !== null 
+        ? categoryIdToCodeMapping.get(selectedCategoryId) 
+        : undefined;
+
       const searchParams = {
         folderId: folderIdToSearch,
         q: keyword.trim(),
         page: 1,
         size: activeTab === "news" ? 12 : 10,
+        ...(sectionCode && { section: sectionCode }),
       };
 
       const performSearch = async () => {
@@ -444,7 +486,7 @@ function ArchiveSearchContent() {
 
       performSearch();
     }
-  }, [selectedFolderId, activeTab, keyword, searched, defaultFolderId, urlFolderId]);
+  }, [selectedFolderId, activeTab, keyword, searched, defaultFolderId, urlFolderId, selectedCategoryId, categoryIdToCodeMapping]);
 
   const handleFolderChange = (folderId: number | null) => {
     console.log("폴더 변경:", { folderId, selectedFolderId, defaultFolderId });

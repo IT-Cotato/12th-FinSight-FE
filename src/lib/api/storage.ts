@@ -408,6 +408,7 @@ export type StorageNewsSearchParams = {
   q: string;
   page?: number;
   size?: number;
+  section?: string;
 };
 
 export type StorageNewsSearchItem = {
@@ -438,7 +439,7 @@ export type StorageNewsSearchResponse = {
 export async function searchStorageNews(
   params: StorageNewsSearchParams
 ): Promise<StorageNewsSearchResponse> {
-  const { folderId, q, page = 1, size = 12 } = params;
+  const { folderId, q, page = 1, size = 12, section } = params;
 
   const queryParams = new URLSearchParams({
     folderId: folderId.toString(),
@@ -446,6 +447,10 @@ export async function searchStorageNews(
     page: page.toString(),
     size: size.toString(),
   });
+
+  if (section) {
+    queryParams.append("section", section);
+  }
 
   const response = await authenticatedFetch(
     `${API_BASE_URL}/api/storage/news/search?${queryParams.toString()}`,
@@ -466,6 +471,7 @@ export type StorageTermsSearchParams = {
   q: string;
   page?: number;
   size?: number;
+  section?: string;
 };
 
 export type StorageTermsSearchItem = {
@@ -495,7 +501,7 @@ export type StorageTermsSearchResponse = {
 export async function searchStorageTerms(
   params: StorageTermsSearchParams
 ): Promise<StorageTermsSearchResponse> {
-  const { folderId, q, page = 1, size = 10 } = params;
+  const { folderId, q, page = 1, size = 10, section } = params;
 
   const queryParams = new URLSearchParams({
     folderId: folderId.toString(),
@@ -503,6 +509,10 @@ export async function searchStorageTerms(
     page: page.toString(),
     size: size.toString(),
   });
+
+  if (section) {
+    queryParams.append("section", section);
+  }
 
   const response = await authenticatedFetch(
     `${API_BASE_URL}/api/storage/terms/search?${queryParams.toString()}`,

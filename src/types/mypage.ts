@@ -20,7 +20,7 @@ export type CategoryItem = {
 export type WeeklyMode =
   | "STOCK"
   | "INDUSTRY"
-  | "PROPERTY"
+  | "REAL_ESTATE"
   | "SME"
   | "GLOBAL"
   | "GENERAL"

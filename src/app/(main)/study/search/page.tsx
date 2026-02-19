@@ -15,6 +15,7 @@ import {
 } from "@/lib/api/news";
 import { getCategoryOrder, type CategoryOrderItem } from "@/lib/api/user";
 import { CATEGORY_MAP } from "@/store/homeStore";
+import Loading from "@/components/common/Loading";
 
 type Category = {
   category_id: number | null;
@@ -362,9 +363,7 @@ export default function SearchPage() {
         )}
 
         {loading && newsList.length === 0 && (
-          <div className="flex flex-1 items-center justify-center">
-            <p className="text-gray-400">검색 중...</p>
-          </div>
+          <Loading className="flex-1" />
         )}
 
         {searched && !loading && newsList.length === 0 && (

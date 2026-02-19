@@ -539,9 +539,7 @@ function ArchiveSearchContent() {
         )}
 
         {loading && newsList.length === 0 && termsList.length === 0 && (
-          <div className="flex flex-1 items-center justify-center">
-            <p className="text-gray-400">검색 중...</p>
-          </div>
+          <Loading className="flex-1" />
         )}
 
         {searched && !loading && newsList.length === 0 && termsList.length === 0 && (

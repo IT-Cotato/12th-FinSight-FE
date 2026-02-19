@@ -92,8 +92,6 @@ export default function ProfileEditScreen() {
         nickname: nickname.trim(),
         categories: selected, // section 배열 그대로 전송
       });
-
-      alert("저장되었습니다.");
       setInitialNickname(nickname);
       setInitialSelected(selected);
       setEditMode(false);

@@ -51,7 +51,7 @@ function KakaoCallbackContent() {
 
   // 로딩 화면
   return (
-    <Loading />
+    <Loading className="min-h-screen" />
   );
 }
 
@@ -59,7 +59,7 @@ export default function KakaoCallbackPage() {
   return (
     <Suspense
       fallback={
-        <Loading />
+        <Loading className="min-h-screen" />
       }
     >
       <KakaoCallbackContent />

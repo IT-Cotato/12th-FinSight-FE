@@ -93,7 +93,13 @@ function PopularNewsCard({ news, rank }: { news: NewsItem; rank: number }) {
               {/* 변환된 한글 카테고리명 사용 */}
               #{categoryName}
             </span>
-            <span className="text-[40px] font-black italic leading-[1] text-white opacity-90 tracking-tighter">
+            <span 
+              className="text-[40px] font-black leading-[1] text-white"
+              style={{
+                letterSpacing: '-2px',  // ✅ 자간 조정
+                lineHeight: '0.9',  // ✅ 줄간격 축소
+              }}
+            >
               {rank}
             </span>
           </div>

@@ -19,6 +19,8 @@ import type {
   KakaoLoginResponse,
   KakaoSignupRequest,
   KakaoSignupResponse,
+  SignupRequest, 
+  SignupResponse, 
 } from '@/types/api';
 
 // 회원가입 - 인증번호 발송
@@ -28,6 +30,25 @@ export const sendVerificationCode = async (data: SendVerificationRequest): Promi
     return response.data;
   } catch (error: any) {
     throw error.response?.data || { message: '인증번호 발송에 실패했습니다.' };
+  }
+};
+
+// 회원가입
+export const signup = async (data: SignupRequest): Promise<SignupResponse> => {
+  try {
+    const response = await apiClient.post<SignupResponse>('/auth/signup', data);
+    
+    // 회원가입 성공 시 토큰 저장
+    if (response.data.data) {
+      useAuthStore.getState().setTokens(
+        response.data.data.accessToken,
+        response.data.data.refreshToken
+      );
+    }
+    
+    return response.data;
+  } catch (error: any) {
+    throw error.response?.data || { message: '회원가입에 실패했습니다.' };
   }
 };
 

@@ -51,6 +51,8 @@ export default function HomePage() {
                   top: '-30px',
                   left: '50%',
                   transform: 'translateX(-52%)',
+                  maxWidth: 'calc(100vw - 40px)',  // ✅ 화면 밖으로 안 나가게
+                  gap: '5.43px',  // ✅ 아이콘-말풍선 간격
                 }}
               >
                 <div 

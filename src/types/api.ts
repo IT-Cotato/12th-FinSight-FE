@@ -106,3 +106,20 @@ export interface KakaoSignupResponse {
     refreshToken: string;
   };
 }
+
+// 일반 회원가입 요청
+export interface SignupRequest {
+  email: string;
+  password: string;
+  nickname: string;
+}
+
+// 일반 회원가입 응답
+export interface SignupResponse {
+  status: boolean;
+  message?: string;
+  data: {
+    accessToken: string;
+    refreshToken: string;
+  };
+}

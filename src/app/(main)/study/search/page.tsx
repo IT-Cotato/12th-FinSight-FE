@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import Image from "next/image";
 import { Header } from "@/components/common/Header";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { NewsCard } from "@/components/study/NewsCard";
 import { CategoryBar } from "@/components/study/CategoryBar";
 import { SortDropdown, type SortOption } from "@/components/study/SortDropdown";
@@ -15,6 +15,7 @@ import {
 } from "@/lib/api/news";
 import { getCategoryOrder, type CategoryOrderItem } from "@/lib/api/user";
 import { CATEGORY_MAP } from "@/store/homeStore";
+import Loading from "@/components/common/Loading";
 
 type Category = {
   category_id: number | null;
@@ -159,9 +160,10 @@ function Pagination({
   );
 }
 
-// 검색 페이지
-export default function SearchPage() {
+// 검색 페이지 콘텐츠 (useSearchParams 사용)
+function SearchPageContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [keyword, setKeyword] = useState("");
   const [searched, setSearched] = useState(false);
   const [newsList, setNewsList] = useState<NewsItem[]>([]);
@@ -214,7 +216,7 @@ export default function SearchPage() {
   };
 
   // 검색 실행
-  const handleSearch = async () => {
+  const handleSearch = useCallback(async () => {
     if (!keyword.trim()) return;
 
     try {
@@ -238,7 +240,7 @@ export default function SearchPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [keyword, selectedCategoryId, categoryMapping, sortOption]);
 
   // 페이지 변경
   const handlePageChange = async (page: number) => {
@@ -274,10 +276,31 @@ export default function SearchPage() {
     }
   }, [selectedCategoryId, sortOption]);
 
+  // URL 쿼리 파라미터에서 검색어 읽기 및 자동 검색
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) {
+      const decodedQ = decodeURIComponent(q);
+      setKeyword(decodedQ);
+      setSearched(false); // 검색어가 변경되면 searched 초기화
+    }
+  }, [searchParams]);
+
   // 카테고리 순서 초기 로드
   useEffect(() => {
     fetchCategoryOrder();
   }, []);
+
+  // URL 쿼리 파라미터가 있고 카테고리 매핑이 준비되면 자동 검색
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q && categoryMapping.size > 0 && keyword && !searched) {
+      const decodedQ = decodeURIComponent(q);
+      if (decodedQ === keyword.trim()) {
+        handleSearch();
+      }
+    }
+  }, [searchParams, categoryMapping, keyword, searched, handleSearch]);
 
   const handleCategoryChange = (categoryId: number | null) => {
     setSelectedCategoryId(categoryId);
@@ -340,9 +363,7 @@ export default function SearchPage() {
         )}
 
         {loading && newsList.length === 0 && (
-          <div className="flex flex-1 items-center justify-center">
-            <p className="text-gray-400">검색 중...</p>
-          </div>
+          <Loading className="flex-1" />
         )}
 
         {searched && !loading && newsList.length === 0 && (
@@ -389,5 +410,18 @@ export default function SearchPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// 검색 페이지 (Suspense로 감싸기)
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col flex-1 min-h-0 bg-bg-100">
+        <Loading className="flex-1" />
+      </div>
+    }>
+      <SearchPageContent />
+    </Suspense>
   );
 }

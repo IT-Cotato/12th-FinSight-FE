@@ -7,6 +7,7 @@ import {
   updateMyNotification,
 } from "@/lib/api/mypage";
 import type { MyPageViewData, WeeklyReport } from "@/types/mypage";
+import { useFCM } from "@/hooks/useFCM";
 import ProfileHeader from "./ProfileHeader";
 import LevelProgress from "./LevelProgress";
 import StatTripletCard from "./StatTripletCard";
@@ -35,6 +36,8 @@ export default function MyPageScreen({
 }: Props) {
   const [notifyOn, setNotifyOn] = useState(true);
   const [loadingNotify, setLoadingNotify] = useState(true);
+
+  const { registerToken, deleteToken } = useFCM();
 
   const [logoutOpen, setLogoutOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
@@ -81,6 +84,13 @@ export default function MyPageScreen({
 
     try {
       await updateMyNotification(next);
+
+      // FCM 토큰 연동: ON이면 등록, OFF면 삭제
+      if (next) {
+        await registerToken();
+      } else {
+        await deleteToken();
+      }
     } catch (e) {
       console.error("알림 변경 실패", e);
       // 실패 시 롤백
@@ -126,9 +136,9 @@ export default function MyPageScreen({
       />
 
       <StatTripletCard
-        attendanceDays={data.report.attendanceDays}
         totalNewsSaved={data.report.totalNewsSaved}
         totalQuizSolved={data.report.totalQuizSolved}
+        totalQuizReviewed={data.report.totalQuizReviewed}
       />
 
       <WeeklyReportCard

@@ -7,8 +7,11 @@ import {
   createStorageFolder,
   saveTermToStorage,
   getStorageFoldersByItemId,
+  getStorageTerms,
+  deleteTermFromStorage,
   type StorageFolder,
 } from "@/lib/api/storage";
+import Loading from "../common/Loading";
 
 type CardMode = "front" | "select" | "create"; // 카드 모드 (앞면, 선택, 생성)
 
@@ -40,7 +43,7 @@ export function TermDescriptionCard({
   const [savedFolderIds, setSavedFolderIds] = useState<number[]>([]); // 저장된 폴더 ID 목록
   const [isSaving, setIsSaving] = useState(false); // 단어 저장 중 상태 (중복 클릭 방지용) 
 
-  // 사용자 폴더 목록 조회 함수
+  // 사용자 폴더 목록 조회 함수 (로딩 상태 포함)
   const fetchUserFolders = useCallback(async () => {
     try {
       setLoadingFolders(true);
@@ -50,6 +53,16 @@ export function TermDescriptionCard({
       console.error("보관함 폴더 조회 실패:", err);
     } finally {
       setLoadingFolders(false);
+    }
+  }, []);
+
+  // 사용자 폴더 목록 조회 함수 (백그라운드 동기화용, 로딩 상태 없음)
+  const syncUserFolders = useCallback(async () => {
+    try {
+      const response = await getStorageFolders("TERM");
+      setUserFolders(response.data);
+    } catch (err) {
+      console.error("보관함 폴더 동기화 실패:", err);
     }
   }, []);
 
@@ -88,6 +101,21 @@ export function TermDescriptionCard({
     setIsSaving(false);
   }, [term?.termId]);
 
+  // 폴더에서 용어 삭제 (savedItemId 찾기)
+  const findSavedItemId = useCallback(async (folderId: number): Promise<number | null> => {
+    if (!term?.termId) return null;
+
+    try {
+      // 폴더의 용어 목록에서 해당 termId 찾기
+      const response = await getStorageTerms({ folderId, size: 1000 });
+      const savedItem = response.data.terms.find((item) => item.termId === term.termId);
+      return savedItem?.savedItemId || null;
+    } catch (err) {
+      console.error("savedItemId 조회 실패:", err);
+      return null;
+    }
+  }, [term?.termId]);
+
   if (!term) return null; // 단어 설명 데이터가 없으면 카드 렌더링하지 않음
 
   // 보관함에 저장하기 버튼 클릭 시 카드 모드 변경
@@ -105,21 +133,29 @@ export function TermDescriptionCard({
     }
   };
 
-  // 카테고리 선택 시 보관함에 단어 저장
+  // 카테고리 선택 시 보관함에 단어 저장/삭제
   const handleCategorySelect = async (folderId: number | null) => {
     if (!term?.termId || folderId === null || isSaving) return;
-    if (savedFolderIds.includes(folderId)) return;
 
-    try {
-      setIsSaving(true);
-      
-      // 보관함에 단어 저장 API 호출
-      await saveTermToStorage(term.termId, [folderId]);
-      
-      // 저장된 폴더 ID 목록 업데이트 (즉각적인 UI 업데이트를 위해 API 호출 없이 로컬 상태만 변경)
+    const isSaved = savedFolderIds.includes(folderId);
+
+    // Optimistic update: 로컬 상태 먼저 업데이트
+    const prevSavedFolderIds = [...savedFolderIds];
+    const prevUserFolders = [...userFolders];
+
+    if (isSaved) {
+      // UI 먼저 업데이트 (삭제)
+      setSavedFolderIds((prev) => prev.filter((id) => id !== folderId));
+      setUserFolders((prevFolders) =>
+        prevFolders.map((folder) =>
+          folder.folderId === folderId
+            ? { ...folder, itemCount: Math.max(0, folder.itemCount - 1) }
+            : folder
+        )
+      );
+    } else {
+      // UI 먼저 업데이트 (저장)
       setSavedFolderIds((prev) => [...prev, folderId]);
-      
-      // 선택한 폴더의 itemCount를 로컬에서 증가시킴
       setUserFolders((prevFolders) =>
         prevFolders.map((folder) =>
           folder.folderId === folderId
@@ -127,11 +163,40 @@ export function TermDescriptionCard({
             : folder
         )
       );
+    }
+
+    try {
+      setIsSaving(true);
+
+      if (isSaved) {
+        // 이미 저장된 폴더면 삭제
+        const savedItemId = await findSavedItemId(folderId);
+        if (savedItemId) {
+          await deleteTermFromStorage(savedItemId);
+        }
+      } else {
+        // 저장되지 않은 폴더면 저장
+        await saveTermToStorage(term.termId, [folderId]);
+      }
+
+      // 백그라운드에서 동기화 (에러가 나도 UI는 이미 업데이트됨, 로딩 상태 없이 조용히 업데이트)
+      Promise.all([
+        fetchSavedFolders(),
+        syncUserFolders(),
+      ]).catch((err) => {
+        console.error("동기화 실패:", err);
+        // 에러 발생 시 이전 상태로 롤백
+        setSavedFolderIds(prevSavedFolderIds);
+        setUserFolders(prevUserFolders);
+      });
       
       // 부모 컴포넌트에 알림 (필요한 경우에만)
       onSelectCategory?.(folderId);
     } catch (err) {
-      console.error("보관함에 단어 저장 실패:", err);
+      console.error("보관함에 단어 저장/삭제 실패:", err);
+      // 에러 발생 시 이전 상태로 롤백
+      setSavedFolderIds(prevSavedFolderIds);
+      setUserFolders(prevUserFolders);
     } finally {
       setIsSaving(false);
     }
@@ -315,7 +380,7 @@ export function TermDescriptionCard({
               {/* 사용자 폴더들 */}
               {loadingFolders ? (
                 <div className="w-full py-[14px] text-center text-b2 text-gray-40">
-                  로딩 중...
+                  <Loading className="min-h-[200px]" />
                 </div>
               ) : (
                 userFolders.map((folder) => {

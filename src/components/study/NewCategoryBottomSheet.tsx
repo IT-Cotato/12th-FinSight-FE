@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Sheet,
   SheetContent,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { getStorageFolders, createStorageFolder, getStorageFoldersByItemId, type StorageFolder } from "@/lib/api/storage";
+import { getStorageFolders, createStorageFolder, getStorageFoldersByItemId, getStorageNews, deleteNewsFromStorage, saveNewsToStorage, getStorageTerms, deleteTermFromStorage, saveTermToStorage, type StorageFolder } from "@/lib/api/storage";
 
 type Category = {
   category_id: number;
@@ -18,12 +18,13 @@ type NewCategoryBottomSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   categories: Category[];
-  onSelectCategory: (categoryId: number | null) => void;
+  onSelectCategory?: (categoryId: number | null) => void; // 선택적: 내부에서 처리할 수도 있음
   onAddNewCategory: () => void;
   itemId?: number; // 뉴스 ID 또는 단어 ID
   folderType?: "NEWS" | "TERM"; // 폴더 타입
   title?: string; // 바텀시트 제목
   subtitle?: string; // 바텀시트 부제목
+  onToggleComplete?: () => void; // 저장/삭제 완료 후 콜백
 };
 
 // 새 카테고리 생성 폼 컴포넌트
@@ -222,14 +223,22 @@ export function NewCategoryBottomSheet({
   folderType = "NEWS",
   title,
   subtitle,
+  onToggleComplete,
 }: NewCategoryBottomSheetProps) {
   const [isCreatingNewCategory, setIsCreatingNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [folders, setFolders] = useState<Category[]>([]);
+  const [optimisticFolders, setOptimisticFolders] = useState<Category[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [savedFolderIds, setSavedFolderIds] = useState<number[]>([]);
 
-  // 폴더 목록 조회 함수
+  // displayCategories: optimisticFolders가 있으면 사용, 없으면 folders가 있으면 folders 사용, 없으면 categories prop 사용
+  const displayCategories = useMemo(() => {
+    if (optimisticFolders) return optimisticFolders;
+    return folders.length > 0 ? folders : categories;
+  }, [optimisticFolders, folders, categories]);
+
+  // 폴더 목록 조회 함수 (로딩 상태 포함)
   const fetchFolders = useCallback(async () => {
     try {
       setLoading(true);
@@ -240,11 +249,30 @@ export function NewCategoryBottomSheet({
         count: folder.itemCount,
       }));
       setFolders(folderList);
+      return response;
     } catch (err) {
       console.warn("폴더 목록 조회 실패:", err);
       setFolders([]);
+      throw err;
     } finally {
       setLoading(false);
+    }
+  }, [folderType]);
+
+  // 폴더 목록 조회 함수 (백그라운드 동기화용, 로딩 상태 없음)
+  const syncFolders = useCallback(async () => {
+    try {
+      const response = await getStorageFolders(folderType);
+      const folderList: Category[] = response.data.map((folder: StorageFolder) => ({
+        category_id: folder.folderId,
+        name: folder.folderName,
+        count: folder.itemCount,
+      }));
+      setFolders(folderList);
+      return response;
+    } catch (err) {
+      console.warn("폴더 목록 동기화 실패:", err);
+      throw err;
     }
   }, [folderType]);
 
@@ -281,9 +309,117 @@ export function NewCategoryBottomSheet({
     }
   }, [open]);
 
-  const handleCategorySelect = (categoryId: number | null) => {
-    onSelectCategory(categoryId);
-    onOpenChange(false);
+  // 폴더에서 아이템 삭제 (savedItemId 찾기)
+  const findSavedItemId = useCallback(async (folderId: number): Promise<number | null> => {
+    if (!itemId) return null;
+
+    try {
+      if (folderType === "NEWS") {
+        // 뉴스의 경우: 폴더의 뉴스 목록에서 해당 newsId 찾기
+        const response = await getStorageNews({ folderId, size: 1000 });
+        const savedItem = response.data.news.find((item) => item.newsId === itemId);
+        return savedItem?.savedItemId || null;
+      } else {
+        // 용어의 경우: 폴더의 용어 목록에서 해당 termId 찾기
+        const response = await getStorageTerms({ folderId, size: 1000 });
+        const savedItem = response.data.terms.find((item) => item.termId === itemId);
+        return savedItem?.savedItemId || null;
+      }
+    } catch (err) {
+      console.error("savedItemId 조회 실패:", err);
+      return null;
+    }
+  }, [itemId, folderType]);
+
+  const handleCategorySelect = async (categoryId: number | null) => {
+    if (!itemId || categoryId === null) {
+      if (onSelectCategory) {
+        onSelectCategory(categoryId);
+      }
+      onOpenChange(false);
+      return;
+    }
+
+    const isSaved = savedFolderIds.includes(categoryId);
+
+    // Optimistic update: 로컬 상태 먼저 업데이트
+    const prevSavedFolderIds = [...savedFolderIds];
+    const currentDisplayCategories = displayCategories;
+    const prevDisplayCategories = [...currentDisplayCategories];
+
+    if (isSaved) {
+      // UI 먼저 업데이트 (삭제)
+      setSavedFolderIds((prev) => prev.filter((id) => id !== categoryId));
+      setOptimisticFolders(
+        currentDisplayCategories.map((category) =>
+          category.category_id === categoryId
+            ? { ...category, count: Math.max(0, (category.count || 0) - 1) }
+            : category
+        )
+      );
+    } else {
+      // UI 먼저 업데이트 (저장)
+      setSavedFolderIds((prev) => [...prev, categoryId]);
+      setOptimisticFolders(
+        currentDisplayCategories.map((category) =>
+          category.category_id === categoryId
+            ? { ...category, count: (category.count || 0) + 1 }
+            : category
+        )
+      );
+    }
+
+    try {
+      if (isSaved) {
+        // 이미 저장된 폴더면 삭제
+        const savedItemId = await findSavedItemId(categoryId);
+        if (savedItemId) {
+          if (folderType === "NEWS") {
+            await deleteNewsFromStorage(savedItemId);
+          } else {
+            await deleteTermFromStorage(savedItemId);
+          }
+        }
+      } else {
+        // 저장되지 않은 폴더면 저장
+        if (folderType === "NEWS") {
+          await saveNewsToStorage(itemId, [categoryId]);
+        } else {
+          await saveTermToStorage(itemId, [categoryId]);
+        }
+      }
+
+      // 백그라운드에서 동기화 (에러가 나도 UI는 이미 업데이트됨, 로딩 상태 없이 조용히 업데이트)
+      Promise.all([
+        fetchSavedFolders(),
+        syncFolders(),
+      ]).then(() => {
+        // 동기화 완료 후 optimistic 상태 초기화
+        setOptimisticFolders(null);
+      }).catch((err) => {
+        console.error("동기화 실패:", err);
+        // 에러 발생 시 이전 상태로 롤백
+        setSavedFolderIds(prevSavedFolderIds);
+        setOptimisticFolders(prevDisplayCategories);
+      });
+
+      // 기존 onSelectCategory 콜백 호출 (호환성 유지)
+      if (onSelectCategory) {
+        onSelectCategory(categoryId);
+      }
+
+      // 완료 콜백 호출
+      if (onToggleComplete) {
+        onToggleComplete();
+      }
+
+      // 바텀시트는 닫지 않음 (여러 폴더 선택 가능하도록)
+    } catch (err) {
+      console.error("폴더 저장/삭제 실패:", err);
+      // 에러 발생 시 이전 상태로 롤백
+      setSavedFolderIds(prevSavedFolderIds);
+      setOptimisticFolders(prevDisplayCategories);
+    }
   };
 
   const handleAddNewCategoryClick = () => {
@@ -328,7 +464,7 @@ export function NewCategoryBottomSheet({
           />
         ) : (
           <CategorySelectList
-            categories={folders}
+            categories={displayCategories.length > 0 ? displayCategories : folders.length > 0 ? folders : categories}
             onSelectCategory={handleCategorySelect}
             onAddNewCategory={handleAddNewCategoryClick}
             loading={loading}

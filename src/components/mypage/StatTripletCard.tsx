@@ -1,7 +1,7 @@
 type Props = {
-  attendanceDays: number;
   totalNewsSaved: number;
   totalQuizSolved: number;
+  totalQuizReviewed: number;
 };
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -14,19 +14,19 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 export default function StatTripletCard({
-  attendanceDays,
   totalNewsSaved,
   totalQuizSolved,
+  totalQuizReviewed,
 }: Props) {
   return (
     <section className="mt-6 px-5">
       <div className="h-[90px] rounded-xl border border-primary-90 bg-primary-100 px-3">
         <div className="grid h-full grid-cols-[1fr_auto_1fr_auto_1fr] items-center">
-          <Stat label="저장한 뉴스" value={`${attendanceDays}일`} />
-          <div className="mx-auto h-10 w-px bg-primary-90" />
-          <Stat label="뉴스 저장" value={`${totalNewsSaved}개`} />
+          <Stat label="저장한 뉴스" value={`${totalNewsSaved}개`} />
           <div className="mx-auto h-10 w-px bg-primary-90" />
           <Stat label="퀴즈 풀이" value={`${totalQuizSolved}회`} />
+          <div className="mx-auto h-10 w-px bg-primary-90" />
+          <Stat label="퀴즈 복습" value={`${totalQuizReviewed}회`} />
         </div>
       </div>
     </section>

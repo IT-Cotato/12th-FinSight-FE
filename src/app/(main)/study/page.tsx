@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/common/Header";
+import Loading from "@/components/common/Loading";
 import { CategoryBar } from "@/components/study/CategoryBar";
 import { SortDropdown, type SortOption } from "@/components/study/SortDropdown";
 import { NewsCard } from "@/components/study/NewsCard";
@@ -14,29 +15,13 @@ import {
   type NewsCategory,
   type NewsSort,
 } from "@/lib/api/news";
+import { CATEGORY_MAP } from "@/store/homeStore";
 import {
   getCategoryOrder,
   updateCategoryOrder,
   type CategoryOrderItem,
 } from "@/lib/api/user";
-
-type Category = {
-  category_id: number | null;
-  name: string;
-};
-
-// 기본 카테고리 (API 실패 시 사용)
-const DEFAULT_CATEGORIES: Category[] = [
-  { category_id: null, name: "종합" },
-  { category_id: 1, name: "금융" },
-  { category_id: 2, name: "증권" },
-  { category_id: 3, name: "산업/재계" },
-  { category_id: 4, name: "부동산" },
-  { category_id: 5, name: "중기/벤처" },
-  { category_id: 6, name: "글로벌 경제" },
-  { category_id: 7, name: "경제 일반" },
-  { category_id: 8, name: "생활 경제" },
-];
+import { DEFAULT_CATEGORIES, type Category } from "@/constants/categories";
 
 // 목 데이터 (API 응답이 없을 때 사용)
 const MOCK_NEWS: NewsItem[] = [
@@ -271,50 +256,62 @@ export default function StudyPage() {
       {/* 뉴스 리스트 */}
       <div className="flex-1">
         {loading && newsList.length === 0 ? (
-          <div className="flex items-center justify-center py-8">
-            <p className="text-gray-400">로딩 중...</p>
-          </div>
+          <Loading className="min-h-[60vh]" />
         ) : newsList.length === 0 ? (
           <div className="flex items-center justify-center py-8">
             <p className="text-gray-400">뉴스가 없습니다.</p>
           </div>
         ) : (
-          newsList.map((news) => (
-            <NewsCard
-              key={news.newsId}
-              title={news.title}
-              thumbnailUrl={news.thumbnailUrl}
-              tags={news.coreTerms.map((term) => term.term)}
-              href={`/study/${news.newsId}`}
-            />
-          ))
+          newsList.map((news) => {
+            // 카테고리바가 "종합"으로 선택되어 있을 때만 카테고리를 태그 맨 앞에 추가
+            const categoryName = "#" + CATEGORY_MAP[news.category];
+            const baseTags = news.coreTerms?.map((term) => term.term) || [];
+
+            // 종합 선택 시 카테고리를 태그 맨 앞에 추가 (카테고리 매핑이 있을 때만)
+            const tags = selectedCategoryId === null && categoryName
+              ? [categoryName, ...baseTags].slice(0, 3)
+              : baseTags.slice(0, 3);
+
+            return (
+              <NewsCard
+                key={news.newsId}
+                title={news.title}
+                thumbnailUrl={news.thumbnailUrl}
+                tags={tags}
+                href={`/study/${news.newsId}`}
+                newsId={news.newsId}
+              />
+            );
+          })
         )}
       </div>
 
       {/* 기사 더보기 버튼 */}
-      <div className="px-4 py-4 flex justify-center">
-        <button
-          onClick={handleLoadMore}
-          disabled={loading}
-          className="flex items-center justify-center w-full gap-[5px] px-[10px] py-[10px] rounded-[8px] border border-bg-80 bg-bg-90 text-center text-b3 text-gray-40"
-        >
-          <span>기사 더보기</span>
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="10"
-            height="7"
-            viewBox="0 0 10 7"
-            fill="none"
+      {hasNext && nextCursor && (
+        <div className="px-4 py-4 flex justify-center">
+          <button
+            onClick={handleLoadMore}
+            disabled={loading}
+            className="flex items-center justify-center w-full gap-[5px] px-[10px] py-[10px] rounded-[8px] border border-bg-80 bg-bg-90 text-center text-b3 text-gray-40 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <path
-              d="M0.650024 0.649902L4.49385 5.45469C4.57392 5.55477 4.72613 5.55477 4.8062 5.45469L8.65002 0.649902"
-              stroke="#D5D5D5"
-              strokeWidth="1.3"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
-      </div>
+            <span>기사 더보기</span>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="10"
+              height="7"
+              viewBox="0 0 10 7"
+              fill="none"
+            >
+              <path
+                d="M0.650024 0.649902L4.49385 5.45469C4.57392 5.55477 4.72613 5.55477 4.8062 5.45469L8.65002 0.649902"
+                stroke="#D5D5D5"
+                strokeWidth="1.3"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* 카테고리 편집 바텀시트 */}
       <CategoryEditBottomSheet

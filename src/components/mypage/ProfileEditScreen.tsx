@@ -5,6 +5,7 @@ import PageHeader from "@/components/mypage/PageHeader";
 import ConfirmModal from "@/components/mypage/ConfirmModal";
 import NicknameField from "@/components/mypage/NicknameField";
 import CategoryPicker from "@/components/mypage/CategoryPicker";
+import Button from "@/components/Button";
 import {
   getMyProfile,
   getUserCategories,
@@ -91,8 +92,6 @@ export default function ProfileEditScreen() {
         nickname: nickname.trim(),
         categories: selected, // section 배열 그대로 전송
       });
-
-      alert("저장되었습니다.");
       setInitialNickname(nickname);
       setInitialSelected(selected);
       setEditMode(false);
@@ -109,36 +108,33 @@ export default function ProfileEditScreen() {
   }
 
   return (
-    <main className="min-h-dvh bg-bg-100 px-5">
+    <main className="min-h-dvh bg-bg-100 px-5 flex flex-col">
       <PageHeader title="프로필 수정" />
 
-      <NicknameField
-        initialNickname={initialNickname}
-        nickname={nickname}
-        onChange={setNickname}
-        onCheckedChange={setNicknameCheckedOk}
-      />
+      <div className="flex-1">
+        <NicknameField
+          initialNickname={initialNickname}
+          nickname={nickname}
+          onChange={setNickname}
+          onCheckedChange={setNicknameCheckedOk}
+        />
 
-      <CategoryPicker
-        allCategories={allCategories}
-        selected={selected}
-        onChange={setSelected}
-        editMode={editMode}
-        onToggleEdit={() => setEditMode((v) => !v)}
-      />
+        <CategoryPicker
+          allCategories={allCategories}
+          selected={selected}
+          onChange={setSelected}
+          editMode={editMode}
+          onToggleEdit={() => setEditMode((v) => !v)}
+        />
+      </div>
 
       {/* 저장 버튼 */}
-      <div className="fixed bottom-[110px] left-0 right-0 px-5 z-[60]">
-        <button
-          type="button"
+      <div className="pb-32">
+        <Button
+          text="저장하기"
           onClick={() => setOpenConfirm(true)}
           disabled={!canSave || saving}
-          className={`h-[60px] w-full rounded-xl text-b1 text-gray-10 ${
-            canSave ? "bg-primary-50" : "bg-primary-20"
-          }`}
-        >
-          저장하기
-        </button>
+        />
       </div>
 
       <ConfirmModal

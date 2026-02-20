@@ -10,26 +10,10 @@ import { ArchiveTermCard } from "@/components/archive/ArchiveTermCard";
 import { ArchiveSortDropdown } from "@/components/archive/ArchiveSortDropdown";
 import { getCategoryOrder } from "@/lib/api/user";
 import { getStorageFolders, searchStorageNews, searchStorageTerms, type StorageNewsSearchItem, type StorageTermsSearchItem } from "@/lib/api/storage";
+import Loading from "@/components/common/Loading";
+import { DEFAULT_CATEGORIES, type Category } from "@/constants/categories";
 
 type TabType = "news" | "terms";
-
-type Category = {
-  category_id: number | null;
-  name: string;
-};
-
-// 기본 카테고리 (API 실패 시 사용)
-const DEFAULT_CATEGORIES: Category[] = [
-  { category_id: null, name: "종합" },
-  { category_id: 1, name: "금융" },
-  { category_id: 2, name: "증권" },
-  { category_id: 3, name: "산업/재계" },
-  { category_id: 4, name: "부동산" },
-  { category_id: 5, name: "중기/벤처" },
-  { category_id: 6, name: "글로벌 경제" },
-  { category_id: 7, name: "경제 일반" },
-  { category_id: 8, name: "생활 경제" },
-];
 
 // 뒤로가기 버튼
 function BackButton() {
@@ -162,6 +146,7 @@ function ArchiveSearchContent() {
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
   const [categoryMapping, setCategoryMapping] = useState<Map<string, string>>(new Map());
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [categoryIdToCodeMapping, setCategoryIdToCodeMapping] = useState<Map<number, string>>(new Map());
 
   // URL 쿼리 파라미터에서 폴더 ID와 탭 읽기
   const urlFolderId = searchParams.get("folderId") ? parseInt(searchParams.get("folderId")!, 10) : null;
@@ -203,6 +188,13 @@ function ArchiveSearchContent() {
           mapping.set(item.code, item.nameKo);
         });
         setCategoryMapping(mapping);
+
+        // 카테고리 ID -> 코드 매핑 생성
+        const idToCodeMapping = new Map<number, string>();
+        items.forEach((item) => {
+          idToCodeMapping.set(item.categoryId, item.code);
+        });
+        setCategoryIdToCodeMapping(idToCodeMapping);
       } catch (err) {
         console.warn("카테고리 순서 API 호출 실패, 기본 카테고리 사용:", err);
         setCategories(DEFAULT_CATEGORIES);
@@ -211,12 +203,25 @@ function ArchiveSearchContent() {
           ["STOCK", "증권"],
           ["INDUSTRY", "산업/재계"],
           ["REAL_ESTATE", "부동산"],
-          ["VENTURE", "중기/벤처"],
+          ["SME", "중기/벤쳐"],
           ["GLOBAL", "글로벌 경제"],
           ["GENERAL", "경제 일반"],
           ["LIVING", "생활 경제"],
         ]);
         setCategoryMapping(defaultMapping);
+
+        // 기본 카테고리 ID -> 코드 매핑
+        const defaultIdToCodeMapping = new Map<number, string>([
+          [1, "FINANCE"],
+          [2, "STOCK"],
+          [3, "INDUSTRY"],
+          [4, "REAL_ESTATE"],
+          [5, "SME"],
+          [6, "GLOBAL"],
+          [7, "GENERAL"],
+          [8, "LIVING"],
+        ]);
+        setCategoryIdToCodeMapping(defaultIdToCodeMapping);
       }
     };
 
@@ -294,11 +299,18 @@ function ArchiveSearchContent() {
       return;
     }
 
+    // 카테고리가 선택되었으면 해당 카테고리의 section 코드를 가져옴
+    // selectedCategoryId가 null이면 section을 전달하지 않아 전체 검색
+    const sectionCode = selectedCategoryId !== null 
+      ? categoryIdToCodeMapping.get(selectedCategoryId) 
+      : undefined;
+
     const searchParams = {
       folderId: folderIdToSearch,
       q: keyword.trim(),
       page: 1,
       size: activeTab === "news" ? 12 : 10,
+      ...(sectionCode && { section: sectionCode }),
     };
 
     try {
@@ -364,11 +376,18 @@ function ArchiveSearchContent() {
       return;
     }
 
+    // 카테고리가 선택되었으면 해당 카테고리의 section 코드를 가져옴
+    // selectedCategoryId가 null이면 section을 전달하지 않아 전체 검색
+    const sectionCode = selectedCategoryId !== null 
+      ? categoryIdToCodeMapping.get(selectedCategoryId) 
+      : undefined;
+
     const searchParams = {
       folderId: folderIdToSearch,
       q: keyword.trim(),
       page,
       size: activeTab === "news" ? 12 : 10,
+      ...(sectionCode && { section: sectionCode }),
     };
 
     try {
@@ -406,11 +425,18 @@ function ArchiveSearchContent() {
         return;
       }
 
+      // 카테고리가 선택되었으면 해당 카테고리의 section 코드를 가져옴
+      // selectedCategoryId가 null이면 section을 전달하지 않아 전체 검색
+      const sectionCode = selectedCategoryId !== null 
+        ? categoryIdToCodeMapping.get(selectedCategoryId) 
+        : undefined;
+
       const searchParams = {
         folderId: folderIdToSearch,
         q: keyword.trim(),
         page: 1,
         size: activeTab === "news" ? 12 : 10,
+        ...(sectionCode && { section: sectionCode }),
       };
 
       const performSearch = async () => {
@@ -444,7 +470,7 @@ function ArchiveSearchContent() {
 
       performSearch();
     }
-  }, [selectedFolderId, activeTab, keyword, searched, defaultFolderId, urlFolderId]);
+  }, [selectedFolderId, activeTab, keyword, searched, defaultFolderId, urlFolderId, selectedCategoryId, categoryIdToCodeMapping]);
 
   const handleFolderChange = (folderId: number | null) => {
     console.log("폴더 변경:", { folderId, selectedFolderId, defaultFolderId });
@@ -539,9 +565,7 @@ function ArchiveSearchContent() {
         )}
 
         {loading && newsList.length === 0 && termsList.length === 0 && (
-          <div className="flex flex-1 items-center justify-center">
-            <p className="text-gray-400">검색 중...</p>
-          </div>
+          <Loading className="flex-1" />
         )}
 
         {searched && !loading && newsList.length === 0 && termsList.length === 0 && (
@@ -647,9 +671,7 @@ export default function ArchiveSearchPage() {
   return (
     <Suspense fallback={
       <div className="flex flex-col flex-1 min-h-0 bg-bg-100">
-        <div className="flex flex-1 items-center justify-center">
-          <p className="text-gray-400">로딩 중...</p>
-        </div>
+        <Loading />
       </div>
     }>
       <ArchiveSearchContent />

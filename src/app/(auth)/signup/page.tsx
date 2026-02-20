@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AuthContainer from '../../(auth)/AuthContainer';
-import { sendVerificationCode, verifyCode, checkNickname, kakaoSignup } from '@/api/auth';
+import { sendVerificationCode, verifyCode, checkNickname, kakaoSignup, signup  } from '@/api/auth';
 
 function SignupPageContent() {
   const router = useRouter();
@@ -112,6 +112,13 @@ function SignupPageContent() {
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [privacyAgreed, setPrivacyAgreed] = useState(false);
 
+  // 마크다운 **텍스트**를 <strong>텍스트</strong>로 변환하고 줄바꿈 처리
+  const markdownToHtml = (text: string) => {
+    return text
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br />');
+  };
+
   const isButtonEnabled = () => {
   switch (step) {
     case 1:
@@ -132,12 +139,31 @@ const handleSignup = async () => {
   setLoading(true);
 
   try {
-    // 회원가입 API 호출
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // 카카오 모드일 때는 카카오 회원가입 API 호출
+    if (isKakaoMode) {
+      await kakaoSignup({
+        kakaoId: kakaoId!,
+        nickname: name.trim(),
+      });
+    } else {
+      // 일반 회원가입 API 호출
+      await signup({
+        email: email,
+        password: password,
+        nickname: name.trim(),
+      });
+    }
+
+    // 토큰 저장 확인 후 이동
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     router.push('/onboarding');
   } catch (err: any) {
-    setError(err.message || '회원가입에 실패했습니다.');
+    if (isKakaoMode) {
+      setNicknameError(err.message || '회원가입에 실패했습니다.');
+    } else {
+      setError(err.message || '회원가입에 실패했습니다.');
+    }
   } finally {
     setLoading(false);
   }
@@ -214,6 +240,12 @@ const handleVerifyCode = async () => {
 
   // 뒤로가기 핸들러 추가
   const handleBack = () => {
+    // 카카오 모드일 때 step 4에서 뒤로가면 step 1로 이동
+    if (isKakaoMode && step === 4) {
+      setStep(1);
+      return;
+    }
+    
     if (step > 1) {
       setStep(step - 1);  // 이전 단계로
     } else {
@@ -222,20 +254,9 @@ const handleVerifyCode = async () => {
   };
 
   const handleNext = async () => {
-    // 카카오 모드이고 step 1(닉네임 입력) 완료 시 카카오 회원가입 API 호출
+    // 카카오 모드이고 step 1(닉네임 입력) 완료 시 step 4(약관 동의)로 이동
     if (isKakaoMode && step === 1 && isNicknameChecked) {
-      try {
-        setLoading(true);
-        await kakaoSignup({
-          kakaoId: kakaoId!,
-          nickname: name.trim(),
-        });
-        // 회원가입 성공 시 홈으로 이동
-        router.push('/home');
-      } catch (err: any) {
-        setNicknameError(err.message || '회원가입에 실패했습니다.');
-        setLoading(false);
-      }
+      setStep(4);
       return;
     }
     
@@ -260,8 +281,8 @@ const handleVerifyCode = async () => {
   };
 
   const renderStepContent = () => {
-    // 카카오 모드일 때는 step 1만 보여줌
-    if (isKakaoMode && step !== 1) {
+    // 카카오 모드일 때는 step 1과 step 4만 보여줌
+    if (isKakaoMode && step !== 1 && step !== 4) {
       return null;
     }
     
@@ -855,33 +876,68 @@ const handleVerifyCode = async () => {
                   </span>
                 </div>
 
-                <textarea
-                  placeholder="어쩌구 저쩌구"
-                  readOnly
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: markdownToHtml(`**제 1 장 총 칙**
+
+**제 1 조 (목적)**
+본 약관은 FinSight(이하 "회사")가 제공하는 금융 뉴스 분석 및 학습 서비스(이하 "서비스")의 이용과 관련하여 회사와 회원 간의 권리, 의무 및 책임사항, 기타 필요한 사항을 규정함을 목적으로 합니다.
+
+**제 2 조 (용어의 정의)**
+1. "서비스"란 단말기(PC, 모바일 등)와 상관없이 회원이 이용할 수 있는 FinSight의 뉴스 큐레이션, AI 요약, 퀴즈, 학습 관리 제반 서비스를 의미합니다.
+2. "회원"이란 본 약관에 동의하고 계정을 생성하여 서비스를 이용하는 자를 말합니다.
+3. "AI 콘텐츠"란 Google Gemini API 등 인공지능 기술을 활용하여 생성된 뉴스 요약, 해설, 퀴즈 등을 의미합니다.
+
+**제 2 장 이용계약 및 회원관리**
+
+**제 3 조 (이용계약 체결 및 정보수집)**
+1. 이용계약은 회원이 되고자 하는 자가 약관에 동의하고, 정해진 가입 절차를 완료함으로써 체결됩니다.
+2. 회사는 원활한 서비스 제공을 위해 회원가입(온보딩) 단계에서 **3개 이상의 '관심 금융 카테고리'** 선택을 필수 조건으로 요구할 수 있습니다.
+3. 회원은 이메일(일반 가입) 또는 카카오(Kakao) 등 소셜 연동을 통해 가입할 수 있습니다.
+
+**제 4 조 (회원정보의 변경)**
+1. 회원은 마이페이지를 통하여 언제든지 본인의 닉네임, 비밀번호, 관심 금융 카테고리를 수정할 수 있습니다.
+2. 서비스 이용의 고유 식별값으로 사용되는 **이메일 주소(ID)는 수정이 불가능**합니다.
+
+**제 3 장 서비스의 이용**
+
+**제 5 조 (서비스의 제공 및 알고리즘 공개)**
+회사는 투명한 정보 제공을 위해 다음과 같은 기준으로 뉴스를 배열 및 추천합니다.
+1. **인기 뉴스:** 전체 조회수 순위와 8개 주요 카테고리별 최고 조회수 콘텐츠를 순환(Round-robin)하여 노출합니다. 별도의 기한 제한은 두지 않으며, 누적된 트래픽 데이터를 반영합니다.
+2. **추천 뉴스:** 회원이 설정한 관심사 카테고리의 최신 뉴스를 우선적으로 노출하며, 정보 편향 방지를 위해 나머지 카테고리의 뉴스도 순차적으로 순환하여 제공합니다.
+3. **AI 학습 지원:** Google Gemini LLM을 활용하여 뉴스 원문의 핵심 사실 요약, 용어 해설, 이해도 점검 퀴즈를 제공합니다.
+
+**제 6 조 (서비스의 중단 및 모니터링)**
+1. 회사는 시스템의 안정적인 운영을 위해 **Grafana Cloud** 등의 모니터링 도구를 활용하여 서버 상태, 로그, 트래픽 매트릭을 실시간으로 수집·분석합니다.
+2. 천재지변, 시스템 점검 등 불가피한 사유가 발생한 경우 서비스 제공을 일시 중단할 수 있습니다.
+
+**제 7 조 (책임제한)**
+회사가 제공하는 AI 콘텐츠(요약, 퀴즈 등)는 인공지능 알고리즘에 의해 자동 생성된 정보로, 그 완전성이나 정확성을 보장하지 않습니다. 이를 참고하여 발생한 회원의 금융 투자 결과에 대해 회사는 책임을 지지 않습니다.
+
+**부 칙**
+본 약관은 2026년 2월 15일부터 시행합니다.`)
+                  }}
                   style={{
                     width: '100%',
                     height: '140px',
                     backgroundColor: 'var(--color-bg-100)',
                     borderRadius: '8px',
                     border: '1.5px solid var(--color-gray-90)',
-                    padding: '16px 265px 102px 20px',
-                    alignItems: 'center',
+                    padding: '16px 20px',
                     fontStyle: 'normal',
                     fontSize: '12px',
                     fontWeight: '500',
                     fontFamily: 'Pretendard',
-                    textAlign: 'center',
+                    textAlign: 'left',
                     color: 'var(--color-gray-50)',
                     lineHeight: '180%',
                     letterSpacing: '-0.12px',
                     overflow: 'auto',
                     resize: 'none',
                     outline: 'none',
-                    // 스크롤바 숨기기
-                    scrollbarWidth: 'none',  // Firefox
-                    msOverflowStyle: 'none',  // IE, Edge
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
                   }}
-                  // Chrome, Safari 스크롤바 숨기기
                   className="hide-scrollbar"
                 />
               </div>
@@ -939,33 +995,67 @@ const handleVerifyCode = async () => {
                   </span>
                 </div>
 
-                <textarea
-                  placeholder="어쩌구 저쩌구"
-                  readOnly
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: markdownToHtml(`**FinSight(이하 "회사")**는 이용자의 개인정보를 중요시하며, 「개인정보보호법」 등 관련 법령을 준수하고 있습니다.
+
+**제 1 조 (개인정보의 수집 및 이용 목적)**
+회사는 다음의 목적을 위하여 개인정보를 처리합니다.
+1. **회원 가입 및 관리:** 본인 식별, 가입 의사 확인, 회원자격 유지·관리 (이메일/소셜 로그인 연동)
+2. **서비스 제공:** 관심사 기반 뉴스 피드 알고리즘 적용, 학습 현황(레벨, 퀴즈 점수) 저장 및 관리
+3. **서비스 개선 및 보안:** AI 모델(Gemini) 응답 품질 개선, 접속 빈도 파악, 시스템 안정성 확보(Grafana 모니터링)
+
+**제 2 조 (수집하는 개인정보의 항목)**
+회사는 서비스 제공을 위해 아래와 같은 정보를 수집합니다.
+1. **필수 항목:** 이메일 주소(ID), 비밀번호(이메일 가입 시), 닉네임, **관심 금융 카테고리(최소 3개 이상)**
+2. **소셜 로그인 시(카카오):** 프로필 정보(닉네임, 이메일), 소셜 식별자(ID)
+3. **자동 수집 항목:** 서비스 이용 기록, 접속 로그, 쿠키, 접속 IP 정보, 뉴스 조회 이력, 퀴즈 풀이 데이터
+
+**제 3 조 (개인정보의 보유 및 이용 기간)**
+회원 탈퇴 시까지 보유하는 것을 원칙으로 하며, 탈퇴 시 지체 없이 파기합니다. 단, 관계 법령 위반에 따른 수사 협조 등이 필요한 경우 해당 목적 달성 시까지 보관할 수 있습니다.
+
+**제 4 조 (개인정보 처리의 위탁)**
+회사는 서비스 향상 및 시스템 운영을 위해 다음과 같이 개인정보 처리 업무를 외부 전문 업체에 위탁하고 있습니다.
+
+**수탁 업체** | **위탁 업무 내용**
+Google (Gemini API) | 뉴스 콘텐츠 요약, 해설 및 퀴즈 생성을 위한 텍스트 데이터 처리
+Grafana Labs | 시스템 성능 모니터링, 서버 로그 분석 및 장애 대응을 위한 데이터 보관
+Kakao Corp. | 카카오 로그인 이용 시 본인 인증 및 식별값 처리
+
+**제 5 조 (이용자의 권리)**
+이용자는 언제든지 마이페이지를 통해 자신의 개인정보(닉네임, 관심사, 비밀번호 등)를 조회하거나 수정할 수 있으며, 회원 탈퇴를 요청할 수 있습니다. 단, 시스템 식별자인 이메일은 수정이 불가능합니다.
+
+**제 6 조 (개인정보의 파기 절차)**
+회사는 파기 사유가 발생한 개인정보를 선정하고, 전자적 파일 형태의 정보는 기록을 재생할 수 없는 기술적 방법을 사용하여 영구 삭제합니다.
+
+**제 7 조 (개인정보 보호책임자)**
+• **성명:** 우재원
+• **직책:** FinSight 프로젝트 대표 (PM)
+• **연락처:** 010-2840-6742
+
+**부 칙**
+본 처리방침은 2026년 2월 15일부터 시행됩니다.`)
+                  }}
                   style={{
                     width: '100%',
                     height: '140px',
                     backgroundColor: 'var(--color-bg-100)',
                     borderRadius: '8px',
-                    border : '1.5px solid var(--color-gray-90)',
-                    padding: '16px 265px 102px 20px',
-                    alignItems: 'center',
+                    border: '1.5px solid var(--color-gray-90)',
+                    padding: '16px 20px',
                     fontSize: '12px',
                     fontWeight: '500',
                     fontStyle: 'normal',
                     fontFamily: 'Pretendard',
-                    textAlign: 'center',
+                    textAlign: 'left',
                     color: 'var(--color-gray-50)',
                     lineHeight: '180%',
                     letterSpacing: '-0.12px',
                     overflow: 'auto',
-                    resize: 'none',
-                    outline: 'none',
-                    // 스크롤바 숨기기
-                    scrollbarWidth: 'none',  // Firefox
-                    msOverflowStyle: 'none',  // IE, Edge
+                    whiteSpace: 'pre-wrap',
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
                   }}
-                  // Chrome, Safari 스크롤바 숨기기
                   className="hide-scrollbar"
                 />
               </div>
@@ -985,12 +1075,14 @@ const handleVerifyCode = async () => {
       totalSteps={isKakaoMode ? 0 : 4}
       buttonText={
         isKakaoMode && step === 1
-          ? "완료"
-          : step === 2 
-            ? (isCodeSent ? "인증하기" : "인증번호 전송")
-            : step === 4
-              ? "가입하기"
-              : "다음"
+          ? "다음"
+          : isKakaoMode && step === 4
+            ? "가입하기"
+            : step === 2 
+              ? (isCodeSent ? "인증하기" : "인증번호 전송")
+              : step === 4
+                ? "가입하기"
+                : "다음"
       }
       buttonDisabled={
         step === 1 ? (!name || !isNicknameChecked) :
@@ -1004,9 +1096,14 @@ const handleVerifyCode = async () => {
         false
       }
       onNext={() => {
-        // 카카오 모드일 때는 step 1에서 바로 회원가입 처리
+        // 카카오 모드일 때 step 1에서는 step 4로 이동, step 4에서는 회원가입 처리
         if (isKakaoMode && step === 1) {
-          handleNext();
+          handleNext(); // step 4로 이동
+          return;
+        }
+        
+        if (isKakaoMode && step === 4) {
+          handleSignup(); // 카카오 회원가입 처리
           return;
         }
         

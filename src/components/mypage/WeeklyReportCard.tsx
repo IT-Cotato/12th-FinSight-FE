@@ -20,7 +20,7 @@ type Props = {
 const MODE_ICON: Record<string, string> = {
   STOCK: "/mypage/icon-stock.svg",
   INDUSTRY: "/mypage/icon-industry.svg",
-  PROPERTY: "/mypage/icon-property.svg",
+  REAL_ESTATE: "/mypage/icon-property.svg",
   SME: "/mypage/icon-venture.svg",
   GLOBAL: "/mypage/icon-global.svg",
   GENERAL: "/mypage/icon-economy.svg",
@@ -31,8 +31,8 @@ const MODE_ICON: Record<string, string> = {
 const MODE_LABEL: Record<string, string> = {
   STOCK: "증권 전문가",
   INDUSTRY: "산업/재계 전문가",
-  PROPERTY: "부동산 전문가",
-  SME: "증기/벤처 전문가",
+  REAL_ESTATE: "부동산 전문가",
+  SME: "중기/벤쳐 전문가",
   GLOBAL: "글로벌 경제 전문가",
   GENERAL: "경제 일반 전문가",
   LIFE: "생활경제 전문가",

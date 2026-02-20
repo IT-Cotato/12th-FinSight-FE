@@ -107,7 +107,6 @@ export default function QuizPlayPage() {
         })),
       });
 
-      // setLastSubmit(submitRes as any);
       setLastSubmit(submitRes);
       router.push(`/quiz/${naverArticleId}/result`);
     } catch {
@@ -117,7 +116,7 @@ export default function QuizPlayPage() {
   }
 
   function exitQuiz() {
-    router.push(`/quiz/${naverArticleId}`);
+    router.push(`/quiz/${naverArticleId}?from=play-exit`);
   }
 
   return (

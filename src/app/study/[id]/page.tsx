@@ -11,7 +11,7 @@ import {
   saveNewsToStorage,
   getStorageFoldersByItemId,
 } from "@/lib/api/storage";
-
+import Loading from "@/components/common/Loading";
 type Category = {
   category_id: number;
   name: string;
@@ -59,6 +59,15 @@ export default function NewsDetailPage() {
         if (!isNaN(articleId)) {
           await fetchSavedFolders(articleId);
         }
+
+        // 읽은 기사로 표시 (localStorage에 저장)
+        const readNewsIds = JSON.parse(
+          localStorage.getItem("readNewsIds") || "[]"
+        ) as string[];
+        if (!readNewsIds.includes(newsId)) {
+          readNewsIds.push(newsId);
+          localStorage.setItem("readNewsIds", JSON.stringify(readNewsIds));
+        }
       } catch (err) {
         console.warn("API 호출 실패: ", err);
         setError(null);
@@ -82,24 +91,18 @@ export default function NewsDetailPage() {
     setIsSaveBottomSheetOpen(true);
   };
 
-  // 기사 저장용 핸들러
-  const handleSelectCategory = async (categoryId: number | null) => {
-    if (!newsId || categoryId === null) {
-      return;
-    }
-
-    try {
-      // 선택한 폴더에 뉴스 저장 API 호출
-      const articleId = parseInt(newsId, 10);
-      await saveNewsToStorage(articleId, [categoryId]);
-      // 저장 후 저장된 폴더 목록 다시 조회하여 북마크 상태 업데이트
+  // 기사 저장/삭제 완료 후 북마크 상태 업데이트
+  const handleToggleComplete = async () => {
+    const articleId = parseInt(newsId, 10);
+    if (!isNaN(articleId)) {
       await fetchSavedFolders(articleId);
-      setIsSaveBottomSheetOpen(false);
-    } catch (err) {
-      console.error("뉴스 저장 실패:", err);
-      // 에러 발생 시에도 바텀시트는 닫음 (사용자 경험을 위해)
-      setIsSaveBottomSheetOpen(false);
     }
+  };
+
+  // 기사 저장용 핸들러 (호환성 유지, 실제로는 NewCategoryBottomSheet에서 처리)
+  const handleSelectCategory = async (categoryId: number | null) => {
+    // NewCategoryBottomSheet에서 내부적으로 처리하므로 여기서는 아무것도 하지 않음
+    // 필요시 추가 로직 구현 가능
   };
 
   const handleAddNewCategory = () => {
@@ -210,7 +213,7 @@ export default function NewsDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col min-h-full bg-bg-100">
+      <div className="flex flex-col min-h-screen bg-bg-100">
         <Header
           title="뉴스 상세"
           leftSlot={
@@ -234,9 +237,7 @@ export default function NewsDetailPage() {
             </button>
           }
         />
-        <div className="flex-1 flex items-center justify-center">
-          <p className="text-gray-400">로딩 중...</p>
-        </div>
+        <Loading className="flex-1" />
       </div>
     );
   }
@@ -324,7 +325,7 @@ export default function NewsDetailPage() {
       />
 
       <div className="flex-1 px-5">
-        <div className="flex flex-col items-start gap-5">
+        <div className="flex flex-col items-start gap-5 mt-3">
           {/* 태그 */}
           {news.coreTerms && news.coreTerms.length > 0 && (
             <div className="flex items-center gap-[5px]">
@@ -439,7 +440,7 @@ export default function NewsDetailPage() {
         </button>
         <button
           onClick={handleSolveProblems}
-          className="flex-1 w-full justify-center items-center px-4 py-[18px] rounded-[12px] bg-primary-50 text-b1 text-gray-10 text-center"
+          className="flex-1 w-full justify-center items-center px-4 py-[18px] mb-[20px] rounded-[12px] bg-primary-50 text-b1 text-gray-10 text-center"
         >
           문제 풀러가기
         </button>
@@ -452,7 +453,9 @@ export default function NewsDetailPage() {
         categories={ARCHIVE_CATEGORIES}
         onSelectCategory={handleSelectCategory}
         onAddNewCategory={handleAddNewCategory}
+        onToggleComplete={handleToggleComplete}
         itemId={newsId ? parseInt(newsId, 10) : undefined}
+        folderType="NEWS"
       />
 
       {/* 단어 설명 카드 */}

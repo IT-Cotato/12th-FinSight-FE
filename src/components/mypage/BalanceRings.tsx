@@ -62,7 +62,7 @@ export default function BalanceRings({ items }: Props) {
     STOCK: "증권",
     INDUSTRY: "산업/재계",
     REAL_ESTATE: "부동산",
-    SME: "중기/벤처",
+    SME: "중기/벤쳐",
     GLOBAL: "글로벌 경제",
     GENERAL: "경제 일반",
     LIVING: "생활 경제",

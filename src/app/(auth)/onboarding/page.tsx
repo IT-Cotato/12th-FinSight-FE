@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import WelcomeLayout from '@/components/onboarding/WelcomeLayout';
 import InterestSelection from '@/components/onboarding/InterestSelection';
@@ -10,6 +10,7 @@ import { useOnboardingStore } from '@/store/onboardingStore';
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const [isSaving, setIsSaving] = useState(false);
 
   /* 추가: Zustand 스토어에서 상태와 액션 가져오기 */
   const { 
@@ -18,11 +19,12 @@ export default function OnboardingPage() {
     selectedInterests, 
     setStep, 
     setShowText, 
-    toggleInterest 
+    toggleInterest,
+    saveInterests
   } = useOnboardingStore();
 
   /* 변경: selectedInterests가 스토어 값이므로 그대로 사용 */
-  const isButtonEnabled = selectedInterests.length >= 3;
+  const isButtonEnabled = selectedInterests.length >= 3 && !isSaving;
 
   // showText는 useEffect에서만 관리
   useEffect(() => {
@@ -36,14 +38,28 @@ export default function OnboardingPage() {
     }
   }, [step, setShowText]); // setShowText 의존성 추가
 
-  // handleNext는 페이지 이동만 담당
-  const handleNext = () => {
+  // handleNext는 페이지 이동 및 관심분야 저장 담당
+  const handleNext = async () => {
     if (step === 1) {
       setStep(2);
     } else if (step === 2) {
       setStep(3);
-    } else {
-      router.push('/home');
+    } else if (step === 3) {
+      // 관심분야 저장 API 호출
+      setIsSaving(true);
+      try {
+        const result = await saveInterests();
+        if (result.success) {
+          router.push('/home');
+        } else {
+          alert(result.message || '관심분야 저장에 실패했습니다.');
+        }
+      } catch (error) {
+        console.error('관심분야 저장 에러:', error);
+        alert('관심분야 저장 중 오류가 발생했습니다.');
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 

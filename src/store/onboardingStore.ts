@@ -21,7 +21,7 @@ const INTEREST_MAP: Record<string, string> = {
   '생활경제': 'LIVING',
   '증권': 'STOCK',
   '산업/재계': 'INDUSTRY',
-  '중기/벤처': 'SME',
+  '중기/벤쳐': 'SME',
   '글로벌 경제': 'GLOBAL',
   '경제 일반': 'GENERAL',
 };

@@ -91,7 +91,7 @@ export const ALL_CATEGORIES_8: CategoryItem[] = [
   { section: "GLOBAL", displayName: "글로벌 경제" },
   { section: "INDUSTRY", displayName: "산업/재계" },
   { section: "REAL_ESTATE", displayName: "부동산" },
-  { section: "SME", displayName: "중기/벤처" },
+  { section: "SME", displayName: "중기/벤쳐" },
   { section: "GENERAL", displayName: "경제 일반" },
   { section: "LIFE", displayName: "생활경제" },
 ];

@@ -16,24 +16,7 @@ import {
 import { getCategoryOrder, type CategoryOrderItem } from "@/lib/api/user";
 import { CATEGORY_MAP } from "@/store/homeStore";
 import Loading from "@/components/common/Loading";
-
-type Category = {
-  category_id: number | null;
-  name: string;
-};
-
-// 기본 카테고리 (API 실패 시 사용)
-const DEFAULT_CATEGORIES: Category[] = [
-  { category_id: null, name: "종합" },
-  { category_id: 1, name: "금융" },
-  { category_id: 2, name: "증권" },
-  { category_id: 3, name: "산업/재계" },
-  { category_id: 4, name: "부동산" },
-  { category_id: 5, name: "중기/벤처" },
-  { category_id: 6, name: "글로벌 경제" },
-  { category_id: 7, name: "경제 일반" },
-  { category_id: 8, name: "생활 경제" },
-];
+import { DEFAULT_CATEGORIES, type Category } from "@/constants/categories";
 
 // 카테고리 ID를 API 카테고리 값으로 변환
 const categoryIdToApiCategory = (

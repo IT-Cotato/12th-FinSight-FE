@@ -11,25 +11,9 @@ import { ArchiveSortDropdown } from "@/components/archive/ArchiveSortDropdown";
 import { getCategoryOrder } from "@/lib/api/user";
 import { getStorageFolders, searchStorageNews, searchStorageTerms, type StorageNewsSearchItem, type StorageTermsSearchItem } from "@/lib/api/storage";
 import Loading from "@/components/common/Loading";
+import { DEFAULT_CATEGORIES, type Category } from "@/constants/categories";
+
 type TabType = "news" | "terms";
-
-type Category = {
-  category_id: number | null;
-  name: string;
-};
-
-// 기본 카테고리 (API 실패 시 사용)
-const DEFAULT_CATEGORIES: Category[] = [
-  { category_id: null, name: "종합" },
-  { category_id: 1, name: "금융" },
-  { category_id: 2, name: "증권" },
-  { category_id: 3, name: "산업/재계" },
-  { category_id: 4, name: "부동산" },
-  { category_id: 5, name: "중기/벤처" },
-  { category_id: 6, name: "글로벌 경제" },
-  { category_id: 7, name: "경제 일반" },
-  { category_id: 8, name: "생활 경제" },
-];
 
 // 뒤로가기 버튼
 function BackButton() {
@@ -219,7 +203,7 @@ function ArchiveSearchContent() {
           ["STOCK", "증권"],
           ["INDUSTRY", "산업/재계"],
           ["REAL_ESTATE", "부동산"],
-          ["VENTURE", "중기/벤처"],
+          ["SME", "중기/벤쳐"],
           ["GLOBAL", "글로벌 경제"],
           ["GENERAL", "경제 일반"],
           ["LIVING", "생활 경제"],
@@ -232,7 +216,7 @@ function ArchiveSearchContent() {
           [2, "STOCK"],
           [3, "INDUSTRY"],
           [4, "REAL_ESTATE"],
-          [5, "VENTURE"],
+          [5, "SME"],
           [6, "GLOBAL"],
           [7, "GENERAL"],
           [8, "LIVING"],

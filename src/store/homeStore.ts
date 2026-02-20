@@ -19,7 +19,7 @@ export const CATEGORY_MAP: Record<string, string> = {
   FINANCE: '금융',
   STOCK: '증권',
   INDUSTRY: '산업/재계',
-  SME: '중기/벤처',
+  SME: '중기/벤쳐',
   REAL_ESTATE: '부동산',
   GLOBAL: '글로벌 경제',
   LIVING: '생활경제',

@@ -116,9 +116,23 @@ function LoginSelectScreen() {
           maxHeight: '844px',
         }}
       >
-        {/* 배경 이미지 */}
+        {/* 배경 이미지 
         <Image
           src="/intro-2.png"
+          alt="Background"
+          width={390}
+          height={844}
+          style={{ 
+            width: '390px',
+            height: '100%',
+            minHeight: '100vh',
+            objectFit: 'cover',
+          }}
+          priority
+        /> */}
+
+        <Image
+          src="/intro_2.svg"  // SVG 파일
           alt="Background"
           width={390}
           height={844}
@@ -193,12 +207,6 @@ function LoginSelectScreen() {
               }} 
             >
             </Link>
-            
-            <div style={{ 
-              width: '1px', 
-              height: '12px',
-              backgroundColor: '#8E8E93',
-            }} />
             
             <Link 
               href="/find-password"

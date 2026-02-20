@@ -52,7 +52,7 @@ function SplashScreen() {
         gap: '268px' 
       }}>
         <Image 
-          src="/img-logo-symbol.png" 
+          src="/img-logo-symbol.svg" 
           alt="Logo" 
           width={120} 
           height={120} 

@@ -170,7 +170,7 @@ function LoginSelectScreen() {
             bottom: '40px',
             left: '0',
             right: '0',
-            height: '20px',
+            height: '44px',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
@@ -179,20 +179,36 @@ function LoginSelectScreen() {
             <Link 
               href="/signup" 
               style={{ 
-                width: '64px', 
-                height: '100%',
-                display: 'block',
+                color: '#8E8E93',
+                fontSize: '12px',
+                fontWeight: '500',
+                textDecoration: 'none',
+                padding: '12px 16px', 
+                minWidth: '64px',
+                textAlign: 'center',
               }} 
-            />
-            <div style={{ width: '1px', height: '100%' }} />
+            >
+            </Link>
+            
+            <div style={{ 
+              width: '1px', 
+              height: '12px',
+              backgroundColor: '#8E8E93',
+            }} />
+            
             <Link 
               href="/find-password"
               style={{ 
-                width: '90px', 
-                height: '100%', 
-                display: 'block',
+                color: '#8E8E93',
+                fontSize: '12px',
+                fontWeight: '500',
+                textDecoration: 'none',
+                padding: '12px 16px',
+                minWidth: '90px',
+                textAlign: 'center',
               }} 
-            />
+            >
+            </Link>
           </div>
         </div>
       </div>
